@@ -1,0 +1,131 @@
+body
+{
+    margin: 0;
+    padding: 0;
+}
+
+/*Footer_________________________________________________________*/
+
+footer
+{
+    background-color: rgb(145, 145, 145);
+    color:white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding:20px 50px;
+    font-size: 24px;
+    height: 200px;
+}
+
+#logo
+{
+    margin-top: 50px;
+}
+
+#logoImage
+{
+    width: 100px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#sobreNosotros
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#sobreNosotrosTitle
+{
+    text-align: center;
+    width: 100%;
+    font-weight: bold;
+}
+
+#sobreNosotrosList
+{
+    text-align: center;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#sobreNosotrosList li
+{
+    cursor: pointer;
+}
+
+#contacto
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#contactoTitle
+{
+    text-align: center;
+    width: 100%;
+    font-weight: bold;
+}
+
+#contactoList
+{
+    text-align: center;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#contactoList li
+{
+    cursor: pointer;
+}
+
+/*NavBar___________________________________________________________*/
+
+#navigationBar
+{
+    background-color: rgb(145, 145, 145);
+}
+
+#logoImageNavBar
+{
+    padding: 5px;
+    margin-left: 50px;
+    width: 45px;
+}
+
+
+/*Billboard_____________________________________________________*/
+
+#mainPageBody
+{
+    padding: 10px;
+}
+
+#movieSugestionImage
+{
+    width: 100%;
+}
+
+#billboard
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.moviePoster
+{
+    width: 30%;
+    height: 176px;
+}
