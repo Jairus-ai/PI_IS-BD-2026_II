@@ -1,3 +1,48 @@
+.detailText
+{
+    font-size: 24px;
+}
+
+.detailTextBold
+{
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.smallDetailText
+{
+    font-size: 14px;
+}
+
+.smallDetailTextBold
+{
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.subtitleText
+{
+    font-size: 28px;
+}
+
+.subtitleTextBold
+{
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.titleText
+{
+    font-size: 34px;
+}
+
+.titleTextBold
+{
+    font-size: 34px;
+    font-weight: bold;
+}
+/*Font heriarchy___________________________________________________*/
+
 body
 {
     margin: 0;
@@ -14,7 +59,6 @@ footer
     flex-direction: row;
     justify-content: space-between;
     padding:20px 50px;
-    font-size: 24px;
     height: 200px;
 }
 
@@ -26,7 +70,6 @@ footer
 #logoImage
 {
     width: 100px;
-    border-radius: 50%;
     cursor: pointer;
 }
 
@@ -42,7 +85,6 @@ footer
 {
     text-align: center;
     width: 100%;
-    font-weight: bold;
 }
 
 #sobreNosotrosList
@@ -72,7 +114,6 @@ footer
 {
     text-align: center;
     width: 100%;
-    font-weight: bold;
 }
 
 #contactoList
@@ -95,37 +136,111 @@ footer
 #navigationBar
 {
     background-color: rgb(145, 145, 145);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 50px;
 }
 
 #logoImageNavBar
 {
-    padding: 5px;
-    margin-left: 50px;
-    width: 45px;
+    margin-left: 2%;
+    margin-top: 0%;
+    width: 70px;
+    height: 100%;
+    cursor: pointer;
 }
 
-
-/*Billboard_____________________________________________________*/
-
-#mainPageBody
+#logInButton
 {
-    padding: 10px;
+    padding: 5px;
+    margin-right: 2%;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+#logInButton:hover
+{
+    color: white;
+}
+
+/*Sugestions_____________________________________________________*/
+
+#suggestions
+{
+    height: 50vh;
+    width: 100%;
+    display: flex;
 }
 
 #movieSugestionImage
 {
     width: 100%;
+    margin: 2% 1%;
+    cursor: pointer;
 }
+
+/*Billboard_____________________________________________________*/
 
 #billboard
 {
     display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+}
+
+#billboardHolders
+{
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
+}
+
+.billboardHolder
+{
+    margin-right: 1%;
+    margin-left: 1%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 50vh;
+    padding: 5px;
+    cursor: pointer;
+    border: 2px solid rgb(202, 202, 202);
+}
+
+.billboardHolder:hover
+{
+    background-color: rgb(226, 226, 226);
 }
 
 .moviePoster
 {
-    width: 30%;
-    height: 176px;
+    width: 100%;
+    height: 70%;
+}
+
+.arrow
+{
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.arrow:hover
+{
+    background-color: rgb(187, 188, 189);
+}
+
+
+/*mainPage______________________________________________________*/
+
+#mainPageBody
+{
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
 }

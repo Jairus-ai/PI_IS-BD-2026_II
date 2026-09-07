@@ -10,25 +10,25 @@ function Footer()
             
             <div id = "sobreNosotros">
                 <div id = "sobreNosotrosTitle">
-                    <p>Sobre Nosotros</p>
+                    <p className='subtitleTextBold'>Sobre Nosotros</p>
                     <hr/>
                 </div>
                 <ul id="sobreNosotrosList">
-                    <li>Historia</li>
-                    <li>Misión</li>
-                    <li>Visión</li>
+                    <li className='detailText'>Historia</li>
+                    <li className='detailText'>Misión</li>
+                    <li className='detailText'>Visión</li>
                 </ul>
             </div>
 
             <div id = "contacto">
                 <div id = "contactoTitle">
-                    <p>Contacto</p>
+                    <p className='subtitleTextBold'>Contacto</p>
                     <hr/>
                 </div>
                 <ul id = "contactoList">
-                    <li>Correo</li>
-                    <li>Facebook</li>
-                    <li>Número de telefono</li>
+                    <li className='detailText'>Correo</li>
+                    <li className='detailText'>Facebook</li>
+                    <li className='detailText'>Número de telefono</li>
                 </ul>
             </div>
         </footer>
