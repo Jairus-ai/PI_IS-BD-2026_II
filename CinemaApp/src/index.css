@@ -1,45 +1,56 @@
+@import url('https://googleapis.com');
+
 .detailText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 24px;
 }
 
 .detailTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 24px;
     font-weight: bold;
 }
 
 .smallDetailText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
 }
 
 .smallDetailTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: bold;
 }
 
 .subtitleText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 28px;
 }
 
 .subtitleTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 28px;
     font-weight: bold;
 }
 
 .titleText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 34px;
 }
 
 .titleTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 34px;
     font-weight: bold;
+    margin-left: 64px;
 }
 /*Font heriarchy___________________________________________________*/
 
