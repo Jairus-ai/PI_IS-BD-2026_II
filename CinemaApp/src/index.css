@@ -1,0 +1,246 @@
+.detailText
+{
+    font-size: 24px;
+}
+
+.detailTextBold
+{
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.smallDetailText
+{
+    font-size: 14px;
+}
+
+.smallDetailTextBold
+{
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.subtitleText
+{
+    font-size: 28px;
+}
+
+.subtitleTextBold
+{
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.titleText
+{
+    font-size: 34px;
+}
+
+.titleTextBold
+{
+    font-size: 34px;
+    font-weight: bold;
+}
+/*Font heriarchy___________________________________________________*/
+
+body
+{
+    margin: 0;
+    padding: 0;
+}
+
+/*Footer_________________________________________________________*/
+
+footer
+{
+    background-color: rgb(145, 145, 145);
+    color:white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding:20px 50px;
+    height: 200px;
+}
+
+#logo
+{
+    margin-top: 50px;
+}
+
+#logoImage
+{
+    width: 100px;
+    cursor: pointer;
+}
+
+#sobreNosotros
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#sobreNosotrosTitle
+{
+    text-align: center;
+    width: 100%;
+}
+
+#sobreNosotrosList
+{
+    text-align: center;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#sobreNosotrosList li
+{
+    cursor: pointer;
+}
+
+#contacto
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#contactoTitle
+{
+    text-align: center;
+    width: 100%;
+}
+
+#contactoList
+{
+    text-align: center;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#contactoList li
+{
+    cursor: pointer;
+}
+
+/*NavBar___________________________________________________________*/
+
+#navigationBar
+{
+    background-color: rgb(145, 145, 145);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 50px;
+}
+
+#logoImageNavBar
+{
+    margin-left: 2%;
+    margin-top: 0%;
+    width: 70px;
+    height: 100%;
+    cursor: pointer;
+}
+
+#logInButton
+{
+    padding: 5px;
+    margin-right: 2%;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+#logInButton:hover
+{
+    color: white;
+}
+
+/*Sugestions_____________________________________________________*/
+
+#suggestions
+{
+    height: 50vh;
+    width: 100%;
+    display: flex;
+}
+
+#movieSugestionImage
+{
+    width: 100%;
+    margin: 2% 1%;
+    cursor: pointer;
+}
+
+/*Billboard_____________________________________________________*/
+
+#billboard
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+}
+
+#billboardHolders
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.billboardHolder
+{
+    margin-right: 1%;
+    margin-left: 1%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 50vh;
+    padding: 5px;
+    cursor: pointer;
+    border: 2px solid rgb(202, 202, 202);
+}
+
+.billboardHolder:hover
+{
+    background-color: rgb(226, 226, 226);
+}
+
+.moviePoster
+{
+    width: 100%;
+    height: 70%;
+}
+
+.arrow
+{
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.arrow:hover
+{
+    background-color: rgb(187, 188, 189);
+}
+
+
+/*mainPage______________________________________________________*/
+
+#mainPageBody
+{
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+}
