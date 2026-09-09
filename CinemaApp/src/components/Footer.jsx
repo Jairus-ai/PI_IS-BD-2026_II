@@ -28,7 +28,7 @@ function Footer()
                 <ul id = "contactoList">
                     <li className='detailText'>Correo</li>
                     <li className='detailText'>Facebook</li>
-                    <li className='detailText'>Número de telefono</li>
+                    <li className='detailText'>Número de teléfono</li>
                 </ul>
             </div>
         </footer>
