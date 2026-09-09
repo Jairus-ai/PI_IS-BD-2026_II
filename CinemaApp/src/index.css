@@ -17,6 +17,7 @@
 {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
+    margin: 0 0;
 }
 
 .smallDetailTextBold
@@ -37,6 +38,8 @@
     font-family: 'Inter', sans-serif;
     font-size: 28px;
     font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 4px;
 }
 
 .titleText
@@ -165,12 +168,10 @@ footer
 
 #logInButton
 {
+    margin-top: 20px;
     margin-right: 3%;
     height: 20px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #logInButton:hover
@@ -187,9 +188,10 @@ footer
     display: flex;
 }
 
-#movieSugestionImage
+#movieSuggestionImage
 {
     width: 100%;
+    height: auto;
     margin: 2% 1%;
     cursor: pointer;
 }
@@ -214,12 +216,11 @@ footer
 
 .billboardHolder
 {
-    margin-right: 1%;
-    margin-left: 1%;
+    margin: 12px 12px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    height: 50vh;
+    height: fit-content;
     padding: 5px;
     cursor: pointer;
     border: 2px solid rgb(202, 202, 202);

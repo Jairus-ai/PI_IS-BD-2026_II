@@ -4,7 +4,7 @@ function Sugestions()
 {
     return(
         <div id = "suggestions">
-            <img id = "movieSugestionImage" src={movieSugestion} alt="suggestions" />
+            <img id = "movieSuggestionImage" src={movieSugestion} alt="suggestions" />
         </div>
     )
 }
