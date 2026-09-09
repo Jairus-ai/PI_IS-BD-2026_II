@@ -7,7 +7,7 @@ function Footer()
             <div id = "logo">
                 <img id = "logoImage" src={logo} alt="LOGO" />
             </div>
-            
+
             <div id = "sobreNosotros">
                 <div id = "sobreNosotrosTitle">
                     <p className='subtitleTextBold'>Sobre Nosotros</p>

@@ -71,6 +71,7 @@ footer
     justify-content: space-between;
     padding:20px 50px;
     height: 200px;
+    margin-top: 80px;
 }
 
 #logo
@@ -150,7 +151,7 @@ footer
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    height: 50px;
+    height: 70px;
 }
 
 #logoImageNavBar
@@ -164,10 +165,12 @@ footer
 
 #logInButton
 {
-    padding: 5px;
-    margin-right: 2%;
-    margin-top: 5px;
+    margin-right: 3%;
+    height: 20px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #logInButton:hover
