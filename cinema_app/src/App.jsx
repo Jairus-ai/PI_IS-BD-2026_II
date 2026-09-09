@@ -1,13 +1,12 @@
-import { useState } from 'react'
 import Mainpage from './pages/Mainpage.jsx'
 
 
 function App() {
 
   return(
-    <html lang = "es-cr">
+    <div className="app-container">
       <Mainpage />
-    </html>
+    </div>
   )
 }
 
