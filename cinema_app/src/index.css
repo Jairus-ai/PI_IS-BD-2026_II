@@ -1,50 +1,66 @@
+@import url('https://googleapis.com');
+
 .detailText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 24px;
 }
 
 .detailTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 24px;
     font-weight: bold;
 }
 
 .smallDetailText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
+    margin: 0 0;
 }
 
 .smallDetailTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: bold;
 }
 
 .subtitleText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 28px;
 }
 
 .subtitleTextBold
 {
+    font-family: 'Inter', sans-serif;
     font-size: 28px;
     font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 4px;
 }
 
 .titleText
 {
+    font-family: 'Inter', sans-serif;
     font-size: 34px;
 }
 
 .titleTextBold
 {
+    color: #780002;
+    font-family: 'Inter', sans-serif;
     font-size: 34px;
     font-weight: bold;
+    margin-left: 64px;
 }
 /*Font heriarchy___________________________________________________*/
 
 body
 {
+    background-color: #eaeaea;
     margin: 0;
     padding: 0;
 }
@@ -53,23 +69,25 @@ body
 
 footer
 {
-    background-color: rgb(145, 145, 145);
+    background-color: #780002;
     color:white;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding:20px 50px;
-    height: 200px;
+    padding: 5px 10%;
+    max-height: none;
+    min-height: 80px;
+    margin-top: 80px;
 }
 
 #logo
 {
-    margin-top: 50px;
+    margin: 30px 0;
 }
 
 #logoImage
 {
-    width: 100px;
+    width: 200px;
     cursor: pointer;
 }
 
@@ -91,10 +109,11 @@ footer
 {
     text-align: center;
     list-style: none;
-    padding: 0;
+    padding: 0 0;
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin: 4px 0;
 }
 
 #sobreNosotrosList li
@@ -124,6 +143,7 @@ footer
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin: 4px 0;
 }
 
 #contactoList li
@@ -135,33 +155,34 @@ footer
 
 #navigationBar
 {
-    background-color: rgb(145, 145, 145);
+    background-color:#C2121F;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    height: 50px;
+    height: 70px;
 }
 
 #logoImageNavBar
 {
     margin-left: 2%;
     margin-top: 0%;
-    width: 70px;
+    width: 200px;
     height: 100%;
     cursor: pointer;
 }
 
 #logInButton
 {
-    padding: 5px;
-    margin-right: 2%;
-    margin-top: 5px;
+    margin-top: 20px;
+    margin-right: 3%;
+    height: 20px;
     cursor: pointer;
+    color: #eaeaea;
 }
 
 #logInButton:hover
 {
-    color: white;
+    color: rgb(199, 199, 199);
 }
 
 /*Sugestions_____________________________________________________*/
@@ -173,9 +194,10 @@ footer
     display: flex;
 }
 
-#movieSugestionImage
+#movieSuggestionImage
 {
     width: 100%;
+    height: auto;
     margin: 2% 1%;
     cursor: pointer;
 }
@@ -200,12 +222,12 @@ footer
 
 .billboardHolder
 {
-    margin-right: 1%;
-    margin-left: 1%;
+    margin: 12px 12px;
     width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    height: 50vh;
+    min-height: 750px;
     padding: 5px;
     cursor: pointer;
     border: 2px solid rgb(202, 202, 202);
@@ -219,7 +241,9 @@ footer
 .moviePoster
 {
     width: 100%;
-    height: 70%;
+    flex: 1 1 0;
+    min-height: 0;
+    object-fit: cover;
 }
 
 .arrow

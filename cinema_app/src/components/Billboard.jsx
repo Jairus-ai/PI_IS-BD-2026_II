@@ -25,7 +25,7 @@ function Billboard()
 
                 <div className='billboardHolder'>
                     <img className = 'moviePoster' id = "movie3" src={movie3} alt="movie1" />
-                    <p className='subtitleTextBold'>Trasnformers</p>
+                    <p className='subtitleTextBold'>Transformers</p>
                 </div>
                 <img className='arrow' src={rightArrow} alt="" />
             </div>

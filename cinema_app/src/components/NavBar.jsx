@@ -1,11 +1,11 @@
-import logo from '../assets/logoPlaceHolder.png'
+import logo from '../assets/logo.png'
 
 function NavBar()
 {
     return(
         <div id = "navigationBar">
             <img id = "logoImageNavBar" src={logo} alt="logo" />
-            <p id = "logInButton" className='subtitleTextBold'>Iniciar Sesión</p>
+            <p id = "logInButton" className='detailTextBold'>Iniciar Sesión</p>
         </div>
     )
 }
