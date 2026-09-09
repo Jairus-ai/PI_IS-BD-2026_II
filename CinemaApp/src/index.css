@@ -60,7 +60,7 @@
 
 body
 {
-    background-color: #D8D8D8;
+    background-color: #eaeaea;
     margin: 0;
     padding: 0;
 }
@@ -174,11 +174,12 @@ footer
     margin-right: 3%;
     height: 20px;
     cursor: pointer;
+    color: #eaeaea;
 }
 
 #logInButton:hover
 {
-    color: white;
+    color: rgb(199, 199, 199);
 }
 
 /*Sugestions_____________________________________________________*/
