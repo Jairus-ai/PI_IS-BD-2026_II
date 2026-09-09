@@ -82,7 +82,7 @@ footer
 
 #logo
 {
-    margin: 20px 0;
+    margin: 30px 0;
 }
 
 #logoImage
@@ -166,7 +166,7 @@ footer
 {
     margin-left: 2%;
     margin-top: 0%;
-    width: 70px;
+    width: 200px;
     height: 100%;
     cursor: pointer;
 }
