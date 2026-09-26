@@ -1,11 +1,26 @@
+import express from 'express';
 import dotenv from 'dotenv';
 import { initializeDatabasePool, closeDatabasePool } from './src/database/database.js';
 
 dotenv.config();
 
+const app = express();
+const port = 3000;
+
 async function startServer() {
-  await initializeDatabasePool();
-  closeDatabasePool();
+  initializeDatabasePool();
+
+  const server = app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  })
+
+  process.on('SIGINT', async () => {
+    console.log("Closing server and database pool");
+    server.close(async () => {
+      await closeDatabasePool();
+      process.exit(0);
+    });
+  });
 }
 
 startServer();

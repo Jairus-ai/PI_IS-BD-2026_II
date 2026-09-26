@@ -13,7 +13,7 @@ export async function initializeDatabasePool() {
       poolMin: 1,
       poolMax: 5
     });
-    console.log("Database connection pool initialized.");
+    console.log("Database connection pool initialized");
   } catch (error) {
     console.error("Failed to initialize the database pool: ", error);
     console.log("Check if there are any problems with the directory of the wallet in .env");
@@ -38,7 +38,7 @@ export async function closeDatabaseConnection(connection) {
 export async function closeDatabasePool() {
   try {
     await oracledb.getPool('connections').close(5);
-    console.log("Database connection pool closed.");
+    console.log("Database connection pool closed");
   } catch (error) {
     console.error("Failed to close database pool: ", error);
   }
