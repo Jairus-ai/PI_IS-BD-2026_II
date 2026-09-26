@@ -4,8 +4,10 @@ import { initializeDatabasePool, closeDatabasePool } from './src/database/databa
 
 dotenv.config();
 
-const app = express();
 const port = 3000;
+
+const app = express();
+app.disable('x-powered-by');
 
 async function startServer() {
   initializeDatabasePool();
