@@ -25,4 +25,9 @@ async function startServer() {
   });
 }
 
-startServer();
+try {
+  await startServer();
+} catch(error) {
+  console.error("Unable to start the server: ", error);
+  process.exit(1);
+}
