@@ -9,7 +9,7 @@ export async function initializeDatabasePool() {
       configDir: process.env.ORACLE_WALLET_DIR,
       walletLocation: process.env.ORACLE_WALLET_DIR,
       walletPassword: process.env.ORACLE_WALLET_PASSWORD,
-      poolAlias: "connections",
+      poolAlias: 'connections',
       poolMin: 1,
       poolMax: 5
     });
