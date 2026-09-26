@@ -4,7 +4,7 @@ import { initializeDatabasePool, closeDatabasePool } from './src/database/databa
 dotenv.config();
 
 async function startServer() {
-  initializeDatabasePool();
+  await initializeDatabasePool();
   closeDatabasePool();
 }
 
