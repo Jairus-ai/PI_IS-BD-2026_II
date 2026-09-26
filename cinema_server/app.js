@@ -1,10 +1,11 @@
 import dotenv from 'dotenv';
-import { initDB } from './src/database/db.js';
+import { initializeDatabasePool, closeDatabasePool } from './src/database/database.js';
 
 dotenv.config();
 
-async function run () {
-    initDB();
+async function startServer() {
+  initializeDatabasePool();
+  closeDatabasePool();
 }
 
-run();
+startServer();
