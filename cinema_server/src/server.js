@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
 import moviesRoutes from './movies_module/routes/movie_routes.js';
+import genresRoutes from './movies_module/routes/genre_routes.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Mount routes in the app
 app.use('/management/movies', moviesRoutes);
+app.use('/management/genres', moviesRoutes);
 
 async function startServer() {
   initializeDatabasePool();
