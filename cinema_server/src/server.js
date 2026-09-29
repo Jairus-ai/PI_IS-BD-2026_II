@@ -2,8 +2,11 @@ import express from 'express';
 import dotenv from 'dotenv';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
-import moviesRoutes from './movies_module/routes/movie_routes.js';
-import genresRoutes from './movies_module/routes/genre_routes.js';
+import movieRoutes from './movies_module/routes/movie_routes.js';
+import genreRoutes from './movies_module/routes/genre_routes.js';
+import languageRoutes from './movies_module/routes/movie_routes.js';
+import ratingRoutes from './movies_module/routes/rating_routes.js';
+import audiovisualFormatRoutes from './movies_module/routes/audiovisual_format_routes.js';
 
 dotenv.config();
 
@@ -14,8 +17,11 @@ app.disable('x-powered-by');
 app.use(express.json());
 
 // Mount routes in the app
-app.use('/management/movies', moviesRoutes);
-app.use('/management/genres', moviesRoutes);
+app.use('/management/movies', movieRoutes);
+app.use('/management/genres', genreRoutes);
+app.use('/management/languages', languageRoutes);
+app.use('/management/ratings', ratingRoutes);
+app.use('/management/audiovisual_format', audiovisualFormatRoutes);
 
 async function startServer() {
   initializeDatabasePool();
