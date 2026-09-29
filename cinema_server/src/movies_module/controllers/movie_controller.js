@@ -11,7 +11,7 @@ export const getMoviesList = async (req, res, next) => {
   try {
     const {
       page = 1,
-      limit = 10
+      limit = 15
     } = req.query;
     // TODO(jesus): make SQL request
     res.status(200).json({
