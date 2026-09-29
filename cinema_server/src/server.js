@@ -2,11 +2,11 @@ import express from 'express';
 import dotenv from 'dotenv';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
-import movieRoutes from './movies_module/routes/movie_routes.js';
-import genreRoutes from './movies_module/routes/genre_routes.js';
-import languageRoutes from './movies_module/routes/movie_routes.js';
-import ratingRoutes from './movies_module/routes/rating_routes.js';
-import audiovisualFormatRoutes from './movies_module/routes/audiovisual_format_routes.js';
+import movieRoutes from './movie_module/routes/movie_routes.js';
+import genreRoutes from './movie_module/routes/genre_routes.js';
+import languageRoutes from './movie_module/routes/movie_routes.js';
+import ratingRoutes from './movie_module/routes/rating_routes.js';
+import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
 
 dotenv.config();
 
