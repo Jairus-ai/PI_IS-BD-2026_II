@@ -7,4 +7,4 @@ export const getLanguageList = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
