@@ -5,7 +5,7 @@ export const getMoviesCount = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 export const getMoviesList = async (req, res, next) => {
   try {
@@ -22,7 +22,7 @@ export const getMoviesList = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 export const getMovieByID = async (req, res, next) => {
   try {
@@ -35,4 +35,4 @@ export const getMovieByID = async (req, res, next) => {
   } catch (error) {
 
   }
-}
+};
