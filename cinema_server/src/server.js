@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { initializeDatabasePool, closeDatabasePool } from './src/database/database.js';
+
+import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
+import moviesRoutes from './movies_module/routes/movie_routes.js';
 
 dotenv.config();
 
@@ -8,6 +10,10 @@ const port = 3000;
 
 const app = express();
 app.disable('x-powered-by');
+app.use(express.json());
+
+// Mount routes in the app
+app.use('/management/movies', moviesRoutes);
 
 async function startServer() {
   initializeDatabasePool();
