@@ -1,3 +1,5 @@
+import oracledb from "oracledb";
+
 export const getRatingList = async (req, res, next) => {
   let connection;
 
@@ -6,7 +8,7 @@ export const getRatingList = async (req, res, next) => {
 
     const sql = `
       SELECT id_rating, rating_name, rating_code
-      FROM ratings
+      FROM PI_DEVELOPERS.ratings
     `;
 
     const result = await connection.execute(
