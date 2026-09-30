@@ -8,7 +8,7 @@ export const getLanguageList = async (req, res, next) => {
 
     const sql = `
       SELECT iso_code, language_name
-      FROM languages
+      FROM PI_DEVELOPERS.languages
       ORDER BY language_name ASC
     `;
 
