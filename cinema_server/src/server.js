@@ -7,6 +7,7 @@ import genreRoutes from './movie_module/routes/genre_routes.js';
 import languageRoutes from './movie_module/routes/movie_routes.js';
 import ratingRoutes from './movie_module/routes/rating_routes.js';
 import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
+import clientRoutes from './client_module/routes/client_routes.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/management/genres', genreRoutes);
 app.use('/management/languages', languageRoutes);
 app.use('/management/ratings', ratingRoutes);
 app.use('/management/audiovisual_format', audiovisualFormatRoutes);
+app.use('/clients', clientRoutes);
 
 async function startServer() {
   initializeDatabasePool();
