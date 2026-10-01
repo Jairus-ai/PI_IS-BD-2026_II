@@ -35,6 +35,7 @@ export const getAudiovisualFormatList = async (req, res, next) => {
   } catch (error) {
     // TODO(Jesus): manage errors
     next(error);
+
   } finally {
     if (connection) {
       try {
