@@ -51,6 +51,8 @@ const buildMovieFilters = (queryParams) => {
 };
 
 export const getMoviesCount = async (req, res, next) => {
+  console.log("getMoviesCount is being called");
+
   let connection;
 
   try {
@@ -88,6 +90,8 @@ export const getMoviesCount = async (req, res, next) => {
 };
 
 export const getMoviesList = async (req, res, next) => {
+  console.log("getMoviesList is being called");
+
   let connection;
 
   try {
@@ -147,6 +151,8 @@ export const getMoviesList = async (req, res, next) => {
 };
 
 export const getMovieByID = async (req, res, next) => {
+  console.log("getMovieByID is being called");
+
   let connection;
 
   try {
