@@ -22,7 +22,7 @@ app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 app.use(requestTracker);
 
-// Mount routes in the app
+//Mount routes in the app
 app.use('/management/movies', movieRoutes);
 app.use('/management/genres', genreRoutes);
 app.use('/management/languages', languageRoutes);
