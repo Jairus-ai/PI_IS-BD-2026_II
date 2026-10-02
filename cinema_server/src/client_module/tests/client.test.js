@@ -1,10 +1,13 @@
-import { afterEach, describe, expect, jest, test } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import oracledb from 'oracledb';
 
 import clientRoutes from '../routes/client_routes.js';
 import { isAdult } from '../validators/client_validator.js';
+import emailService from '../../email/email_service.js';
+
+process.env.JWT_SECRET = 'test-secret';
 
 const app = express();
 app.use(express.json());
@@ -42,6 +45,11 @@ function uniqueConstraintError(constraintName) {
   return error;
 }
 
+let sendWelcomeEmailSpy;
+beforeEach(() => {
+  sendWelcomeEmailSpy = jest.spyOn(emailService, 'sendWelcomeEmail').mockResolvedValue();
+});
+
 afterEach(() => {
   jest.restoreAllMocks();
 });
@@ -75,6 +83,24 @@ describe('POST /clients/register', () => {
 
     expect(connection.commit).toHaveBeenCalledTimes(1);
     expect(connection.close).toHaveBeenCalledTimes(1);
+
+    expect(sendWelcomeEmailSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'adrian.prueba@ucr.ac.cr', firstName: 'Adrián' })
+    );
+
+    const sessionCookie = response.headers['set-cookie'].join(';');
+    expect(sessionCookie).toMatch(/session_token=/);
+    expect(sessionCookie).toMatch(/HttpOnly/);
+  });
+
+  test('Register client 201 even if the welcome email fails', async () => {
+    mockDatabaseConnection(async () => ({ outBinds: { idClient: [8] } }));
+    sendWelcomeEmailSpy.mockRejectedValue(new Error('SMTP error'));
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    await request(app)
+      .post(REGISTER_URL)
+      .send(validClient)
+      .expect(201);
   });
 
   test('Register client 400 when required fields are empty', async () => {
