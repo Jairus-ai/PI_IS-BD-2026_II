@@ -11,6 +11,7 @@ import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_ro
 dotenv.config();
 
 const port = 3000;
+const ip = '0.0.0.0';
 
 const app = express();
 app.disable('x-powered-by');
@@ -26,8 +27,8 @@ app.use('/management/audiovisual_format', audiovisualFormatRoutes);
 async function startServer() {
   initializeDatabasePool();
 
-  const server = app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+  const server = app.listen(port, ip, () => {
+    console.log(`Server running on port ${port} IP ${ip}`);
   })
 
   process.on('SIGINT', async () => {
