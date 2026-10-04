@@ -6,26 +6,26 @@ export const getMovies = async () => {
 };
 
 export const getMovieById = async (id) => {
-  const { data } = await api.get(`/movies/${id}`);
+  const { data } = await api.get(`/management/movies/${id}`);
   return data;
 };
 
 export const getGenres = async () => {
-  const { data } = await api.get('management/genres');
+  const { data } = await api.get('/management/genres');
   return data;
 };
 
 export const getRatings = async () => {
-  const { data } = await api.get('management/ratings');
+  const { data } = await api.get('/management/ratings');
   return data;
 };
 
 export const getLanguages = async () => {
-  const { data } = await api.get('management/languages');
+  const { data } = await api.get('/management/languages');
   return data;
 };
 
 export const getAudiovisualFormats = async () => {
-  const { data } = await api.get('management/audiovisual-formats');
+  const { data } = await api.get('/management/audiovisual_format');
   return data;
 };
