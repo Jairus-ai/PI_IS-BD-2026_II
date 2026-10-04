@@ -8,6 +8,10 @@ import DiscountShow from '../modules/discounts/pages/DiscountShow';
 
 const router = createHashRouter([
   {
+    path: '/',
+    Component: App,
+  },
+  {
     Component: DashboardLayout,
     children: [
       {
