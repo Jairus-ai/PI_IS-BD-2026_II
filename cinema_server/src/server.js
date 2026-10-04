@@ -9,7 +9,6 @@ import languageRoutes from './movie_module/routes/language_routes.js';
 import ratingRoutes from './movie_module/routes/rating_routes.js';
 import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
-import cors from 'cors';
 import { requestTracker } from './middleware/logger.js'
 import { globalErrorHandler } from './middleware/errorHandler.js';
 
