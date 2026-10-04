@@ -1,11 +1,12 @@
 import oracledb from "oracledb";
+import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
 export const getDiscountByName = async (req, res, next) => {
   let connection;
   
   try 
   {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     /*TODO: define better what is going to get gotten*/
     const request = `
@@ -29,18 +30,9 @@ export const getDiscountByName = async (req, res, next) => {
   } catch (error) 
   {
     next(error);
-  } finally 
+  } finally
   {
-    if(connection)
-    {
-      try
-      {
-        await connection.close();
-      }catch (error)
-      {
-        console.error("Error closing connection to the database: ", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 }
 
@@ -49,7 +41,7 @@ export const getDiscountList = async (req, res, next) => {
   
   try 
   {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     /*TODO: define better what is going to get gotten*/
     const request = 

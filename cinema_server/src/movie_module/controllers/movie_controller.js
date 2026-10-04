@@ -1,4 +1,5 @@
 import oracledb from 'oracledb';
+import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 
 const buildMovieFilters = (queryParams) => {
   const { genreId, languageCode, directorId, audiovisualFormatId } = queryParams;
@@ -56,7 +57,7 @@ export const getMoviesCount = async (req, res, next) => {
   let connection;
 
   try {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     const { whereClause, binds } = buildMovieFilters(req.query);
 
@@ -79,13 +80,7 @@ export const getMoviesCount = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection:", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };
 
@@ -99,7 +94,7 @@ export const getMoviesList = async (req, res, next) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     const { whereClause, binds } = buildMovieFilters(req.query);
 
@@ -140,13 +135,7 @@ export const getMoviesList = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection:", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };
 
@@ -158,7 +147,7 @@ export const getMovieByID = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     const sql = `
       SELECT
@@ -222,12 +211,6 @@ export const getMovieByID = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection:", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };
