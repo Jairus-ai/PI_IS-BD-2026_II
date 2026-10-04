@@ -1,6 +1,6 @@
 import oracledb from "oracledb";
 
-export const getDiscountList = async (req, res, next) => {
+export const getDiscountByName = async (req, res, next) => {
   let connection;
   
   try 
@@ -9,9 +9,9 @@ export const getDiscountList = async (req, res, next) => {
 
     /*TODO: define better what is going to get gotten*/
     const request = `
-      SELECT ID_DISCOUNT, DISCOUNT_PORCENTAGE
+      SELECT ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE
       FROM DISCOUNTS
-    `;
+      WHERE DISCOUNT_NAME = ` + req;
 
     const result = await connection.execute(
       request, [], 
@@ -41,5 +41,54 @@ export const getDiscountList = async (req, res, next) => {
         console.error("Error closing connection to the database: ", error);
       }
     }
+  }
+}
+
+export const getDiscountList = async (req, res, next) => {
+  let connection;
+  
+  try 
+  {
+    connection = await oracledb.getConnection();
+
+    /*TODO: define better what is going to get gotten*/
+    const request = 
+    `SELECT ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE
+      FROM PI_DEVELOPERS.DISCOUNTS`;
+
+    const result = await connection.execute(
+      request, [], 
+      { 
+        outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
+      }
+    );
+
+    res.status(200).json(
+      {
+        data: result.rows
+      }
+    );
+
+
+    console.log("fuck");
+
+  } catch (error) 
+  {
+    next(error);
+    console.log("fucksss");
+  } finally 
+  {
+    if(connection)
+    {
+      try
+      {
+        await connection.close();
+      }catch (error)
+      {
+        console.error("Error closing connection to the database: ", error);
+      }
+    }
+
+    console.log("fucksx");
   }
 };
