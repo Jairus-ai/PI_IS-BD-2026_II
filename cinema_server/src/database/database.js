@@ -9,7 +9,7 @@ export async function initializeDatabasePool() {
       configDir: process.env.ORACLE_WALLET_DIR,
       walletLocation: process.env.ORACLE_WALLET_DIR,
       walletPassword: process.env.ORACLE_WALLET_PASSWORD,
-      poolAlias: 'connections',
+      poolAlias: 'default',
       poolMin: 1,
       poolMax: 5
     });
@@ -22,7 +22,7 @@ export async function initializeDatabasePool() {
 }
 
 export async function getConnection () {
-  return await oracledb.getConnection('connections')
+  return await oracledb.getConnection('default')
 }
 
 export async function closeDatabaseConnection(connection) {
