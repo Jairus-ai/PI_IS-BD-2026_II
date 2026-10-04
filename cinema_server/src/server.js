@@ -19,6 +19,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
+app.use(requestTracker);
 
 // Mount routes in the app
 app.use('/management/movies', movieRoutes);
@@ -27,6 +28,13 @@ app.use('/management/languages', languageRoutes);
 app.use('/management/ratings', ratingRoutes);
 app.use('/management/audiovisual_format', audiovisualFormatRoutes);
 app.use('/management/discounts', discountRoutes);
+
+// Router not found
+app.use((req, res, next) => {
+  next({ status: 404, code: 'NOT_FOUND', message: 'La ruta solicitada no existe.' });
+});
+
+app.use(globalErrorHandler);
 
 async function startServer() {
   initializeDatabasePool();
