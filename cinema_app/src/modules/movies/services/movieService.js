@@ -1,7 +1,12 @@
 import { api } from '../../../services/api'
 
-export const getMovies = async () => {
-  const { data } = await api.get('/management/movies');
+export const getMovies = async (page = 1) => {
+  const { data } = await api.get('/management/movies', { params: { page } });
+  return data;
+};
+
+export const getMoviesCount = async () => {
+  const { data } = await api.get('/management/movies/count');
   return data;
 };
 

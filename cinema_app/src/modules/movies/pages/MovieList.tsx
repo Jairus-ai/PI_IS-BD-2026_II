@@ -21,8 +21,11 @@ export default function MovieList() {
   const dialogs = useDialogs();
   const notifications = useNotifications();
 
+  const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+  const serverPage = paginationModel.page + 1;
+
   // TODO(Jesus): Uncomment delete and refetch once implemented.
-  const { movies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies();
+  const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies();
 
   const handleRowDelete = React.useCallback(
     (movie: Movie) => async () => {
@@ -138,20 +141,15 @@ export default function MovieList() {
           </Box>
         ) : (
           <DataGrid
-            rows={Array.isArray(movies) ? movies : []}
+            rows={movies}
             getRowId={(row: Movie) => row.ID_MOVIE}
             columns={columns}
             loading={isLoadingMovies}
+            paginationMode="server"
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10]}
             disableRowSelectionOnClick
-            pageSizeOptions={[5, 10, 25]}
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
-            }}
-            sx={{
-              [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
-                outline: 'transparent',
-              },
-            }}
           />
         )}
       </Box>
