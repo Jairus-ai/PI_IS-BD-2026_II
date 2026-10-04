@@ -1,10 +1,11 @@
 import oracledb from "oracledb";
+import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
 export const getRatingList = async (req, res, next) => {
   let connection;
 
   try {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     const sql = `
       SELECT id_rating, rating_name, rating_code
@@ -25,12 +26,6 @@ export const getRatingList = async (req, res, next) => {
     // TODO(Jesus): manage errors
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection to the database: ", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };

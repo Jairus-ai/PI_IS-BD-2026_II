@@ -1,11 +1,12 @@
 import oracledb from "oracledb";
+import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
 export const getDiscountList = async (req, res, next) => {
   let connection;
   
   try 
   {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     /*TODO: define better what is going to get gotten*/
     const request = 
