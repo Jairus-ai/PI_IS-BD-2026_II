@@ -133,6 +133,18 @@ const {
     >
       <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              type="number"
+              value={formValues.ID_DISCOUNT ?? ''}
+              onChange={handleNumberFieldChange}
+              name="ID_DISCOUNT"
+              label="ID"
+              error={!!formErrors.ID_DISCOUNT}
+              helperText={formErrors.ID_DISCOUNT ?? ' '}
+              fullWidth
+            />
+          </Grid>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
             <TextField
               value={formValues.DISCOUNT_NAME ?? ''}

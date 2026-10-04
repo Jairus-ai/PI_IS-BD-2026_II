@@ -60,6 +60,12 @@ export default function DiscountList() {
   const columns = React.useMemo<GridColDef[]>(
     () => [
       {
+        field: 'ID_DISCOUNT',
+        headerName: 'ID',
+        width: 160,
+        type: 'number',
+      },
+      {
         field: 'DISCOUNT_NAME',
         headerName: 'Nombre',
         flex: 1,

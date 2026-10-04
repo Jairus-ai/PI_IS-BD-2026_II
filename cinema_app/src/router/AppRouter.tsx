@@ -3,6 +3,7 @@ import { createHashRouter, RouterProvider } from 'react-router';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MovieList from '../modules/movies/pages/MovieList';
 import DiscountList from '../modules/discounts/pages/DiscountList';
+import Mainpage from '../pages/Mainpage';
 
 const router = createHashRouter([
   {
@@ -18,7 +19,7 @@ const router = createHashRouter([
       },
       {
         path: '*',
-        Component: DiscountList,
+        Component: Mainpage //to simulate in the meanwhile. Obviously this has to be changed
       },
     ],
   },
