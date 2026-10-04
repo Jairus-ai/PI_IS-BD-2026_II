@@ -59,7 +59,7 @@ export const getMoviesCount = async (req, res, next) => {
   try {
     connection = await getConnection();
 
-    const { whereClause, binds } = buildMovieFilters(req.query);
+    const { whereClause, binds } = buildMovieFilters(req.validatedQuery ?? req.query);
 
     const sql = `
       SELECT COUNT(m.id_movie) AS TOTAL
@@ -90,13 +90,13 @@ export const getMoviesList = async (req, res, next) => {
   let connection;
 
   try {
-    const page = Number(req.query.page);
+    const page = req.validatedQuery?.page ?? 1;
     const limit = 10;
     const offset = (page - 1) * limit;
 
     connection = await getConnection();
 
-    const { whereClause, binds } = buildMovieFilters(req.query);
+    const { whereClause, binds } = buildMovieFilters(req.validatedQuery ?? req.query);
 
     const allBinds = {
       ...binds,

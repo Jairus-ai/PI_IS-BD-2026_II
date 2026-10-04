@@ -10,8 +10,7 @@ export const validateQuery = (schema) => (req, res, next) => {
     });
   }
 
-  for (const k of Object.keys(req.query)) delete req.query[k];
-  Object.assign(req.query, result.data);
+  req.validatedQuery = result.data;
   next();
 };
 
