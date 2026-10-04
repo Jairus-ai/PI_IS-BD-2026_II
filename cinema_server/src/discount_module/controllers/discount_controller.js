@@ -69,13 +69,9 @@ export const getDiscountList = async (req, res, next) => {
       }
     );
 
-
-    console.log("fuck");
-
   } catch (error) 
   {
     next(error);
-    console.log("fucksss");
   } finally 
   {
     if(connection)
@@ -88,7 +84,5 @@ export const getDiscountList = async (req, res, next) => {
         console.error("Error closing connection to the database: ", error);
       }
     }
-
-    console.log("fucksx");
   }
 };
