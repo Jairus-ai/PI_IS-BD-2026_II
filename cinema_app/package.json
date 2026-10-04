@@ -37,5 +37,8 @@
     "eslint-plugin-react-refresh": "^0.5.4",
     "globals": "^17.11.0",
     "vite": "^8.2.2"
+  },
+  "allowScripts": {
+    "@mui/x-telemetry@9.13.0": true
   }
 }

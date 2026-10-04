@@ -1,7 +1,8 @@
-// src/router/AppRouter.tsx
+﻿// src/router/AppRouter.tsx
 import { createHashRouter, RouterProvider } from 'react-router';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MovieList from '../modules/movies/pages/MovieList';
+import DiscountList from '../modules/discounts/pages/DiscountList';
 
 const router = createHashRouter([
   {
@@ -10,6 +11,10 @@ const router = createHashRouter([
       {
         path: '/movies',
         Component: MovieList,
+      },
+      {
+        path: '/discounts',
+        Component: DiscountList,
       },
       {
         path: '*',
