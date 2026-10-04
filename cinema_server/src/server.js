@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
 import movieRoutes from './movie_module/routes/movie_routes.js';
