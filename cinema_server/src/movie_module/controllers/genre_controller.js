@@ -8,7 +8,7 @@ export const getGenreList = async (req, res, next) => {
 
     const sql = `
       SELECT id_genre, genre_name
-      FROM genre
+      FROM pi_developers.genres
       ORDER BY genre_name ASC
     `;
 
