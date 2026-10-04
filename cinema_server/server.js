@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import { initializeDatabasePool, closeDatabasePool } from './src/database/database.js';
 import userRoutes from './src/user_module/routes/user_routes.js';
 
@@ -9,6 +10,7 @@ const port = 3000;
 
 const app = express();
 app.disable('x-powered-by');
+app.use(cors());
 app.use(express.json());
 
 app.use('/management/users', userRoutes);
