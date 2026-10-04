@@ -7,6 +7,8 @@ import genreRoutes from './movie_module/routes/genre_routes.js';
 import languageRoutes from './movie_module/routes/language_routes.js';
 import ratingRoutes from './movie_module/routes/rating_routes.js';
 import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
+import { requestTracker } from './middleware/logger.js'
+import { globalErrorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
@@ -15,7 +17,10 @@ const ip = '0.0.0.0';
 
 const app = express();
 app.disable('x-powered-by');
+
+// Global middlewares for debugging
 app.use(express.json());
+app.use(requestTracker);
 
 // Mount routes in the app
 app.use('/management/movies', movieRoutes);
@@ -23,6 +28,13 @@ app.use('/management/genres', genreRoutes);
 app.use('/management/languages', languageRoutes);
 app.use('/management/ratings', ratingRoutes);
 app.use('/management/audiovisual_format', audiovisualFormatRoutes);
+
+// Router not found
+app.use((req, res, next) => {
+  next({ status: 404, code: 'NOT_FOUND', message: 'La ruta solicitada no existe.' });
+});
+
+app.use(globalErrorHandler);
 
 async function startServer() {
   initializeDatabasePool();
