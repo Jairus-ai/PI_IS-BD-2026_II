@@ -7,6 +7,10 @@ import App from '../App';
 
 const router = createHashRouter([
   {
+    path: '/',
+    Component: App,
+  },
+  {
     Component: DashboardLayout,
     children: [
       {
@@ -16,10 +20,6 @@ const router = createHashRouter([
       {
         path: '/discounts',
         Component: DiscountList,
-      },
-      {
-        path: '*',
-        Component: App,
       },
     ],
   },
