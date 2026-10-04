@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 app.use(globalErrorHandler);
 
 async function startServer() {
-  initializeDatabasePool();
+  await initializeDatabasePool();
 
   const server = app.listen(port, ip, () => {
     console.log(`Server running on port ${port} IP ${ip}`);
