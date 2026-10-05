@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   getDiscounts,
-  getDiscountsByName
+  getDiscountsByName,
+  getDiscountsByID
 } from '../services/discountService';
 
 export const useDiscounts = (discountName = null) => {
@@ -10,9 +11,15 @@ export const useDiscounts = (discountName = null) => {
     queryFn: getDiscounts,
   });
 
-  const discountDetailQuery = useQuery({
+  const discountByName = useQuery({
     queryKey: ['discount', discountName],
     queryFn: () => getDiscountsByName(discountName),
+    enabled: !!discountName,
+  });
+
+  const discountDetailQuery = useQuery({
+    queryKey: ['discount', discountName],
+    queryFn: () => getDiscountsById(Number(discountId)),
     enabled: !!discountName,
   });
 

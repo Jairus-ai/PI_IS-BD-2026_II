@@ -99,7 +99,13 @@ export const getDiscountByID = async (req, res, next) => {
 
     /*TODO: define better what is going to get gotten*/
     const request = `
-      SELECT *
+      SELECT ID_DISCOUNT,
+      DISCOUNT_NAME,
+      DISCOUNT_PORCENTAGE,
+      TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE,
+      TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE,
+      ID_SNACKS,
+      ID_MOVIE_IN_BILLBOARD
       FROM PI_DEVELOPERS.DISCOUNTS
       WHERE ID_DISCOUNT = :id`;
 

@@ -8,7 +8,7 @@ import {
 const router = Router();
 
 router.get('/', getDiscountList);
-router.get('/:name', getDiscountByName);
+router.get('/N/:name', getDiscountByName);
 router.get('/:id', getDiscountByID);
 
 export default router;

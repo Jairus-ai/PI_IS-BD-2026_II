@@ -4,6 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import MovieList from '../modules/movies/pages/MovieList';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import Mainpage from '../pages/Mainpage';
+import DiscountShow from '../modules/discounts/pages/DiscountShow';
 
 const router = createHashRouter([
   {
@@ -16,6 +17,10 @@ const router = createHashRouter([
       {
         path: '/discounts',
         Component: DiscountList,
+      },
+      { 
+        path: '/discounts/:discountId', 
+        Component: DiscountShow 
       },
       {
         path: '*',
