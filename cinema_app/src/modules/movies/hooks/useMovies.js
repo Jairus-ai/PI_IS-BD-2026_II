@@ -21,9 +21,9 @@ export const useMovies = (page = 1, movieId = null) => {
   });
 
   const movieDetailQuery = useQuery({
-    queryKey: ['movies', movieId],
+    queryKey: ['movie', movieId],
     queryFn: () => getMovieById(movieId),
-    enabled: !!movieId,
+    enabled: movieId != null,
   });
 
   const genresQuery = useQuery({
