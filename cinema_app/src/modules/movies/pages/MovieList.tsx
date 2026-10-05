@@ -94,21 +94,21 @@ export default function MovieList() {
         getActions: ({ row }: { row: Movie }) => [
           <GridActionsCellItem
             key="show"
-            icon={<span style={{ fontWeight: 500 }}>Mostrar</span>}
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
             label="Mostrar"
             onClick={() => setSelectedId(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<span style={{ fontWeight: 500 }}>Editar</span>}
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
             label="Editar"
             onClick={() => navigate(`/movies/${row.ID_MOVIE}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<span style={{ fontWeight: 500, color: '#d32f2f' }}>Eliminar</span>}
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -154,6 +154,17 @@ export default function MovieList() {
             onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[10]}
             disableRowSelectionOnClick
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
+              [`& .${gridClasses.columnHeader}`]: {
+                bgcolor: 'background.default',
+              },
+              [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
+                outline: 'transparent',
+              },
+            }}
           />
         )}
         <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
