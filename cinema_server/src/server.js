@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
 import movieRoutes from './movie_module/routes/movie_routes.js';
@@ -24,6 +25,9 @@ app.disable('x-powered-by');
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Route for poster images
+app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters')));
 
 //Mount routes in the app
 app.use('/clients', clientRoutes);

@@ -2,11 +2,13 @@ import { Router } from 'express';
 import {
   getMoviesCount,
   getMoviesList,
-  getMovieByID
+  getMovieByID,
 } from '../controllers/movie_controller.js';
+import { uploadPosterFile } from '../controllers/poster_controller.js';
 import { z } from 'zod';
 import { validateQuery } from '../../middleware/validate.js';
 import { validateParams } from '../../middleware/validate.js';
+import { uploadPoster } from '../../middleware/upload.js';
 
 const router = Router();
 
@@ -22,5 +24,6 @@ const movieIdSchema = z.object({ id: z.coerce.number().int().positive() });
 router.get('/', validateQuery(movieQuerySchema), getMoviesList);
 router.get('/count', validateQuery(movieQuerySchema), getMoviesCount);
 router.get('/:id', validateParams(movieIdSchema), getMovieByID);
+router.post('/poster', uploadPoster.single('poster'), uploadPosterFile);
 
 export default router;
