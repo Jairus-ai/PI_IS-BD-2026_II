@@ -90,21 +90,21 @@ export default function DiscountList() {
         getActions: ({ row }: { row: Discount }) => [
           <GridActionsCellItem
             key="show"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
             label="Mostrar"
             onClick={() => setSelectedDiscountId(row.ID_DISCOUNT)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
             label="Editar"
             onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
