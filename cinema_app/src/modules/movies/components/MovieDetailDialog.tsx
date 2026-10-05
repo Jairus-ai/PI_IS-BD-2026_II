@@ -75,15 +75,15 @@ export default function MovieDetailDialog({ movieId, open, onClose }: {
                 <Typography variant="body1">{movie.SYNOPSIS}</Typography></Box>
               <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Géneros</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.GENRES).map(g => <Chip key={g} label={g} color="primary" />)}
+                  {splitList(movie.GENRES).map(g => <Chip key={g} label={g} color="primary" variant="outlined" />)}
                 </Stack></Box>
               <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Directores</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.DIRECTORS).map(d => <Chip key={d} label={d} variant="outlined" color="secondary" />)}
+                  {splitList(movie.DIRECTORS).map(d => <Chip key={d} label={d} color="primary" variant="outlined" />)}
                 </Stack></Box>
               <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Formatos</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.FORMATS).map(f => <Chip key={f} label={f} variant="outlined" color="secondary" />)}
+                  {splitList(movie.FORMATS).map(f => <Chip key={f} label={f} color="primary" variant="outlined" />)}
                 </Stack></Box>
               <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Idiomas</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
