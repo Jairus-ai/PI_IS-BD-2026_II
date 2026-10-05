@@ -233,6 +233,9 @@ export default function DashboardSidebar({
         ...(isTemporary ? { position: 'absolute' } : {}),
         [`& .MuiDrawer-paper`]: {
           position: 'absolute',
+          top: 0,
+          bottom: 0,
+          height: '100%',
           width: drawerWidth,
           boxSizing: 'border-box',
           backgroundImage: 'none',
