@@ -1,4 +1,4 @@
-/*import Mainpage from './pages/Mainpage.jsx'
+import Mainpage from './pages/Mainpage.jsx'
 
 
 function App() {
@@ -10,12 +10,12 @@ function App() {
   )
 }
 
-export default App*/
+export default App
 
-import UserList from './modules/users/pages/UserList.jsx';
+/*import UserList from './modules/users/pages/UserList.jsx';
 
 function App() {
   return <UserList />;
 }
 
-export default App;
+export default App;*/

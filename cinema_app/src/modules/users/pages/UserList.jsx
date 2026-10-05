@@ -1,8 +1,50 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+
+import { DataGrid } from '@mui/x-data-grid';
+
+import PageContainer from '../../../components/common/PageContainer';
 import { useUsers } from '../hooks/useUsers.js';
 import { useLocations } from '../hooks/useLocations.js';
 
-function UserList() {
+function formatRole(role) {
+  const roles = {
+    CLIENT: 'Cliente',
+    SUPERUSER: 'Superusuario',
+    ADMINISTRATOR: 'Administrador',
+    EMPLOYEE: 'Empleado',
+  };
+
+  return roles[role] || role;
+}
+
+function formatStatus(status) {
+  const statuses = {
+    ACTIVE: 'Activo',
+    INACTIVE: 'Inactivo',
+  };
+
+  return statuses[status] || status;
+}
+
+function formatDate(date) {
+  if (!date) {
+    return '-';
+  }
+
+  return new Date(date).toLocaleDateString('es-CR');
+}
+
+export default function UserList() {
   const [filters, setFilters] = useState({
     name: '',
     role: '',
@@ -36,145 +78,195 @@ function UserList() {
     });
   }
 
-  function formatRole(role) {
-    const roles = {
-      CLIENT: 'Cliente',
-      SUPERUSER: 'Superusuario',
-      ADMINISTRATOR: 'Administrador',
-      EMPLOYEE: 'Empleado',
-    };
-
-    return roles[role] || role;
-  }
-
-  function formatStatus(status) {
-    const statuses = {
-      ACTIVE: 'Activo',
-      INACTIVE: 'Inactivo',
-    };
-
-    return statuses[status] || status;
-  }
-
-  function formatDate(date) {
-    if (!date) {
-      return '-';
-    }
-
-    return new Date(date).toLocaleDateString('es-CR');
-  }
+  const columns = useMemo(
+    () => [
+      {
+        field: 'FULL_NAME',
+        headerName: 'Nombre',
+        flex: 1,
+        minWidth: 220,
+        valueGetter: (value, row) =>
+          [
+            row.FIRST_NAME,
+            row.MIDDLE_NAME,
+            row.FIRST_SURNAME,
+            row.LAST_SURNAME,
+          ]
+            .filter(Boolean)
+            .join(' '),
+      },
+      {
+        field: 'IDENTIFICATION_NUMBER',
+        headerName: 'Identificación',
+        width: 150,
+      },
+      {
+        field: 'EMAIL',
+        headerName: 'Correo',
+        flex: 1,
+        minWidth: 220,
+      },
+      {
+        field: 'BIRTHDATE',
+        headerName: 'Fecha de nacimiento',
+        width: 170,
+        valueGetter: (value, row) => formatDate(row.BIRTHDATE),
+      },
+      {
+        field: 'PHONE_NUMBER',
+        headerName: 'Teléfono',
+        width: 130,
+      },
+      {
+        field: 'ROLE',
+        headerName: 'Rol',
+        width: 150,
+        valueGetter: (value, row) => formatRole(row.ROLE),
+      },
+      {
+        field: 'STATUS',
+        headerName: 'Estado',
+        width: 120,
+        valueGetter: (value, row) => formatStatus(row.STATUS),
+      },
+      {
+        field: 'LOCATIONS',
+        headerName: 'Sucursales',
+        flex: 1,
+        minWidth: 180,
+        valueGetter: (value, row) => row.LOCATIONS || '-',
+      },
+    ],
+    []
+  );
 
   return (
-    <div>
-      <h1>Usuarios</h1>
-
-      <div>
-        <input
-          type="text"
-          name="name"
-          placeholder="Buscar por nombre"
-          value={filters.name}
-          onChange={handleChange}
-        />
-
-        <select
-          name="role"
-          value={filters.role}
-          onChange={handleChange}
+    <PageContainer
+      title="Usuarios"
+      breadcrumbs={[]}
+    >
+      <Stack spacing={2}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={2}
+          sx={{ alignItems: { md: 'center' } }}
         >
-          <option value="">Todos los roles</option>
-          <option value="CLIENT">Cliente</option>
-          <option value="SUPERUSER">Superusuario</option>
-          <option value="ADMINISTRATOR">Administrador</option>
-          <option value="EMPLOYEE">Empleado</option>
-        </select>
+          <TextField
+            label="Buscar por nombre"
+            name="name"
+            value={filters.name}
+            onChange={handleChange}
+            size="small"
+          />
 
-        <select
-          name="status"
-          value={filters.status}
-          onChange={handleChange}
-        >
-          <option value="">Todos los estados</option>
-          <option value="ACTIVE">Activo</option>
-          <option value="INACTIVE">Inactivo</option>
-        </select>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Rol</InputLabel>
 
-        <select
-          name="locationId"
-          value={filters.locationId}
-          onChange={handleChange}
-          disabled={loadingLocations}
-        >
-          <option value="">
-            {loadingLocations
-              ? 'Cargando sucursales...'
-              : 'Todas las sucursales'}
-          </option>
+            <Select
+              label="Rol"
+              name="role"
+              value={filters.role}
+              onChange={handleChange}
+            >
+              <MenuItem value="">Todos los roles</MenuItem>
+              <MenuItem value="CLIENT">Cliente</MenuItem>
+              <MenuItem value="SUPERUSER">Superusuario</MenuItem>
+              <MenuItem value="ADMINISTRATOR">Administrador</MenuItem>
+              <MenuItem value="EMPLOYEE">Empleado</MenuItem>
+            </Select>
+          </FormControl>
 
-        {locations.map((location) => (
-          <option
-            key={location.ID_LOCATION}
-            value={location.ID_LOCATION}
+          <FormControl size="small" sx={{ minWidth: 170 }}>
+            <InputLabel>Estado</InputLabel>
+
+            <Select
+              label="Estado"
+              name="status"
+              value={filters.status}
+              onChange={handleChange}
+            >
+              <MenuItem value="">Todos los estados</MenuItem>
+              <MenuItem value="ACTIVE">Activo</MenuItem>
+              <MenuItem value="INACTIVE">Inactivo</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl
+            size="small"
+            sx={{ minWidth: 220 }}
+            disabled={loadingLocations}
           >
-            {location.LOCATION_NAME}
-          </option>
-        ))}
-      </select>
+            <InputLabel>Sucursal</InputLabel>
 
-        <button onClick={clearFilters}>
-          Limpiar filtros
-        </button>
-      </div>
+            <Select
+              label="Sucursal"
+              name="locationId"
+              value={filters.locationId}
+              onChange={handleChange}
+            >
+              <MenuItem value="">
+                Todas las sucursales
+              </MenuItem>
 
-      {loading && <p>Cargando usuarios...</p>}
+              {locations.map((location) => (
+                <MenuItem
+                  key={location.ID_LOCATION}
+                  value={location.ID_LOCATION}
+                >
+                  {location.LOCATION_NAME}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-      {error && <p>Error: {error}</p>}
+          <Button
+            variant="outlined"
+            onClick={clearFilters}
+          >
+            Limpiar filtros
+          </Button>
+        </Stack>
 
-      {!loading && !error && users.length === 0 && (
-        <p>No se encontraron usuarios.</p>
-      )}
+        {locationsError && (
+          <Alert severity="error">
+            Error al cargar sucursales: {locationsError}
+          </Alert>
+        )}
 
-      {!loading && !error && users.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Identificación</th>
-              <th>Correo</th>
-              <th>Fecha de nacimiento</th>
-              <th>Teléfono</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Sucursales</th>
-            </tr>
-          </thead>
+        {error && (
+          <Alert severity="error">
+            {error}
+          </Alert>
+        )}
 
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.USER_KEY}>
-                <td>
-                  {user.FIRST_NAME} {user.MIDDLE_NAME || ''}{' '}
-                  {user.FIRST_SURNAME} {user.LAST_SURNAME || ''}
-                </td>
+        {!loading && !error && users.length === 0 && (
+          <Alert severity="info">
+            No se encontraron usuarios.
+          </Alert>
+        )}
 
-                <td>{user.IDENTIFICATION_NUMBER}</td>
-                <td>{user.EMAIL}</td>
-                <td>{formatDate(user.BIRTHDATE)}</td>
-                <td>{user.PHONE_NUMBER}</td>
-                <td>{formatRole(user.ROLE)}</td>
-                <td>{formatStatus(user.STATUS)}</td>
-                <td>{user.LOCATIONS || '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {locationsError && (
-        <p>Error al cargar sucursales: {locationsError}</p>
-      )}
-    </div>
+        <Box sx={{ width: '100%' }}>
+          <DataGrid
+            rows={users}
+            columns={columns}
+            getRowId={(row) => row.USER_KEY}
+            loading={loading}
+            disableRowSelectionOnClick
+            pageSizeOptions={[5, 10, 25]}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 10,
+                  page: 0,
+                },
+              },
+            }}
+            sx={{
+              minHeight: 400,
+            }}
+          />
+        </Box>
+      </Stack>
+    </PageContainer>
   );
 }
-
-export default UserList;
