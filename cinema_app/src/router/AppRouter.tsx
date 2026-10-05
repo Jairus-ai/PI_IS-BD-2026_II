@@ -2,14 +2,17 @@
 import { createHashRouter, RouterProvider } from 'react-router';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MovieList from '../modules/movies/pages/MovieList';
-import DiscountList from '../modules/discounts/pages/DiscountList';
 import Mainpage from '../pages/Mainpage';
-import DiscountShow from '../modules/discounts/pages/DiscountShow';
+import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 
 const router = createHashRouter([
   {
     path: '/',
-    Component: App,
+    Component: Mainpage,
+  },
+  {
+    path: '/register',
+    Component: ClientSignUp,
   },
   {
     Component: DashboardLayout,
@@ -19,16 +22,8 @@ const router = createHashRouter([
         Component: MovieList,
       },
       {
-        path: '/discounts',
-        Component: DiscountList,
-      },
-      { 
-        path: '/discounts/:discountId', 
-        Component: DiscountShow 
-      },
-      {
         path: '*',
-        Component: Mainpage //to simulate in the meanwhile. Obviously this has to be changed
+        Component: MovieList,
       },
     ],
   },
