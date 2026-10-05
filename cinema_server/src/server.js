@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
 import movieRoutes from './movie_module/routes/movie_routes.js';
@@ -9,23 +10,23 @@ import languageRoutes from './movie_module/routes/language_routes.js';
 import ratingRoutes from './movie_module/routes/rating_routes.js';
 import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
-import { requestTracker } from './middleware/logger.js'
 import { globalErrorHandler } from './middleware/errorHandler.js';
+import clientRoutes from './client_module/routes/client_routes.js';
 
 dotenv.config();
 
 const port = 3000;
 const ip = '0.0.0.0';
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 
 const app = express();
 app.disable('x-powered-by');
-app.use(cors({ origin: 'http://localhost:5173' }));
-
-// Global middlewares for debugging
+app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
-app.use(requestTracker);
+app.use(cookieParser());
 
-// Mount routes in the app
+//Mount routes in the app
+app.use('/clients', clientRoutes);
 app.use('/management/movies', movieRoutes);
 app.use('/management/genres', genreRoutes);
 app.use('/management/languages', languageRoutes);
