@@ -36,6 +36,34 @@ function UserList() {
     });
   }
 
+  function formatRole(role) {
+    const roles = {
+      CLIENT: 'Cliente',
+      SUPERUSER: 'Superusuario',
+      ADMINISTRATOR: 'Administrador',
+      EMPLOYEE: 'Empleado',
+    };
+
+    return roles[role] || role;
+  }
+
+  function formatStatus(status) {
+    const statuses = {
+      ACTIVE: 'Activo',
+      INACTIVE: 'Inactivo',
+    };
+
+    return statuses[status] || status;
+  }
+
+  function formatDate(date) {
+    if (!date) {
+      return '-';
+    }
+
+    return new Date(date).toLocaleDateString('es-CR');
+  }
+
   return (
     <div>
       <h1>Usuarios</h1>
@@ -131,10 +159,10 @@ function UserList() {
 
                 <td>{user.IDENTIFICATION_NUMBER}</td>
                 <td>{user.EMAIL}</td>
-                <td>{user.BIRTHDATE}</td>
+                <td>{formatDate(user.BIRTHDATE)}</td>
                 <td>{user.PHONE_NUMBER}</td>
-                <td>{user.ROLE}</td>
-                <td>{user.STATUS}</td>
+                <td>{formatRole(user.ROLE)}</td>
+                <td>{formatStatus(user.STATUS)}</td>
                 <td>{user.LOCATIONS || '-'}</td>
               </tr>
             ))}
