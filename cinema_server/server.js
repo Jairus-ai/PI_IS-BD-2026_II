@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { initializeDatabasePool, closeDatabasePool } from './src/database/database.js';
 import userRoutes from './src/user_module/routes/user_routes.js';
+import locationRoutes from './src/location_module/routes/location_routes.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/management/users', userRoutes);
+app.use('/management/locations', locationRoutes);
 app.use((error, req, res, next) => {
   console.error(error);
 
