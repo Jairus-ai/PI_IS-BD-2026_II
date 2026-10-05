@@ -15,11 +15,14 @@ import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
 import PageContainer from '../../../components/common/PageContainer';
 import type { Discount } from '../types/discounts';
+import DiscountShow from '../components/DiscountShow';
 
 export default function DiscountList() {
   const navigate = useNavigate();
   const dialogs = useDialogs();
   const notifications = useNotifications();
+
+  const [selectedDiscountId, setSelectedDiscountId] = React.useState<number | null>(null);
 
   // Uncomment delete and refetch once implemented.
   const { discounts, isLoadingDiscounts, discountsError, /* deleteDiscount, refetchDiscounts */ } = useDiscounts();
@@ -39,7 +42,7 @@ export default function DiscountList() {
       if (confirmed) {
         try {
           // await deleteDiscount(discount.ID_DISCOUNTS);
-          notifications.show('Descuent eliminado correctamente.', {
+          notifications.show('Descuento eliminado correctamente.', {
             severity: 'success',
             autoHideDuration: 3000,
           });
@@ -87,21 +90,21 @@ export default function DiscountList() {
         getActions: ({ row }: { row: Discount }) => [
           <GridActionsCellItem
             key="show"
-            icon={<span style={{ fontWeight: 500 }}>Mostrar</span>}
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
             label="Mostrar"
-            onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}`)}
+            onClick={() => setSelectedDiscountId(row.ID_DISCOUNT)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<span style={{ fontWeight: 500 }}>Editar</span>}
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
             label="Editar"
             onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<span style={{ fontWeight: 500, color: '#d32f2f' }}>Eliminar</span>}
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -125,7 +128,7 @@ export default function DiscountList() {
             variant="contained"
             onClick={() => navigate('/discounts/new')}
           >
-            Crear Película
+            Crear Descuento
           </Button>
         </Stack>
       }
@@ -153,6 +156,7 @@ export default function DiscountList() {
             }}
           />
         )}
+        <DiscountShow discountId={selectedDiscountId} onClose={() => setSelectedDiscountId(null)}/>
       </Box>
     </PageContainer>
   );

@@ -22,14 +22,17 @@ import {
 } from '../services/discountService';
 import PageContainer from '../../../components/common/PageContainer';
 import type { Discount } from '../types/discounts';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 
-export default function EmployeeShow() {
-  const { discountId } = useParams();
-  const navigate = useNavigate();
+interface Props {
+  discountId: number | null;
+  onClose: () => void;
+}
 
-  const dialogs = useDialogs();
-  const notifications = useNotifications();
-
+export default function DiscountShow({ discountId, onClose }: Props) {
   const [discount, setDiscount] = React.useState<Discount | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -40,8 +43,6 @@ export default function EmployeeShow() {
 
     try {
       const showData = await getDiscountsByID(Number(discountId));
-
-      console.log('Discount data:', showData); // Log the fetched data for debugging
       setDiscount(showData.data[0]);
     } catch (showDataError) {
       setError(showDataError as Error);
@@ -98,10 +99,6 @@ export default function EmployeeShow() {
     }
   }, [discount, dialogs, discountId, navigate, notifications]);*/
 
-  const handleBack = React.useCallback(() => {
-    navigate('/discounts');
-  }, [navigate]);
-
   const renderShow = React.useMemo(() => {
     if (isLoading) {
       return (
@@ -129,58 +126,44 @@ export default function EmployeeShow() {
     }
 
     return discount ? (
-      <Box sx={{ flexGrow: 1, width: '100%' }}>
-        <Grid container spacing={2} sx={{ width: '100%' }}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Paper sx={{ px: 2, py: 1 }}>
-              <Typography variant="overline">Nombre</Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {discount.DISCOUNT_NAME}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Paper sx={{ px: 2, py: 1 }}>
-              <Typography variant="overline">Porcentaje</Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {discount.DISCOUNT_PORCENTAGE}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Paper sx={{ px: 2, py: 1 }}>
-              <Typography variant="overline">Fecha de inicio</Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {discount.DISCOUNT_START_DATE}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Paper sx={{ px: 2, py: 1 }}>
-              <Typography variant="overline">Fecha de finalización</Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {discount.DISCOUNT_FINISH_DATE}
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-        <Divider sx={{ my: 3 }} />
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <Button
-            variant="contained"
-            startIcon={<ArrowBackIcon />}
-            onClick={handleBack}
-          >
-            Back
-          </Button>
-        </Stack>
-      </Box>
+    <Dialog open={discountId !== null} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}>
+      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>{discount?.DISCOUNT_NAME}</DialogTitle>
+      <DialogContent dividers>
+        {isLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+            <CircularProgress />
+          </Box>
+        )}
+        {discount && (
+          <Box sx={{ display: 'grid', gap: 2 }}>
+            <div>
+              <Typography variant="overline" sx={{ color: 'primary.dark' }}>Nombre</Typography>
+              <Typography>{discount.DISCOUNT_NAME}</Typography>
+            </div>
+            <div>
+              <Typography variant="overline" sx={{ color: 'primary.dark' }}>Porcentaje</Typography>
+              <Typography>{discount.DISCOUNT_PORCENTAGE}%</Typography>
+            </div>
+            <div>
+              <Typography variant="overline" sx={{ color: 'primary.dark' }}>Fecha de inicio</Typography>
+              <Typography>{discount.DISCOUNT_START_DATE}</Typography>
+            </div>
+            <div>
+              <Typography variant="overline" sx={{ color: 'primary.dark' }}>Fecha de finalización</Typography>
+              <Typography>{discount.DISCOUNT_FINISH_DATE}</Typography>
+            </div>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cerrar</Button>
+      </DialogActions>
+    </Dialog>
     ) : null;
   }, [
     isLoading,
     error,
     discount,
-    handleBack,
   ]);
 
   const pageTitle = `Discount ${discountId}`;

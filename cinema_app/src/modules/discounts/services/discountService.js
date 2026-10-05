@@ -12,6 +12,5 @@ export const getDiscountsByName = async (name) => {
 
 export const getDiscountsByID = async (id) => {
   const { data } = await api.get(`/management/discounts/${id}`);
-  console.log('Data fetched by ID:', data); // Log the fetched data for debugging
   return data;
 };

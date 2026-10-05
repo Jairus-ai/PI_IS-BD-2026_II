@@ -6,7 +6,6 @@ import Mainpage from '../pages/Mainpage';
 import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import App from '../App';
-import DiscountShow from '../modules/discounts/pages/DiscountShow';
 
 const router = createHashRouter([
   {
@@ -29,8 +28,8 @@ const router = createHashRouter([
         Component: MovieList,
       },
       { 
-        path: '/discounts/:discountId', 
-        Component: DiscountShow 
+        path: '/discounts/', 
+        Component: DiscountList 
       },
     ],
   },
