@@ -42,10 +42,16 @@ export default function MovieDetailDialog({ movieId, open, onClose }: {
   const movie = movieDetail as MovieDetail | null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{movie?.MOVIE_TITLE ?? (isLoadingDetail ? 'Cargando…' : 'Película')}</DialogTitle>
-      <DialogContent dividers>
-        {isLoadingDetail ? <Box sx={{display:'flex',justifyContent:'center',p:4}}><CircularProgress/></Box>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}
+    >
+      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>{movie?.MOVIE_TITLE ?? (isLoadingDetail ? 'Cargando…' : 'Película')}</DialogTitle>
+      <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
+        {isLoadingDetail ? <Box sx={{display:'flex',justifyContent:'center',p:4}}><CircularProgress color="primary" /></Box>
         : !movie ? (movieId != null ? <Alert severity="warning">Sin datos.</Alert> : null)
         : (
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -53,35 +59,35 @@ export default function MovieDetailDialog({ movieId, open, onClose }: {
               {posterSrc(movie.POSTER)
                 ? <Box component="img" src={posterSrc(movie.POSTER)} alt={movie.MOVIE_TITLE}
                        sx={{ width: '100%', borderRadius: 1, objectFit: 'cover' }} />
-                : <Box sx={{ width:'100%', height: 320, bgcolor:'grey.200', borderRadius:1,
+                : <Box sx={{ width:'100%', height: 320, bgcolor:'background.default', borderRadius:1,
                              display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <Typography color="text.secondary">Sin póster</Typography>
                   </Box>}
             </Box>
             <Stack spacing={1.5} sx={{ flex: 1 }}>
-              <Box><Typography variant="overline">Clasificación</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Clasificación</Typography>
                 <Typography variant="body1">{movie.RATING_CODE ? `${movie.RATING_CODE} — ${movie.RATING_NAME}` : (movie.RATING_NAME ?? '—')}</Typography></Box>
-              <Box><Typography variant="overline">Año de publicación</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Año de publicación</Typography>
                 <Typography variant="body1">{movie.PUBLISHING_YEAR}</Typography></Box>
-              <Box><Typography variant="overline">Duración</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Duración</Typography>
                 <Typography variant="body1">{formatDuration(movie.MOVIE_DURATION)}</Typography></Box>
-              <Box><Typography variant="overline">Sinopsis</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Sinopsis</Typography>
                 <Typography variant="body1">{movie.SYNOPSIS}</Typography></Box>
-              <Box><Typography variant="overline">Géneros</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Géneros</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.GENRES).map(g => <Chip key={g} label={g} />)}
+                  {splitList(movie.GENRES).map(g => <Chip key={g} label={g} color="primary" />)}
                 </Stack></Box>
-              <Box><Typography variant="overline">Directores</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Directores</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.DIRECTORS).map(d => <Chip key={d} label={d} variant="outlined" />)}
+                  {splitList(movie.DIRECTORS).map(d => <Chip key={d} label={d} variant="outlined" color="secondary" />)}
                 </Stack></Box>
-              <Box><Typography variant="overline">Formatos</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Formatos</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.FORMATS).map(f => <Chip key={f} label={f} variant="outlined" />)}
+                  {splitList(movie.FORMATS).map(f => <Chip key={f} label={f} variant="outlined" color="secondary" />)}
                 </Stack></Box>
-              <Box><Typography variant="overline">Idiomas</Typography>
+              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Idiomas</Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.LANGUAGES).map(l => <Chip key={l} label={l} />)}
+                  {splitList(movie.LANGUAGES).map(l => <Chip key={l} label={l} color="primary" variant="outlined" />)}
                 </Stack></Box>
             </Stack>
           </Stack>

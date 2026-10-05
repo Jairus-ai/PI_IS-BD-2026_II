@@ -137,7 +137,13 @@ const {
       onSubmit={handleSubmit}
       noValidate
       autoComplete="off"
-      sx={{ width: '100%' }}
+      sx={{
+        width: '100%',
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        p: 3,
+        boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
+      }}
     >
       <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
