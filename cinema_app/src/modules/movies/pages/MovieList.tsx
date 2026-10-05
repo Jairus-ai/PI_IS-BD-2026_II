@@ -15,6 +15,7 @@ import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
 import PageContainer from '../../../components/common/PageContainer';
 import type { Movie } from '../types/movies';
+import MovieDetailDialog from '../components/MovieDetailDialog';
 
 export default function MovieList() {
   const navigate = useNavigate();
@@ -24,8 +25,10 @@ export default function MovieList() {
   const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
   const serverPage = paginationModel.page + 1;
 
+  const [selectedId, setSelectedId] = React.useState<number | null>(null);
+
   // TODO(Jesus): Uncomment delete and refetch once implemented.
-  const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies();
+  const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies(serverPage);
 
   const handleRowDelete = React.useCallback(
     (movie: Movie) => async () => {
@@ -93,7 +96,7 @@ export default function MovieList() {
             key="show"
             icon={<span style={{ fontWeight: 500 }}>Mostrar</span>}
             label="Mostrar"
-            onClick={() => navigate(`/movies/${row.ID_MOVIE}`)}
+            onClick={() => setSelectedId(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
@@ -142,6 +145,7 @@ export default function MovieList() {
         ) : (
           <DataGrid
             rows={movies}
+            rowCount={totalMovies}
             getRowId={(row: Movie) => row.ID_MOVIE}
             columns={columns}
             loading={isLoadingMovies}
@@ -152,6 +156,7 @@ export default function MovieList() {
             disableRowSelectionOnClick
           />
         )}
+        <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
       </Box>
     </PageContainer>
   );
