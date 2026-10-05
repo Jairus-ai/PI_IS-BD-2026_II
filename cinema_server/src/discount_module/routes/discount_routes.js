@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { 
     getDiscountList,
-    getDiscountByName
+    getDiscountByName,
+    getDiscountByID
  } from '../controllers/discount_controller.js';
 
 const router = Router();
 
-let r = router.get('/', getDiscountList);
+router.get('/', getDiscountList);
 router.get('/:name', getDiscountByName);
+router.get('/:id', getDiscountByID);
 
 export default router;
