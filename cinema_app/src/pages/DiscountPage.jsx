@@ -1,74 +1,67 @@
 import React, { useState } from 'react';
-import { useMovies } from '../hooks/useMovies';
+import { useDiscounts } from '../hooks/useDiscounts';
 
-export const MoviesPage = () => {
+export const DiscountsPage = () => {
   const {
-    movies,
-    isLoading,
-    isError,
+    discounts,
+    isLoadingDiscounts,
+    isdiscountsError,
     error,
-    createMovie,
-    updateMovie,
-    deleteMovie,
+    createDiscount,
+    updateDiscount,
+    deleteDiscount,
     isSaving,
     isDeleting
-  } = useMovies();
+  } = useDiscounts();
 
-  const [formData, setFormData] = useState({ id: null, title: '', genre: '', year: '' });
+  const [formData, setFormData] = useState({ id: null, name: '', porcentage: '' });
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isEditing) {
-      updateMovie(formData, { onSuccess: resetForm });
+      updateDiscount(formData, { onSuccess: resetForm });
     } else {
-      createMovie(formData, { onSuccess: resetForm });
+      createDiscount(formData, { onSuccess: resetForm });
     }
   };
 
-  const handleEditClick = (movie) => {
-    setFormData(movie);
+  const handleEditClick = (discount) => {
+    setFormData(discount);
     setIsEditing(true);
   };
 
   const handleDeleteClick = (id) => {
-    if (window.confirm('¿Está seguro que desea eliminar esta película?')) {
-      deleteMovie(id);
+    if (window.confirm('¿Está seguro que desea eliminar este descuento?')) {
+      deleteDiscount(id);
     }
   };
 
   const resetForm = () => {
-    setFormData({ id: null, title: '', genre: '', year: '' });
+    setFormData({ id: null, name: '', porcentage: '' });
     setIsEditing(false);
   };
 
-  if (isLoading) return <div>Cargando películas...</div>;
-  if (isError) return <div>Error al cargar películas: {error.message}</div>;
+  if (isLoadingDiscounts) return <div>Cargando películas...</div>;
+  if (isdiscountsError) return <div>Error al cargar películas: {error.message}</div>;
 
   return (
     <div>
-      <h2>Películas</h2>
+      <h2>Discounts</h2>
 
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Título"
+          placeholder="Nombre"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           required
         />
         <input
           type="text"
-          placeholder="Género"
+          placeholder="Porcentaje"
           value={formData.genre}
           onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-          required
-        />
-        <input
-          type="number"
-          placeholder="Año"
-          value={formData.year}
-          onChange={(e) => setFormData({ ...formData, year: e.target.value })}
           required
         />
         <button type="submit" disabled={isSaving}>
@@ -80,22 +73,20 @@ export const MoviesPage = () => {
       <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th>Título</th>
-            <th>Género</th>
-            <th>Año</th>
+            <th>Nombre</th>
+            <th>Porcentaje</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {movies?.map((movie) => (
-            <tr key={movie.id}>
-              <td>{movie.title}</td>
-              <td>{movie.genre}</td>
-              <td>{movie.year}</td>
+          {discounts?.map((discount) => (
+            <tr key={discount.id}>
+              <td>{discount.name}</td>
+              <td>{discount.porcentage}</td>
               <td>
-                <button onClick={() => handleEditClick(movie)}>Editar</button>
+                <button onClick={() => handleEditClick(discount)}>Editar</button>
                 <button
-                  onClick={() => handleDeleteClick(movie.id)}
+                  onClick={() => handleDeleteClick(discount.id)}
                   disabled={isDeleting}
                 >
                   Eliminar

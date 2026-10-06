@@ -10,32 +10,26 @@ import {
   gridClasses,
 } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router';
-import { useMovies } from '../hooks/useMovies';
+import { useDiscounts } from '../hooks/useDiscounts';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
 import PageContainer from '../../../components/common/PageContainer';
-import type { Movie } from '../types/movies';
-import MovieDetailDialog from '../components/MovieDetailDialog';
+import type { Discount } from '../types/discounts';
 
-export default function MovieList() {
+export default function DiscountList() {
   const navigate = useNavigate();
   const dialogs = useDialogs();
   const notifications = useNotifications();
 
-  const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
-  const serverPage = paginationModel.page + 1;
-
-  const [selectedId, setSelectedId] = React.useState<number | null>(null);
-
-  // TODO(Jesus): Uncomment delete and refetch once implemented.
-  const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies(serverPage);
+  // Uncomment delete and refetch once implemented.
+  const { discounts, isLoadingDiscounts, discountsError, /* deleteDiscount, refetchDiscounts */ } = useDiscounts();
 
   const handleRowDelete = React.useCallback(
-    (movie: Movie) => async () => {
+    (discount: Discount) => async () => {
       const confirmed = await dialogs.confirm(
-        `¿Desea eliminar la película "${movie.MOVIE_TITLE}"?`,
+        `¿Desea eliminar el descuento "${discount.DISCOUNT_NAME}"?`,
         {
-          title: 'Eliminar película',
+          title: 'Eliminar descuento',
           severity: 'error',
           okText: 'Eliminar',
           cancelText: 'Cancelar',
@@ -44,14 +38,14 @@ export default function MovieList() {
 
       if (confirmed) {
         try {
-          // await deleteMovie(movie.ID_MOVIE);
-          notifications.show('Película eliminada correctamente.', {
+          // await deleteDiscount(discount.ID_DISCOUNTS);
+          notifications.show('Descuent eliminado correctamente.', {
             severity: 'success',
             autoHideDuration: 3000,
           });
         } catch (error) {
           notifications.show(
-            `Error al eliminar la película: ${(error as Error).message}`,
+            `Error al eliminar el descuento: ${(error as Error).message}`,
             {
               severity: 'error',
               autoHideDuration: 3000,
@@ -60,27 +54,20 @@ export default function MovieList() {
         }
       }
     },
-    [dialogs, /* deleteMovie, */ notifications],
+    [dialogs, /* deleteDiscount, */ notifications],
   );
 
   const columns = React.useMemo<GridColDef[]>(
     () => [
       {
-        field: 'MOVIE_TITLE',
-        headerName: 'Título',
+        field: 'DISCOUNT_NAME',
+        headerName: 'Nombre',
         flex: 1,
         minWidth: 200,
       },
       {
-        field: 'GENRES',
-        headerName: 'Género',
-        width: 200,
-        valueGetter: (value, row: Movie) =>
-          Array.isArray(row.GENRES) ? row.GENRES.join(', ') : value || 'N/A',
-      },
-      {
-        field: 'PUBLISHING_YEAR',
-        headerName: 'Año de Publicación',
+        field: 'DISCOUNT_PORCENTAGE',
+        headerName: 'Porcentaje de descuento',
         width: 160,
         type: 'number',
       },
@@ -91,24 +78,24 @@ export default function MovieList() {
         flex: 1,
         minWidth: 220,
         align: 'right',
-        getActions: ({ row }: { row: Movie }) => [
+        getActions: ({ row }: { row: Discount }) => [
           <GridActionsCellItem
             key="show"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
+            icon={<span style={{ fontWeight: 500 }}>Mostrar</span>}
             label="Mostrar"
-            onClick={() => setSelectedId(row.ID_MOVIE)}
+            onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
+            icon={<span style={{ fontWeight: 500 }}>Editar</span>}
             label="Editar"
-            onClick={() => navigate(`/movies/${row.ID_MOVIE}/edit`)}
+            onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
+            icon={<span style={{ fontWeight: 500, color: '#d32f2f' }}>Eliminar</span>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -121,8 +108,8 @@ export default function MovieList() {
 
   return (
     <PageContainer
-      title="Películas"
-      breadcrumbs={[{ title: 'Películas' }]}
+      title="Descuentos"
+      breadcrumbs={[{ title: 'Descuentos' }]}
       actions={
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Button variant="outlined" size="small" /* onClick={() => refetchMovies()} */>
@@ -130,7 +117,7 @@ export default function MovieList() {
           </Button>
           <Button
             variant="contained"
-            onClick={() => navigate('/movies/new')}
+            onClick={() => navigate('/discounts/new')}
           >
             Crear Película
           </Button>
@@ -138,36 +125,28 @@ export default function MovieList() {
       }
     >
       <Box sx={{ flex: 1, width: '100%' }}>
-        {moviesError ? (
+        {discountsError ? (
           <Box sx={{ flexGrow: 1 }}>
-            <Alert severity="error">{(moviesError as Error).message}</Alert>
+            <Alert severity="error">{(discountsError as Error).message}</Alert>
           </Box>
         ) : (
           <DataGrid
-            rows={movies}
-            rowCount={totalMovies}
-            getRowId={(row: Movie) => row.ID_MOVIE}
+            rows={Array.isArray(discounts?.data) ? discounts.data : []}
+            getRowId={(row: Discount) => row.ID_DISCOUNT}
             columns={columns}
-            loading={isLoadingMovies}
-            paginationMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[10]}
+            loading={isLoadingDiscounts}
             disableRowSelectionOnClick
+            pageSizeOptions={[5, 10, 25]}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 10 } },
+            }}
             sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
-              [`& .${gridClasses.columnHeader}`]: {
-                bgcolor: 'background.default',
-              },
               [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
                 outline: 'transparent',
               },
             }}
           />
         )}
-        <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
       </Box>
     </PageContainer>
   );

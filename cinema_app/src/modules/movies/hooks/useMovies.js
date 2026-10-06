@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   getMovies,
+  getMoviesCount,
   getMovieById,
   getGenres,
   getRatings,
@@ -8,16 +9,21 @@ import {
   getAudiovisualFormats,
 } from '../services/movieService';
 
-export const useMovies = (movieId = null) => {
+export const useMovies = (page = 1, movieId = null) => {
   const moviesQuery = useQuery({
-    queryKey: ['movies'],
-    queryFn: getMovies,
+    queryKey: ['movies', page],
+    queryFn: ()  => getMovies(page),
+  });
+
+  const countQuery = useQuery({
+    queryKey: ['moviesCount'],
+    queryFn: getMoviesCount,
   });
 
   const movieDetailQuery = useQuery({
-    queryKey: ['movies', movieId],
+    queryKey: ['movie', movieId],
     queryFn: () => getMovieById(movieId),
-    enabled: !!movieId,
+    enabled: movieId != null,
   });
 
   const genresQuery = useQuery({
@@ -41,17 +47,18 @@ export const useMovies = (movieId = null) => {
   });
 
   return {
-    movies: moviesQuery.data ?? [],
+    movies: moviesQuery.data?.data ?? [],
+    totalMovies: countQuery.data?.total ?? 0,
     isLoadingMovies: moviesQuery.isLoading,
     moviesError: moviesQuery.error,
 
-    movieDetail: movieDetailQuery.data ?? null,
+    movieDetail: movieDetailQuery.data?.data ?? null,
     isLoadingDetail: movieDetailQuery.isLoading,
 
-    genres: genresQuery.data ?? [],
-    ratings: ratingsQuery.data ?? [],
-    languages: languagesQuery.data ?? [],
-    formats: formatsQuery.data ?? [],
+    genres: genresQuery.data?.data ?? [],
+    ratings: ratingsQuery.data?.data ?? [],
+    languages: languagesQuery.data?.data ?? [],
+    formats: formatsQuery.data?.data ?? [],
     isLoadingCatalogs:
       genresQuery.isLoading ||
       ratingsQuery.isLoading ||

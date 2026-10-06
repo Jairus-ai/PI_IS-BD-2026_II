@@ -1,10 +1,11 @@
 import oracledb from 'oracledb';
+import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 
 export const getAudiovisualFormatList = async (req, res, next) => {
   let connection;
 
   try {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     const sql = `
       SELECT
@@ -37,12 +38,6 @@ export const getAudiovisualFormatList = async (req, res, next) => {
     next(error);
 
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection to the database: ", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };

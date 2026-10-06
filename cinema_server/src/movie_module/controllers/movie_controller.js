@@ -1,4 +1,5 @@
 import oracledb from 'oracledb';
+import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 
 const buildMovieFilters = (queryParams) => {
   const { genreId, languageCode, directorId, audiovisualFormatId } = queryParams;
@@ -51,12 +52,14 @@ const buildMovieFilters = (queryParams) => {
 };
 
 export const getMoviesCount = async (req, res, next) => {
+  console.log("getMoviesCount is being called");
+
   let connection;
 
   try {
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
-    const { whereClause, binds } = buildMovieFilters(req.query);
+    const { whereClause, binds } = buildMovieFilters(req.validatedQuery ?? req.query);
 
     const sql = `
       SELECT COUNT(m.id_movie) AS TOTAL
@@ -77,27 +80,23 @@ export const getMoviesCount = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection:", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };
 
 export const getMoviesList = async (req, res, next) => {
+  console.log("getMoviesList is being called");
+
   let connection;
 
   try {
-    const page = Number(req.query.page);
+    const page = req.validatedQuery?.page ?? 1;
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
-    const { whereClause, binds } = buildMovieFilters(req.query);
+    const { whereClause, binds } = buildMovieFilters(req.validatedQuery ?? req.query);
 
     const allBinds = {
       ...binds,
@@ -136,23 +135,19 @@ export const getMoviesList = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection:", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };
 
 export const getMovieByID = async (req, res, next) => {
+  console.log("getMovieByID is being called");
+
   let connection;
 
   try {
     const { id } = req.params;
 
-    connection = await oracledb.getConnection();
+    connection = await getConnection();
 
     const sql = `
       SELECT
@@ -216,12 +211,6 @@ export const getMovieByID = async (req, res, next) => {
   } catch (error) {
     next(error);
   } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Error closing connection:", error);
-      }
-    }
+    await closeDatabaseConnection(connection);
   }
 };

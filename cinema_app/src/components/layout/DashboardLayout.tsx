@@ -54,6 +54,7 @@ export default function DashboardLayout() {
         display: 'flex',
         overflow: 'hidden',
         height: '100%',
+        minHeight: '100dvh',
         width: '100%',
       }}
     >

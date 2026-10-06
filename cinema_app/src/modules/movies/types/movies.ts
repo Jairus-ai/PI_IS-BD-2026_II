@@ -12,6 +12,21 @@ export interface Movie {
   FORMATS?: number[];
 }
 
+export interface MovieDetail {
+  ID_MOVIE: number;
+  MOVIE_TITLE: string;
+  SYNOPSIS: string;
+  MOVIE_DURATION: number;
+  PUBLISHING_YEAR: number;
+  POSTER: string | null;
+  RATING_NAME: string | null;
+  RATING_CODE: string | null;
+  GENRES: string | null;
+  DIRECTORS: string | null;
+  FORMATS: string | null;
+  LANGUAGES: string | null;
+}
+
 export interface Genre {
   ID_GENRE: number;
   GENRE_NAME: string;
