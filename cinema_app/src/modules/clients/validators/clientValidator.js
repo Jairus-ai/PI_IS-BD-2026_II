@@ -11,6 +11,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REQUIRED_FIELDS = [
   'email',
   'password',
+  'confirmPassword',
   'firstName',
   'firstSurname',
   'identificationType',
@@ -67,6 +68,10 @@ export function validateClientForm(values) {
 
   if (!errors.password && checkPasswordStrength(values.password, values).score < MINIMUM_PASSWORD_SCORE) {
     errors.password = 'La contraseña es débil';
+  }
+
+  if (!errors.confirmPassword && values.confirmPassword !== values.password) {
+    errors.confirmPassword = 'Las contraseñas no coinciden';
   }
 
   return errors;

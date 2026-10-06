@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import LinearProgress from '@mui/material/LinearProgress';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -12,6 +14,14 @@ import Stack from '@mui/material/Stack';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { esES } from '@mui/x-date-pickers/locales';
+import dayjs, { type Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
 import { isAxiosError } from 'axios';
 
 import logo from '../../../assets/logo.png';
@@ -28,6 +38,7 @@ import {
 type ClientFormValues = {
   email: string;
   password: string;
+  confirmPassword: string;
   firstName: string;
   middleName: string;
   firstSurname: string;
@@ -43,6 +54,7 @@ type ClientFormErrors = Partial<Record<keyof ClientFormValues, string>>;
 const INITIAL_VALUES: ClientFormValues = {
   email: '',
   password: '',
+  confirmPassword: '',
   firstName: '',
   middleName: '',
   firstSurname: '',
@@ -63,6 +75,14 @@ const PASSWORD_STRENGTH_LABELS = ['Muy débil', 'Débil', 'Regular', 'Fuerte', '
 type RegisterErrorResponse = {
   errors?: ClientFormErrors;
   passwordSuggestions?: string[];
+};
+
+const BIRTHDATE_FORMAT = 'DD/MM/YYYY';
+const DATE_PICKER_TEXT = esES.components.MuiLocalizationProvider.defaultProps.localeText;
+const API_DATE_FORMAT = 'YYYY-MM-DD';
+
+type RegisterResponse = {
+  data: SessionUser;
 };
 
 const GENERIC_ERROR_MESSAGE = 'No se pudo completar el registro. Intenta de nuevo.';
@@ -117,6 +137,56 @@ function FormField({ label, name, values, errors, onChange, ...textFieldProps }:
   );
 }
 
+type PasswordFieldProps = {
+  label: string;
+  name: 'password' | 'confirmPassword';
+  value: string;
+  error?: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  children?: ReactNode;
+};
+
+function PasswordField({ label, name, value, error, onChange, children }: PasswordFieldProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <FormControl fullWidth>
+      <FormLabel htmlFor={name}>{label}</FormLabel>
+      <TextField
+        id={name}
+        name={name}
+        type={isVisible ? 'text' : 'password'}
+        autoComplete="new-password"
+        placeholder="••••••••"
+        required
+        fullWidth
+        value={value}
+        onChange={onChange}
+        error={Boolean(error)}
+        helperText={error}
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={isVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setIsVisible((previous) => !previous)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  edge="end"
+                  size="small"
+                >
+                  {isVisible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                </IconButton>
+              </InputAdornment>
+            )
+          }
+        }}
+      />
+      {children}
+    </FormControl>
+  );
+}
+
 export default function ClientSignUp() {
   const navigate = useNavigate();
   const notifications = useNotifications();
@@ -141,9 +211,16 @@ export default function ClientSignUp() {
     setErrors((previousErrors) => ({ ...previousErrors, [name]: undefined }));
   };
 
-  const handleRegisterSuccess = ({ data }: { data: SessionUser }) => {
-    startSession(data);
-    notifications.show(`¡Bienvenido, ${data.firstName}! Tu cuenta fue creada.`, {
+  const handleBirthdateChange = (birthdate: Dayjs | null) => {
+    const formattedBirthdate = birthdate?.isValid() ? birthdate.format(API_DATE_FORMAT) : '';
+    setValues((previousValues) => ({ ...previousValues, birthdate: formattedBirthdate }));
+    setErrors((previousErrors) => ({ ...previousErrors, birthdate: undefined }));
+  };
+
+  const handleRegisterSuccess = (response: RegisterResponse) => {
+    const client = response.data;
+    startSession(client);
+    notifications.show(`¡Bienvenido, ${client.firstName}! Tu cuenta fue creada.`, {
       severity: 'success',
       autoHideDuration: 5000
     });
@@ -172,7 +249,8 @@ export default function ClientSignUp() {
       return;
     }
 
-    register(values, { onSuccess: handleRegisterSuccess, onError: handleRegisterError });
+    const { confirmPassword: _confirmPassword, ...client } = values;
+    register(client, { onSuccess: handleRegisterSuccess, onError: handleRegisterError });
   };
 
   const fieldProps = { values, errors, onChange: handleChange };
@@ -201,21 +279,13 @@ export default function ClientSignUp() {
             {...fieldProps}
           />
 
-          <FormControl fullWidth>
-            <FormLabel htmlFor="password">Contraseña</FormLabel>
-            <TextField
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              required
-              fullWidth
-              value={values.password}
-              onChange={handleChange}
-              error={Boolean(errors.password)}
-              helperText={errors.password}
-            />
+          <PasswordField
+            label="Contraseña"
+            name="password"
+            value={values.password}
+            error={errors.password}
+            onChange={handleChange}
+          >
             {values.password && (
               <Box sx={{ mt: 1 }}>
                 <LinearProgress
@@ -237,7 +307,15 @@ export default function ClientSignUp() {
                 ))}
               </Box>
             )}
-          </FormControl>
+          </PasswordField>
+
+          <PasswordField
+            label="Confirmar contraseña"
+            name="confirmPassword"
+            value={values.confirmPassword}
+            error={errors.confirmPassword}
+            onChange={handleChange}
+          />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <FormField label="Nombre" name="firstName" autoComplete="given-name" required {...fieldProps} />
@@ -263,7 +341,28 @@ export default function ClientSignUp() {
           </Stack>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <FormField label="Fecha de nacimiento" name="birthdate" type="date" required {...fieldProps} />
+            <FormControl fullWidth>
+              <FormLabel htmlFor="birthdate">Fecha de nacimiento</FormLabel>
+              <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es" localeText={DATE_PICKER_TEXT}>
+                <DatePicker
+                  value={values.birthdate ? dayjs(values.birthdate) : null}
+                  onChange={handleBirthdateChange}
+                  format={BIRTHDATE_FORMAT}
+                  openTo="year"
+                  views={['year', 'month', 'day']}
+                  disableFuture
+                  slotProps={{
+                    textField: {
+                      id: 'birthdate',
+                      fullWidth: true,
+                      required: true,
+                      error: Boolean(errors.birthdate),
+                      helperText: errors.birthdate
+                    }
+                  }}
+                />
+              </LocalizationProvider>
+            </FormControl>
             <FormField
               label="Celular"
               name="phoneNumber"
