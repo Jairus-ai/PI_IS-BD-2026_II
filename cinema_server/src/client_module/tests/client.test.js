@@ -65,7 +65,8 @@ describe('POST /clients/register', () => {
       .expect(201);
 
     expect(response.body.data).toEqual({
-      idClient: 7,
+      id: 7,
+      role: 'CLIENT',
       email: 'adrian.prueba@ucr.ac.cr',
       firstName: 'Adrián',
       firstSurname: 'Arias'
