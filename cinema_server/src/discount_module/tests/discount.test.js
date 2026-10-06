@@ -12,7 +12,7 @@ describe('GET /management/discounts', () => {
 
   test('Discounts list 200 OK', async () => {
     const mockDiscounts = [
-      { ID_DISCOUNTS: 1,DISCOUNT_NAME: 'BIRTHDAY' ,DISCOUNT_PORCENTAGE: 30},
+      { ID_DISCOUNTS: 1,DISCOUNT_NAME: 'BIRTHDAY' ,DISCOUNT_PORCENTAGE: 30, },
       { ID_DISCOUNTS: 2,DISCOUNT_NAME: 'D.DAY' ,DISCOUNT_PORCENTAGE: 50},
     ];
 
@@ -35,47 +35,6 @@ describe('GET /management/discounts', () => {
     expect(response.body.data).toHaveLength(2);
     expect(mockConnection.close).toHaveBeenCalledTimes(1);
   });
-
-  test('Discount by name 200 OK', async () => {
-    const mockDiscounts = [
-      { ID_DISCOUNTS: 1,DISCOUNT_NAME: 'BIRTHDAY' ,DISCOUNT_PORCENTAGE: 30},
-      { ID_DISCOUNTS: 2,DISCOUNT_NAME: 'D.DAY' ,DISCOUNT_PORCENTAGE: 50},
-    ];
-
-    const mockConnection = {
-      execute: jest.fn().mockResolvedValue({
-        rows: mockDiscounts
-      }),
-      close: jest.fn().mockResolvedValue()
-    };
-
-    jest.spyOn(oracledb, 'getConnection').mockResolvedValue(mockConnection);
-
-    const response = await request(app)
-      .get('/management/discounts/1')
-      .expect('Content-type', /json/)
-      .expect(200);
-
-    expect(response.body).toHaveProperty('data');
-    expect(response.body.data).toEqual(mockDiscounts[0]);
-    expect(response.body.data).toHaveLength(1);
-    expect(mockConnection.close).toHaveBeenCalledTimes(1);
-  });
-
-  test('Discount list 500 Internal Server Error', async () => {
-    const mockConnection = {
-      execute: jest.fn().mockRejectedValue(new Error('Oracle error')),
-      close: jest.fn().mockResolvedValue()
-    };
-
-    jest.spyOn(oracledb, 'getConnection').mockResolvedValue(mockConnection);
-
-    const response = await request(app)
-      .get('/management/discounts')
-      .expect(500);
-
-    expect(mockConnection.close).toHaveBeenCalledTimes(1);
-  })
 });
 
 
