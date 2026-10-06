@@ -42,6 +42,13 @@ export function checkPasswordStrength(password, values = {}) {
   };
 }
 
+export function validateRequiredField(fieldName, value) {
+  if (REQUIRED_FIELDS.includes(fieldName) && !String(value ?? '').trim()) {
+    return REQUIRED_FIELD_MESSAGE;
+  }
+  return undefined;
+}
+
 function isAdult(birthdateText) {
   const [year, month, day] = birthdateText.split('-').map(Number);
   const adulthoodDate = new Date(year + MINIMUM_AGE, month - 1, day);
