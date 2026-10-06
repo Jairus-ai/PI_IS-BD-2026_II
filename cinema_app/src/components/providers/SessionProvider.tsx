@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import SessionContext, { type SessionUser } from '../../context/SessionContext';
+import { getCurrentUser } from '../../modules/auth/services/authService';
 
 const SESSION_USER_KEY = 'session_user';
 
@@ -14,6 +15,7 @@ function readStoredUser(): SessionUser | null {
 
 export default function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(readStoredUser);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const startSession = useCallback((sessionUser: SessionUser) => {
     setUser(sessionUser);
@@ -33,9 +35,22 @@ export default function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    getCurrentUser()
+      .then(({ data }) => isActive && startSession(data))
+      .catch(() => isActive && endSession())
+      .finally(() => isActive && setIsCheckingSession(false));
+
+    return () => {
+      isActive = false;
+    };
+  }, [startSession, endSession]);
+
   const value = useMemo(
-    () => ({ user, isLoggedIn: user !== null, startSession, endSession }),
-    [user, startSession, endSession]
+    () => ({ user, isLoggedIn: user !== null, isCheckingSession, startSession, endSession }),
+    [user, isCheckingSession, startSession, endSession]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
