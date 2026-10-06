@@ -187,8 +187,8 @@ footer
     margin-right: 3%;
     height: 20px;*/
     margin: 0;
-    cursor: pointer;
     color: var(--mui-palette-primary-contrastText);
+    text-decoration: none;
 }
 
 #logInButton:hover
@@ -218,6 +218,12 @@ footer
 {
     margin: 0;
     color: var(--mui-palette-primary-contrastText);
+}
+
+#logOutButton
+{
+    color: var(--mui-palette-primary-contrastText);
+    text-transform: none;
 }
 
 /*Sugestions_____________________________________________________*/

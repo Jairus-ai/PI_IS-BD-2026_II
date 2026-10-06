@@ -11,6 +11,7 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import Stack from '@mui/material/Stack';
 import { Link } from 'react-router';
 import ThemeSwitcher from '../common/ThemeSwitcher';
+import LogOutButton from '../common/LogOutButton';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -117,6 +118,7 @@ export default function DashboardHeader({
             <Stack direction="row" sx={{ alignItems: 'center' }}>
               <ThemeSwitcher />
             </Stack>
+            <LogOutButton size="small" />
           </Stack>
         </Stack>
       </Toolbar>

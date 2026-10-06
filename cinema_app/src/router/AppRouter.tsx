@@ -1,11 +1,14 @@
 // src/router/AppRouter.tsx
-import { createHashRouter, RouterProvider } from 'react-router';
+import { createHashRouter, Navigate, RouterProvider } from 'react-router';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MovieList from '../modules/movies/pages/MovieList';
 import Mainpage from '../pages/Mainpage';
 import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import App from '../App';
+import LogIn from '../modules/auth/pages/LogIn';
+import RequireSession from '../components/common/RequireSession';
+import { WORKER_ROLES } from '../context/SessionContext';
 
 const router = createHashRouter([
   {
@@ -17,7 +20,15 @@ const router = createHashRouter([
     Component: ClientSignUp,
   },
   {
-    Component: DashboardLayout,
+    path: '/login',
+    Component: LogIn,
+  },
+  {
+    element: (
+      <RequireSession allowedRoles={WORKER_ROLES}>
+        <DashboardLayout />
+      </RequireSession>
+    ),
     children: [
       {
         path: '/movies',
@@ -29,9 +40,9 @@ const router = createHashRouter([
       },
     ],
   },
-  { // TODO(any): set up a page to handle an unknown route
+  {
     path: '*',
-    Component: MovieList,
+    element: <Navigate to="/" replace />,
   },
 ]);
 
