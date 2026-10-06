@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { use,useCallback, useEffect, useState } from 'react';
 import { getUsers } from '../services/userService.js';
 
 export function useUsers(filters = {}) {
@@ -6,24 +6,19 @@ export function useUsers(filters = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function loadUsers() {
-      try {
-        setLoading(true);
-        setError(null);
+  const loadUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const data = await getUsers(filters);
-
-        setUsers(data);
-      } catch (error) {
-        setError(error.message);
-        setUsers([]);
-      } finally {
-        setLoading(false);
-      }
+      const data = await getUsers(filters);
+      setUsers(data);
+    } catch (error) {
+      setError(error.message);
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
-
-    loadUsers();
   }, [
     filters.role,
     filters.status,
@@ -31,9 +26,14 @@ export function useUsers(filters = {}) {
     filters.name,
   ]);
 
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
   return {
     users,
     loading,
     error,
+    refetchUsers: loadUsers,
   };
 }

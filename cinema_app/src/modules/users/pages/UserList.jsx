@@ -16,6 +16,9 @@ import PageContainer from '../../../components/common/PageContainer';
 import UserDetailDialog from '../components/UserDetailDialog.jsx';
 import { useUsers } from '../hooks/useUsers.js';
 import { useLocations } from '../hooks/useLocations.js';
+import { deactivateWorker } from '../services/userService.js';
+import { useDialogs } from '../../../hooks/useDialogs.tsx';
+import useNotifications from '../../../hooks/useNotifications.tsx';
 
 function formatRole(role) {
   const roles = {
@@ -55,13 +58,16 @@ export default function UserList() {
 
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const { users, loading, error } = useUsers(filters);
+  const { users, loading, error, refetchUsers, } = useUsers(filters);
 
   const {
     locations,
     loadingLocations,
     locationsError,
   } = useLocations();
+
+  const dialogs = useDialogs();
+  const notifications = useNotifications();
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -79,6 +85,44 @@ export default function UserList() {
       status: '',
       locationId: '',
     });
+  }
+
+  async function handleDeactivate(user) {
+    const confirmed = await dialogs.confirm(
+      `¿Desea desactivar la cuenta de ${user.FIRST_NAME} ${user.FIRST_SURNAME}? La persona ya no podrá iniciar sesión en el sistema.`,
+      {
+        title: 'Desactivar cuenta',
+        severity: 'warning',
+        okText: 'Desactivar',
+        cancelText: 'Cancelar',
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deactivateWorker(user.USER_ID);
+
+      notifications.show(
+        'La cuenta fue desactivada correctamente.',
+        {
+          severity: 'success',
+          autoHideDuration: 3000,
+        }
+      );
+
+      await refetchUsers();
+    } catch (error) {
+      notifications.show(
+        error.message || 'No fue posible desactivar la cuenta.',
+        {
+          severity: 'error',
+          autoHideDuration: 3000,
+        }
+      );
+    }
   }
 
   const columns = useMemo(
@@ -119,37 +163,74 @@ export default function UserList() {
         field: 'actions',
         type: 'actions',
         headerName: 'Acciones',
-        width: 120,
-        getActions: ({ row }) => [
-          <GridActionsCellItem
-            key="show"
-            label="Mostrar"
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  fontWeight: 500,
-                  color: 'primary.main',
-                  border: '1px solid',
-                  borderColor: 'primary.main',
-                  borderRadius: 1,
-                  px: 1.5,
-                  py: 0.5,
-                  '&:hover': {
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
-                  },
-                }}
-              >
-                Mostrar
-              </Box>
-            }
-            onClick={() => setSelectedUser(row)}
-            showInMenu={false}
-          />,
-        ],
+        width: 230,
+        getActions: ({ row }) => {
+          const actions = [
+            <GridActionsCellItem
+              key="show"
+              label="Mostrar"
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    fontWeight: 500,
+                    color: 'primary.main',
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1,
+                    px: 1.5,
+                    py: 0.5,
+                    '&:hover': {
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                    },
+                  }}
+                >
+                  Mostrar
+                </Box>
+              }
+              onClick={() => setSelectedUser(row)}
+              showInMenu={false}
+            />,
+          ];
+
+          if (
+            row.ROLE !== 'CLIENT' &&
+            row.STATUS === 'ACTIVE'
+          ) {
+            actions.push(
+              <GridActionsCellItem
+                key="deactivate"
+                label="Desactivar"
+                icon={
+                  <Box
+                    component="span"
+                    sx={{
+                      fontWeight: 500,
+                      color: 'error.main',
+                      border: '1px solid',
+                      borderColor: 'error.main',
+                      borderRadius: 1,
+                      px: 1.5,
+                      py: 0.5,
+                      '&:hover': {
+                        bgcolor: 'error.main',
+                        color: 'error.contrastText',
+                      },
+                    }}
+                  >
+                    Desactivar
+                  </Box>
+                }
+                onClick={() => handleDeactivate(row)}
+                showInMenu={false}
+              />
+            );
+          }
+          return actions;
+        },
       },
-    ]
+    ],
   );
 
   return (

@@ -39,3 +39,22 @@ export async function getUsers(filters = {}) {
 
   return data.data;
 }
+
+export async function deactivateWorker(workerId) {
+  const response = await fetch(
+    `${API_URL}/users/${workerId}/deactivate`,
+    {
+      method: 'PATCH',
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'No fue posible desactivar la cuenta.'
+    );
+  }
+
+  return data;
+}
