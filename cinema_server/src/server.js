@@ -13,6 +13,7 @@ import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_ro
 import discountRoutes from './discount_module/routes/discount_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import clientRoutes from './client_module/routes/client_routes.js';
+import authRoutes from './auth_module/routes/auth_routes.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use(cookieParser());
 app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters')));
 
 //Mount routes in the app
+app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
 app.use('/management/movies', movieRoutes);
 app.use('/management/genres', genreRoutes);
