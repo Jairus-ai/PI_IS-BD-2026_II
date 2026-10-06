@@ -66,45 +66,47 @@ export default function DiscountList() {
         field: 'DISCOUNT_NAME',
         headerName: 'Nombre',
         flex: 1,
-        minWidth: 200,
+        minWidth: 200
       },
       {
         field: 'DISCOUNT_PORCENTAGE',
         headerName: 'Porcentaje',
-        width: 100,
+        maxWidth: 100,
+        minWidth: 100,
         type: 'number',
       },
       {
         field: 'DISCOUNT_STATE',
         headerName: 'Estado',
-        width: 100,
+        maxWidth: 100,
+        minWidth: 100,
         type: 'string',
       },
       {
         field: 'actions',
         type: 'actions',
+        align: 'right',
         headerName: 'Acciones',
         flex: 1,
         minWidth: 220,
-        align: 'right',
         getActions: ({ row }: { row: Discount }) => [
           <GridActionsCellItem
             key="show"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '80px'}}>Mostrar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
             label="Mostrar"
             onClick={() => setSelectedDiscountId(row.ID_DISCOUNT)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'secondary.main', border: '1px solid', borderColor: 'secondary.main', borderRadius: '4px', padding: '0.2rem', width: '80px'}}>Editar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'secondary.main', border: '1px solid', borderColor: 'secondary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
             label="Editar"
             onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'error.main', border: '1px solid', borderColor: 'error.main', borderRadius: '4px', padding: '0.2rem', width: '80px'}}>Eliminar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'error.main', border: '1px solid', borderColor: 'error.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}

@@ -35,6 +35,9 @@ export const getDiscountList = async (req, res, next) => {
       } else {
         result.rows[i].DISCOUNT_STATE = 'activo';
       }
+
+      delete result.rows[i].DISCOUNT_FINISH_DATE;
+      delete result.rows[i].DISCOUNT_START_DATE;
     }
 
     res.status(200).json(
@@ -61,49 +64,21 @@ export const getDiscountList = async (req, res, next) => {
   }
 };
 
-export const getDiscountByName = async (req, res, next) => {
-  let connection;
-  
-  try 
-  {
-    const { name } = req.params;
+async function SnackName(connection, idSnack) {
 
-    connection = await oracledb.getConnection();
+  const request = `
+    SELECT SNACK_NAME
+    FROM PI_DEVELOPERS.SNACKS
+    WHERE ID_SNACK = :id`;
 
-    /*TODO: define better what is going to get gotten*/
-    const request = `
-      SELECT *
-      FROM PI_DEVELOPERS.DISCOUNTS
-      WHERE DISCOUNT_NAME = :name`;
 
-    const result = await connection.execute(
-      request,
-      {name: String(name)}, 
-      { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
-    );
+  const result = await connection.execute(
+    request,
+    { id: Number(idSnack) },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
 
-    res.status(200).json(
-      {
-        data: result.rows
-      }
-    );
-
-  } catch (error) 
-  {
-    next(error);
-  } finally 
-  {
-    if(connection)
-    {
-      try
-      {
-        await connection.close();
-      }catch (error)
-      {
-        console.error("Error closing connection to the database: ", error);
-      }
-    }
-  }
+  return result.rows[0]?.SNACK_NAME ?? null;
 }
 
 export const getDiscountByID = async (req, res, next) => {
@@ -132,6 +107,23 @@ export const getDiscountByID = async (req, res, next) => {
       {id: Number(id)}, 
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
+
+    for (let i = 0; i < result.rows.length; i++) {
+      const Snack = result.rows[i].ID_SNACKS;
+      const movie = result.rows[i].ID_MOVIE_IN_BILLBOARD;
+
+      if(Snack == null)
+      {
+        result.rows[i].TYPE = 'PELICULA EN CARTELERA';
+        result.rows[i].ID_FK_PRODUCT = result.rows[i].ID_MOVIE_IN_BILLBOARD;
+      }else{
+        result.rows[i].TYPE = 'SNACK';
+        result.rows[i].ID_FK_PRODUCT = await SnackName(connection, Snack);
+      }
+
+      delete result.rows[i].ID_SNACKS;
+      delete result.rows[i].ID_MOVIE_IN_BILLBOARD;
+    }
 
     res.status(200).json(
       {

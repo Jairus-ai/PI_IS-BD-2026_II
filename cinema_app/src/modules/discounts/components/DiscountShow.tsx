@@ -110,7 +110,6 @@ export default function DiscountShow({ discountId, onClose }: Props) {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            m: 1,
           }}
         >
           <CircularProgress />
@@ -125,9 +124,9 @@ export default function DiscountShow({ discountId, onClose }: Props) {
       );
     }
     return discount ? (
-    <Dialog open={discountId !== null} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}>
+    <Dialog open={discountId !== null} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2, display:'flex', alignItems:'center' } } }}>
       <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>Descuento #{discount.ID_DISCOUNT}</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent>
         {isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
             <CircularProgress />
@@ -153,11 +152,20 @@ export default function DiscountShow({ discountId, onClose }: Props) {
                 <Typography>{discount.DISCOUNT_FINISH_DATE}</Typography>
               </div>
             </div>
+            <div>
+                <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Tipo de descuento</Typography>
+                <Typography>{discount.TYPE}: {discount.ID_FK_PRODUCT}</Typography>
+              </div>
           </Box>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cerrar</Button>
+        <Button
+          onClick={onClose}
+          sx={{ border: '1px solid', borderColor: 'primary.main', width:'25rem' }}
+        >
+          Cerrar
+        </Button>
       </DialogActions>
     </Dialog>
     ) : null;

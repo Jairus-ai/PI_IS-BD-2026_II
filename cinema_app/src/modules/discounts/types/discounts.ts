@@ -5,4 +5,6 @@ export interface Discount {
   DISCOUNT_PORCENTAGE: number;
   DISCOUNT_NAME: string;
   DISCOUNT_STATE: string; //finished/active/future
+  TYPE: string;
+  ID_FK_PRODUCT: string;
 }
