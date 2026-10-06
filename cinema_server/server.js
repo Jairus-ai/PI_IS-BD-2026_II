@@ -24,7 +24,7 @@ app.use((error, req, res, next) => {
   res.status(status).json({
     message:
       status === 500
-        ? 'No fue posible cargar la información de los usuarios.'
+        ? 'No fue posible completar la operación.'
         : error.message,
   });
 });

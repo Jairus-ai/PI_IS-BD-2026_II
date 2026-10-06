@@ -23,7 +23,7 @@ app.use((error, req, res, next) => {
   res.status(status).json({
     message:
       status === 500
-        ? 'No fue posible cargar la información de los usuarios.'
+        ? 'No fue posible completar la operación.'
         : error.message,
   });
 });
@@ -222,6 +222,195 @@ describe('GET /management/users', () => {
     });
   });
 
+//Deactivates an activate workers
+  test('deactivates an active worker successfully', async () => {
+  const mockConnection = {
+    execute: jest
+      .fn()
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            ID_WORKER: 11,
+            FIRST_NAME: 'Daniel',
+            FIRST_SURNAME: 'Desactivar',
+            ROLE: 'E',
+            IS_ACTIVE: 1,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        rowsAffected: 1,
+      }),
+
+    commit: jest.fn().mockResolvedValue(),
+  };
+
+  mockGetConnection.mockResolvedValue(mockConnection);
+  mockCloseDatabaseConnection.mockResolvedValue();
+
+  const response = await request(app)
+    .patch('/management/users/11/deactivate')
+    .expect(200);
+
+  expect(response.body).toEqual({
+    message: 'La cuenta fue desactivada correctamente.',
+    data: {
+      ID_WORKER: 11,
+      STATUS: 'INACTIVE',
+    },
+  });
+
+  expect(mockConnection.execute).toHaveBeenCalledTimes(2);
+  expect(mockConnection.commit).toHaveBeenCalledTimes(1);
+  expect(mockCloseDatabaseConnection).toHaveBeenCalledTimes(1);
+});
+
+//Try deactivates an woker inactive
+  test('returns 409 when worker is already inactive', async () => {
+    const mockConnection = {
+      execute: jest.fn().mockResolvedValueOnce({
+        rows: [
+          {
+            ID_WORKER: 11,
+            FIRST_NAME: 'Daniel',
+            FIRST_SURNAME: 'Desactivar',
+            ROLE: 'E',
+            IS_ACTIVE: 0,
+          },
+        ],
+      }),
+
+      commit: jest.fn(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    const response = await request(app)
+      .patch('/management/users/11/deactivate')
+      .expect(409);
+
+    expect(response.body).toEqual({
+      message: 'La cuenta ya se encuentra inactiva.',
+    });
+
+    expect(mockConnection.execute).toHaveBeenCalledTimes(1);
+    expect(mockConnection.commit).not.toHaveBeenCalled();
+  });
+
+//Try deactivate a worker does not exist.
+  test('returns 404 when worker does not exist', async () => {
+    const mockConnection = {
+      execute: jest.fn().mockResolvedValueOnce({
+        rows: [],
+      }),
+
+      commit: jest.fn(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    const response = await request(app)
+      .patch('/management/users/99999/deactivate')
+      .expect(404);
+
+    expect(response.body).toEqual({
+      message: 'Worker not found',
+    });
+
+    expect(mockConnection.commit).not.toHaveBeenCalled();
+  });
+
+// Deactivate wrong id
+  test('returns 400 when worker ID is invalid', async () => {
+    const response = await request(app)
+      .patch('/management/users/abc/deactivate')
+      .expect(400);
+
+    expect(response.body).toEqual({
+      message: 'Invalid worker ID',
+    });
+
+    expect(mockGetConnection).not.toHaveBeenCalled();
+  });
+
+//Uptate fail 
+  test('returns 500 when deactivation fails', async () => {
+    const mockConnection = {
+      execute: jest
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              ID_WORKER: 11,
+              FIRST_NAME: 'Daniel',
+              FIRST_SURNAME: 'Desactivar',
+              ROLE: 'E',
+              IS_ACTIVE: 1,
+            },
+          ],
+        })
+        .mockRejectedValueOnce(
+          new Error('Oracle update error')
+        ),
+
+      commit: jest.fn(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    const response = await request(app)
+      .patch('/management/users/11/deactivate')
+      .expect(500);
+
+    expect(response.body).toEqual({
+      message: 'No fue posible completar la operación.',
+    });
+
+    expect(mockConnection.commit).not.toHaveBeenCalled();
+    expect(mockCloseDatabaseConnection).toHaveBeenCalledTimes(1);
+  });
+
+//Rigth id
+  test('updates the selected worker ID', async () => {
+    const mockConnection = {
+      execute: jest
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              ID_WORKER: 25,
+              FIRST_NAME: 'Ana',
+              FIRST_SURNAME: 'Mora',
+              ROLE: 'A',
+              IS_ACTIVE: 1,
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rowsAffected: 1,
+        }),
+
+      commit: jest.fn().mockResolvedValue(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    await request(app)
+      .patch('/management/users/25/deactivate')
+      .expect(200);
+
+    const [, updateBinds] =
+      mockConnection.execute.mock.calls[1];
+
+    expect(updateBinds).toEqual({
+      workerId: 25,
+    });
+  });
+
 //Oracle failure
   test('returns 500 when the database query fails', async () => {
     const mockConnection = {
@@ -238,7 +427,7 @@ describe('GET /management/users', () => {
       .expect(500);
 
     expect(response.body).toEqual({
-      message: 'No fue posible cargar la información de los usuarios.',
+      message: 'No fue posible completar la operación.',
     });
 
     expect(mockCloseDatabaseConnection).toHaveBeenCalledTimes(1);

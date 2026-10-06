@@ -238,3 +238,71 @@ export const getUsersList = async (req, res, next) => {
     await closeDatabaseConnection(connection);
   }
 };
+
+export const deactivateWorker = async (req, res, next) => {
+  let connection;
+
+  try {
+    const workerId = Number(req.params.id);
+
+    if (!Number.isInteger(workerId) || workerId <= 0) {
+      const error = new Error('Invalid worker ID');
+      error.status = 400;
+      throw error;
+    }
+
+    connection = await getConnection();
+
+    const workerResult = await connection.execute(
+      `
+        SELECT
+          ID_WORKER,
+          FIRST_NAME,
+          FIRST_SURNAME,
+          ROLE,
+          IS_ACTIVE
+        FROM PI_DEVELOPERS.WORKERS
+        WHERE ID_WORKER = :workerId
+      `,
+      { workerId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (workerResult.rows.length === 0) {
+      const error = new Error('Worker not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const worker = workerResult.rows[0];
+
+    if (worker.IS_ACTIVE === 0) {
+      const error = new Error('La cuenta ya se encuentra inactiva.');
+      error.status = 409;
+      throw error;
+    }
+
+    await connection.execute(
+      `
+        UPDATE PI_DEVELOPERS.WORKERS
+        SET IS_ACTIVE = 0
+        WHERE ID_WORKER = :workerId
+      `,
+      { workerId }
+    );
+
+    await connection.commit();
+
+    res.status(200).json({
+      message: 'La cuenta fue desactivada correctamente.',
+      data: {
+        ID_WORKER: worker.ID_WORKER,
+        STATUS: 'INACTIVE',
+      },
+    });
+  } catch (error) {
+    next(error);
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
