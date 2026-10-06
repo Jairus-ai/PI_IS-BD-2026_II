@@ -8,9 +8,11 @@ export const getDiscountList = async (req, res, next) => {
   {
     connection = await getConnection();
 
-    /*TODO: define better what is going to get gotten*/
     const request = 
-    `SELECT ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE
+    `SELECT ID_DISCOUNT, DISCOUNT_NAME, 
+      DISCOUNT_PORCENTAGE, 
+      TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE, 
+      TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE
       FROM PI_DEVELOPERS.DISCOUNTS`;
 
     const result = await connection.execute(
@@ -19,6 +21,21 @@ export const getDiscountList = async (req, res, next) => {
         outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
       }
     );
+
+    const today = new Date().toLocaleDateString('en-CA');
+
+    for (let i = 0; i < result.rows.length; i++) {
+      const SD = result.rows[i].DISCOUNT_START_DATE;
+      const FD = result.rows[i].DISCOUNT_FINISH_DATE;
+
+      if (today < SD) {
+        result.rows[i].DISCOUNT_STATE = 'próximo';
+      } else if (today > FD) {
+        result.rows[i].DISCOUNT_STATE = 'finalizado';
+      } else {
+        result.rows[i].DISCOUNT_STATE = 'activo';
+      }
+    }
 
     res.status(200).json(
       {
@@ -103,8 +120,8 @@ export const getDiscountByID = async (req, res, next) => {
       SELECT ID_DISCOUNT,
       DISCOUNT_NAME,
       DISCOUNT_PORCENTAGE,
-      TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE,
-      TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE,
+      TO_CHAR(DISCOUNT_START_DATE,  'DD/MM/YYYY') AS DISCOUNT_START_DATE,
+      TO_CHAR(DISCOUNT_FINISH_DATE, 'DD/MM/YYYY') AS DISCOUNT_FINISH_DATE,
       ID_SNACKS,
       ID_MOVIE_IN_BILLBOARD
       FROM PI_DEVELOPERS.DISCOUNTS

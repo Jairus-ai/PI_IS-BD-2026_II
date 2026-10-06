@@ -63,12 +63,6 @@ export default function DiscountList() {
   const columns = React.useMemo<GridColDef[]>(
     () => [
       {
-        field: 'ID_DISCOUNT',
-        headerName: 'ID',
-        width: 160,
-        type: 'number',
-      },
-      {
         field: 'DISCOUNT_NAME',
         headerName: 'Nombre',
         flex: 1,
@@ -76,9 +70,15 @@ export default function DiscountList() {
       },
       {
         field: 'DISCOUNT_PORCENTAGE',
-        headerName: 'Porcentaje de descuento',
-        width: 160,
+        headerName: 'Porcentaje',
+        width: 100,
         type: 'number',
+      },
+      {
+        field: 'DISCOUNT_STATE',
+        headerName: 'Estado',
+        width: 100,
+        type: 'string',
       },
       {
         field: 'actions',
@@ -90,21 +90,21 @@ export default function DiscountList() {
         getActions: ({ row }: { row: Discount }) => [
           <GridActionsCellItem
             key="show"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '80px'}}>Mostrar</Box>}
             label="Mostrar"
             onClick={() => setSelectedDiscountId(row.ID_DISCOUNT)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'secondary.main', border: '1px solid', borderColor: 'secondary.main', borderRadius: '4px', padding: '0.2rem', width: '80px'}}>Editar</Box>}
             label="Editar"
             onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'error.main', border: '1px solid', borderColor: 'error.main', borderRadius: '4px', padding: '0.2rem', width: '80px'}}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -118,12 +118,8 @@ export default function DiscountList() {
   return (
     <PageContainer
       title="Descuentos"
-      breadcrumbs={[{ title: 'Descuentos' }]}
       actions={
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-          <Button variant="outlined" size="small" /* onClick={() => refetchMovies()} */>
-            Recargar
-          </Button>
           <Button
             variant="contained"
             onClick={() => navigate('/discounts/new')}
@@ -145,9 +141,8 @@ export default function DiscountList() {
             columns={columns}
             loading={isLoadingDiscounts}
             disableRowSelectionOnClick
-            pageSizeOptions={[5, 10, 25]}
             initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
+              pagination: { paginationModel: { pageSize: 15 } },
             }}
             sx={{
               [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {

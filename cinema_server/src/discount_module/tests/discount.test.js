@@ -52,13 +52,13 @@ describe('GET /management/discounts', () => {
     jest.spyOn(oracledb, 'getConnection').mockResolvedValue(mockConnection);
 
     const response = await request(app)
-      .get('/management/discounts/BIRTHDAY')
+      .get('/management/discounts/1')
       .expect('Content-type', /json/)
       .expect(200);
 
     expect(response.body).toHaveProperty('data');
-    expect(response.body.data).toEqual(mockDiscounts);
-    expect(response.body.data).toHaveLength(2);
+    expect(response.body.data).toEqual(mockDiscounts[0]);
+    expect(response.body.data).toHaveLength(1);
     expect(mockConnection.close).toHaveBeenCalledTimes(1);
   });
 
