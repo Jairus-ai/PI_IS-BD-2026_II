@@ -174,18 +174,8 @@ export default function DiscountShow({ discountId, onClose }: Props) {
     error,
     discount,
   ]);
-
-  const pageTitle = `Discount ${discountId}`;
-
+  
   return (
-    <PageContainer
-      title={pageTitle}
-      breadcrumbs={[
-        { title: 'Discounts', path: '//discounts' },
-        { title: pageTitle },
-      ]}
-    >
-      <Box sx={{ display: 'flex', flex: 1, width: '100%' }}>{renderShow}</Box>
-    </PageContainer>
+    <Box>{renderShow}</Box>
   );
 }
