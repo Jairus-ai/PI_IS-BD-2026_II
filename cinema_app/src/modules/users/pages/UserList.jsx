@@ -10,9 +10,10 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 
-import { DataGrid } from '@mui/x-data-grid';
+import {DataGrid, GridActionsCellItem,} from '@mui/x-data-grid';
 
 import PageContainer from '../../../components/common/PageContainer';
+import UserDetailDialog from '../components/UserDetailDialog.jsx';
 import { useUsers } from '../hooks/useUsers.js';
 import { useLocations } from '../hooks/useLocations.js';
 
@@ -51,6 +52,8 @@ export default function UserList() {
     status: '',
     locationId: '',
   });
+
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const { users, loading, error } = useUsers(filters);
 
@@ -101,23 +104,6 @@ export default function UserList() {
         width: 150,
       },
       {
-        field: 'EMAIL',
-        headerName: 'Correo',
-        flex: 1,
-        minWidth: 220,
-      },
-      {
-        field: 'BIRTHDATE',
-        headerName: 'Fecha de nacimiento',
-        width: 170,
-        valueGetter: (value, row) => formatDate(row.BIRTHDATE),
-      },
-      {
-        field: 'PHONE_NUMBER',
-        headerName: 'Teléfono',
-        width: 130,
-      },
-      {
         field: 'ROLE',
         headerName: 'Rol',
         width: 150,
@@ -130,14 +116,40 @@ export default function UserList() {
         valueGetter: (value, row) => formatStatus(row.STATUS),
       },
       {
-        field: 'LOCATIONS',
-        headerName: 'Sucursales',
-        flex: 1,
-        minWidth: 180,
-        valueGetter: (value, row) => row.LOCATIONS || '-',
+        field: 'actions',
+        type: 'actions',
+        headerName: 'Acciones',
+        width: 120,
+        getActions: ({ row }) => [
+          <GridActionsCellItem
+            key="show"
+            label="Mostrar"
+            icon={
+              <Box
+                component="span"
+                sx={{
+                  fontWeight: 500,
+                  color: 'primary.main',
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 1,
+                  px: 1.5,
+                  py: 0.5,
+                  '&:hover': {
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                  },
+                }}
+              >
+                Mostrar
+              </Box>
+            }
+            onClick={() => setSelectedUser(row)}
+            showInMenu={false}
+          />,
+        ],
       },
-    ],
-    []
+    ]
   );
 
   return (
@@ -264,6 +276,11 @@ export default function UserList() {
             sx={{
               minHeight: 400,
             }}
+          />
+          <UserDetailDialog
+            user={selectedUser}
+            open={selectedUser !== null}
+            onClose={() => setSelectedUser(null)}
           />
         </Box>
       </Stack>
