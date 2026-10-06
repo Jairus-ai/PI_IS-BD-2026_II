@@ -10,6 +10,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import LayersIcon from '@mui/icons-material/Layers';
+import MovieIcon from '@mui/icons-material/Movie';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
@@ -153,11 +154,11 @@ export default function DashboardSidebar({
           >
             <DashboardSidebarHeaderItem>Main items</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
-              id="employees"
-              title="Employees"
+              id="users"
+              title="Usuarios"
               icon={<PersonIcon />}
-              href="/employees"
-              selected={!!matchPath('/employees/*', pathname) || pathname === '/'}
+              href="/users"
+              selected={!!matchPath('/users/*', pathname)}
             />
             <DashboardSidebarDividerItem />
             <DashboardSidebarHeaderItem>Example items</DashboardSidebarHeaderItem>
@@ -206,6 +207,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="movies"
               title="Películas"
+              icon={<MovieIcon />}
               href="/movies"
               selected={!!matchPath('/movies/*', pathname) || pathname === '/'}
             />
@@ -233,6 +235,9 @@ export default function DashboardSidebar({
         ...(isTemporary ? { position: 'absolute' } : {}),
         [`& .MuiDrawer-paper`]: {
           position: 'absolute',
+          top: 0,
+          bottom: 0,
+          height: '100%',
           width: drawerWidth,
           boxSizing: 'border-box',
           backgroundImage: 'none',
