@@ -1,23 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
-import FormHelperText from '@mui/material/FormHelperText';
 import Grid from '@mui/material/Grid';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent, SelectProps } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useNavigate } from 'react-router';
-import dayjs, { Dayjs } from 'dayjs';
 import type { Discount } from '../types/discounts';
 
 export interface DiscountFormState {
@@ -35,30 +23,24 @@ export interface DiscountFormProps {
     value: FormFieldValue,
   ) => void;
   onSubmit: (formValues: Partial<DiscountFormState['values']>) => Promise<void>;
-  onReset?: (formValues: Partial<DiscountFormState['values']>) => void;
   submitButtonLabel: string;
-  backButtonPath?: string;
 }
 
-export default function MovieForm(props: DiscountFormProps) {
+export default function MovieForm(props:Readonly<DiscountFormProps>) {
 const {
     formState,
     onFieldChange,
     onSubmit,
-    onReset,
     submitButtonLabel,
-    backButtonPath,
   } = props;
 
   const formValues = formState.values;
   const formErrors = formState.errors;
 
-  const navigate = useNavigate();
-
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleSubmit = React.useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.SubmitEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       setIsSubmitting(true);
@@ -91,7 +73,8 @@ const {
     [onFieldChange],
   );
 
-  const handleCheckboxFieldChange = React.useCallback(
+  //for other histories
+  /*const handleCheckboxFieldChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
       onFieldChange(event.target.name as keyof DiscountFormState['values'], checked);
     },
@@ -117,11 +100,7 @@ const {
       );
     },
     [onFieldChange],
-  );
-
-  const handleBack = React.useCallback(() => {
-    navigate(backButtonPath ?? '/discounts');
-  }, [navigate, backButtonPath]);
+  );*/
 
   return (
     <Box
@@ -196,7 +175,6 @@ const {
         <Button
           variant="contained"
           startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
         >
           Volver
         </Button>

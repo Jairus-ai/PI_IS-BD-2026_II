@@ -3,24 +3,10 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useNavigate, useParams } from 'react-router';
-import dayjs from 'dayjs';
-import { useDialogs } from '../../../hooks/useDialogs';
-import useNotifications from '../../../hooks/useNotifications';
 import {
-  getDiscounts,
-  getDiscountsByName,
   getDiscountsByID
 } from '../services/discountService';
-import PageContainer from '../../../components/common/PageContainer';
 import type { Discount } from '../types/discounts';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -28,8 +14,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
 interface Props {
-  discountId: number | null;
-  onClose: () => void;
+  readonly discountId: number | null;
+  readonly onClose: () => void;
 }
 
 export default function DiscountShow({ discountId, onClose }: Props) {
@@ -51,7 +37,7 @@ export default function DiscountShow({ discountId, onClose }: Props) {
   }, [discountId]);
 
   React.useEffect(() => {
-    loadData();
+    void loadData();
   }, [loadData]);
 
   //It'll be use later, when the edit feature is implemented
