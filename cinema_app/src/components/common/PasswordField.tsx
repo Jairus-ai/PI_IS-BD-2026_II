@@ -27,7 +27,7 @@ export default function PasswordField({
   onChange,
   onBlur,
   children
-}: PasswordFieldProps) {
+}: Readonly<PasswordFieldProps>) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (

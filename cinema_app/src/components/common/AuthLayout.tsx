@@ -38,7 +38,7 @@ type AuthLayoutProps = {
   children: ReactNode;
 };
 
-export default function AuthLayout({ title, cardWidth = 450, children }: AuthLayoutProps) {
+export default function AuthLayout({ title, cardWidth = 450, children }: Readonly<AuthLayoutProps>) {
   return (
     <AuthContainer direction="column" sx={{ justifyContent: 'center' }}>
       <Card variant="outlined" cardWidth={cardWidth}>

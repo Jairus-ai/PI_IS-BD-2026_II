@@ -10,7 +10,7 @@ type RequireSessionProps = {
   children: ReactNode;
 };
 
-export default function RequireSession({ allowedRoles, children }: RequireSessionProps) {
+export default function RequireSession({ allowedRoles, children }: Readonly<RequireSessionProps>) {
   const { user, isCheckingSession } = useSession();
   const location = useLocation();
 

@@ -9,7 +9,7 @@ import { useLogOut } from '../../modules/auth/hooks/useLogOut';
 const LOG_OUT_MESSAGE = 'Sesión cerrada correctamente';
 const NOTIFICATION_DURATION_MS = 4000;
 
-export default function LogOutButton(buttonProps: Omit<ButtonProps, 'onClick'>) {
+export default function LogOutButton(buttonProps: Readonly<Omit<ButtonProps, 'onClick'>>) {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const { endSession } = useSession();
