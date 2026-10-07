@@ -90,7 +90,7 @@ export interface DialogProps<P = undefined, R = void> {
   onClose: (result: R) => Promise<void>;
 }
 
-export interface OpenAlertDialog {
+export type OpenAlertDialog = (
   /**
    * Open an alert dialog. Returns a promise that resolves when the user
    * closes the dialog.
@@ -99,10 +99,11 @@ export interface OpenAlertDialog {
    * @param options Additional options for the dialog.
    * @returns A promise that resolves when the dialog is closed.
    */
-  (msg: React.ReactNode, options?: AlertOptions): Promise<void>;
-}
+  msg: React.ReactNode,
+  options?: AlertOptions,
+) => Promise<void>;
 
-export interface OpenConfirmDialog {
+export type OpenConfirmDialog = (
   /**
    * Open a confirmation dialog. Returns a promise that resolves to true if
    * the user confirms, false if the user cancels.
@@ -111,10 +112,11 @@ export interface OpenConfirmDialog {
    * @param options Additional options for the dialog.
    * @returns A promise that resolves to true if the user confirms, false if the user cancels.
    */
-  (msg: React.ReactNode, options?: ConfirmOptions): Promise<boolean>;
-}
+  msg: React.ReactNode,
+  options?: ConfirmOptions,
+) => Promise<boolean>;
 
-export interface OpenPromptDialog {
+export type OpenPromptDialog = (
   /**
    * Open a prompt dialog to request user input. Returns a promise that resolves to the input
    * if the user confirms, null if the user cancels.
@@ -123,12 +125,13 @@ export interface OpenPromptDialog {
    * @param options Additional options for the dialog.
    * @returns A promise that resolves to the user input if the user confirms, null if the user cancels.
    */
-  (msg: React.ReactNode, options?: PromptOptions): Promise<string | null>;
-}
+  msg: React.ReactNode,
+  options?: PromptOptions,
+) => Promise<string | null>;
 
 export type DialogComponent<P, R> = React.ComponentType<DialogProps<P, R>>;
 
-export interface OpenDialog {
+export type OpenDialog = {
   /**
    * Open a dialog without payload.
    * @param Component The dialog component to open.
@@ -150,17 +153,18 @@ export interface OpenDialog {
     payload: P,
     options?: OpenDialogOptions<R>,
   ): Promise<R>;
-}
+};
 
-export interface CloseDialog {
+export type CloseDialog = <R>(
   /**
    * Close a dialog and return a result.
    * @param dialog The dialog to close. The promise returned by `open`.
    * @param result The result to return from the dialog.
    * @returns A promise that resolves when the dialog is fully closed.
    */
-  <R>(dialog: Promise<R>, result: R): Promise<R>;
-}
+  dialog: Promise<R>,
+  result: R,
+) => Promise<R>;
 
 export interface DialogHook {
   alert: OpenAlertDialog;
@@ -192,7 +196,7 @@ export interface AlertDialogPayload extends AlertOptions {
 
 export interface AlertDialogProps extends DialogProps<AlertDialogPayload, void> {}
 
-export function AlertDialog({ open, payload, onClose }: AlertDialogProps) {
+export function AlertDialog({ open, payload, onClose }: Readonly<AlertDialogProps>) {
   const okButtonProps = useDialogLoadingButton(() => onClose());
 
   return (
@@ -217,7 +221,7 @@ export interface ConfirmDialogProps extends DialogProps<
   boolean
 > {}
 
-export function ConfirmDialog({ open, payload, onClose }: ConfirmDialogProps) {
+export function ConfirmDialog({ open, payload, onClose }: Readonly<ConfirmDialogProps>) {
   const cancelButtonProps = useDialogLoadingButton(() => onClose(false));
   const okButtonProps = useDialogLoadingButton(() => onClose(true));
 
@@ -246,7 +250,7 @@ export interface PromptDialogProps extends DialogProps<
   string | null
 > {}
 
-export function PromptDialog({ open, payload, onClose }: PromptDialogProps) {
+export function PromptDialog({ open, payload, onClose }: Readonly<PromptDialogProps>) {
   const [input, setInput] = React.useState('');
   const cancelButtonProps = useDialogLoadingButton(() => onClose(null));
 
@@ -270,7 +274,7 @@ export function PromptDialog({ open, payload, onClose }: PromptDialogProps) {
               const value = formData.get(name) ?? '';
 
               if (typeof value !== 'string') {
-                throw new Error('Value must come from a text input.');
+                throw new TypeError('Value must come from a text input.');
               }
 
               await onClose(value);

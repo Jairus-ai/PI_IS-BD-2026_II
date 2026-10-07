@@ -1,21 +1,36 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { initializeDatabasePool, closeDatabasePool } from './src/database/database.js';
-import userRoutes from './src/user_module/routes/user_routes.js';
-import locationRoutes from './src/location_module/routes/location_routes.js';
+import cookieParser from 'cookie-parser';
+
+import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
+import discountRoutes from './discount_module/routes/discount_routes.js';
+import userRoutes from './user_module/routes/user_routes.js';
+import locationRoutes from './location_module/routes/location_routes.js';
 
 dotenv.config();
 
 const port = 3000;
+const ip = '0.0.0.0';
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 
 const app = express();
 app.disable('x-powered-by');
-app.use(cors({origin: 'http://localhost:5173',credentials: true,}));
+app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
+//Mount routes in the app
+app.use('/management/discounts', discountRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
+
+// Router not found
+app.use((req, res, next) => {
+  next({ status: 404, code: 'NOT_FOUND', message: 'La ruta solicitada no existe.' });
+});
+
+// Error handler
 app.use((error, req, res, next) => {
   console.error(error);
 
@@ -32,9 +47,9 @@ app.use((error, req, res, next) => {
 async function startServer() {
   await initializeDatabasePool();
 
-  const server = app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  })
+  const server = app.listen(port, ip, () => {
+    console.log(`Server running on port ${port} IP ${ip}`);
+  });
 
   process.on('SIGINT', async () => {
     console.log("Closing server and database pool");
@@ -47,7 +62,7 @@ async function startServer() {
 
 try {
   await startServer();
-} catch(error) {
+} catch (error) {
   console.error("Unable to start the server: ", error);
   process.exit(1);
 }

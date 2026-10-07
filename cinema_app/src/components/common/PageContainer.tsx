@@ -59,11 +59,10 @@ export default function PageContainer(props: Readonly<PageContainerProps>) {
             separator={<NavigateNextRoundedIcon fontSize="small" />}
           >
             {breadcrumbs
-              ? breadcrumbs.map((breadcrumb, index) => {
-                  const key = breadcrumb.path ?? breadcrumb.title;
+              ? breadcrumbs.map((breadcrumb) => {
                   return breadcrumb.path ? (
                     <MuiLink
-                      key={key}
+                      key={breadcrumb.path}
                       component={Link}
                       underline="hover"
                       color="inherit"
@@ -73,7 +72,7 @@ export default function PageContainer(props: Readonly<PageContainerProps>) {
                     </MuiLink>
                   ) : (
                     <Typography
-                      key={key}
+                      key={breadcrumb.title}
                       sx={{ color: 'text.primary', fontWeight: 600 }}
                     >
                       {breadcrumb.title}

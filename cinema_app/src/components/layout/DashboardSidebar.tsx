@@ -159,6 +159,13 @@ export default function DashboardSidebar({
               href="/users"
               selected={!!matchPath('/users/*', pathname)}
             />
+            <DashboardSidebarPageItem
+              id="discounts"
+              title="Discounts"
+              icon={<PersonIcon />}
+              href="/discounts"
+              selected={!!matchPath('/discounts/*', pathname) || pathname === '/'}
+            />
             <DashboardSidebarDividerItem />
             <DashboardSidebarHeaderItem>Example items</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem

@@ -21,11 +21,11 @@ const RootPropsContext = React.createContext<NotificationsProviderProps | null>(
 );
 
 interface NotificationProps {
-  notificationKey: string;
-  badge: string | null;
-  open: boolean;
-  message: React.ReactNode;
-  options: ShowNotificationOptions;
+  readonly notificationKey: string;
+  readonly badge: string | null;
+  readonly open: boolean;
+  readonly message: React.ReactNode;
+  readonly options: ShowNotificationOptions;
 }
 
 function Notification({
@@ -34,7 +34,7 @@ function Notification({
   message,
   options,
   badge,
-}: Readonly<NotificationProps>) {
+}: NotificationProps) {
   const notificationsContext = React.useContext(NotificationsContext);
   if (!notificationsContext) {
     throw new Error('Notifications context was used without a provider.');

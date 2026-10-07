@@ -14,8 +14,8 @@ interface DialogStackEntry<P, R> {
 }
 
 export interface DialogProviderProps {
-  children?: React.ReactNode;
-  unmountAfter?: number;
+  readonly children?: React.ReactNode;
+  readonly unmountAfter?: number;
 }
 
 /**

@@ -37,7 +37,7 @@ export async function closeDatabaseConnection(connection) {
 
 export async function closeDatabasePool() {
   try {
-    await oracledb.getPool('connections').close(5);
+    await oracledb.getPool('default').close(5);
     console.log("Database connection pool closed");
   } catch (error) {
     console.error("Failed to close database pool: ", error);

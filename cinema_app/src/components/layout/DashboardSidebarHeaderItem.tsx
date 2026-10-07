@@ -5,12 +5,12 @@ import { DRAWER_WIDTH } from '../../theme/constants';
 import getDrawerSxTransitionMixin from '../../theme/mixins';
 
 export interface DashboardSidebarHeaderItemProps {
-  children?: React.ReactNode;
+  readonly children?: React.ReactNode;
 }
 
 export default function DashboardSidebarHeaderItem({
   children,
-}: Readonly<DashboardSidebarHeaderItemProps>) {
+}: DashboardSidebarHeaderItemProps) {
   const sidebarContext = React.useContext(DashboardSidebarContext);
   if (!sidebarContext) {
     throw new Error('Sidebar context was used without a provider.');
