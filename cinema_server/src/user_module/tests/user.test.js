@@ -88,8 +88,15 @@ describe('GET /management/users', () => {
     expect(response.body.data).toHaveLength(1);
   });
 
-//Role filter
-  test('applies role filter', async () => {
+//Filters
+test.each([
+  ['role', 'EMPLOYEE', 'role', 'EMPLOYEE'],
+  ['status', 'INACTIVE', 'status', 'INACTIVE'],
+  ['name', 'Stephannie', 'name', '%stephannie%'],
+  ['locationId', '3', 'locationId', 3],
+])(
+  'applies %s filter',
+  async (queryParam, queryValue, bindName, expectedValue) => {
     const mockConnection = {
       execute: jest.fn().mockResolvedValue({ rows: [] }),
     };
@@ -98,106 +105,33 @@ describe('GET /management/users', () => {
     mockCloseDatabaseConnection.mockResolvedValue();
 
     await request(app)
-      .get('/management/users?role=EMPLOYEE')
+      .get(`/management/users?${queryParam}=${queryValue}`)
       .expect(200);
 
     const [, binds] = mockConnection.execute.mock.calls[0];
 
-    expect(binds).toHaveProperty('role', 'EMPLOYEE');
-  });
+    expect(binds).toHaveProperty(bindName, expectedValue);
+  }
+);
 
-//Role invalit
-  test('returns 400 when role filter is invalid', async () => {
+test.each([
+  ['role', 'PIRATE', 'Invalid role filter'],
+  ['status', 'DELETED', 'Invalid status filter'],
+  ['locationId', 'abc', 'Invalid location filter'],
+])(
+  'returns 400 when %s filter is invalid',
+  async (queryParam, queryValue, expectedMessage) => {
     const response = await request(app)
-      .get('/management/users?role=PIRATE')
+      .get(`/management/users?${queryParam}=${queryValue}`)
       .expect(400);
 
     expect(response.body).toEqual({
-      message: 'Invalid role filter',
+      message: expectedMessage,
     });
 
     expect(mockGetConnection).not.toHaveBeenCalled();
-  });
-
-//Status filter (ACTIVE INACTIVE)
-  test('applies status filter', async () => {
-    const mockConnection = {
-      execute: jest.fn().mockResolvedValue({ rows: [] }),
-    };
-
-    mockGetConnection.mockResolvedValue(mockConnection);
-    mockCloseDatabaseConnection.mockResolvedValue();
-
-    await request(app)
-      .get('/management/users?status=INACTIVE')
-      .expect(200);
-
-    const [, binds] = mockConnection.execute.mock.calls[0];
-
-    expect(binds).toHaveProperty('status', 'INACTIVE');
-  });
-
-//Status invalit
-  test('returns 400 when status filter is invalid', async () => {
-    const response = await request(app)
-      .get('/management/users?status=DELETED')
-      .expect(400);
-
-    expect(response.body).toEqual({
-      message: 'Invalid status filter',
-    });
-
-    expect(mockGetConnection).not.toHaveBeenCalled();
-  });
-
-//Search by name
-  test('applies name search', async () => {
-    const mockConnection = {
-      execute: jest.fn().mockResolvedValue({ rows: [] }),
-    };
-
-    mockGetConnection.mockResolvedValue(mockConnection);
-    mockCloseDatabaseConnection.mockResolvedValue();
-
-    await request(app)
-      .get('/management/users?name=Stephannie')
-      .expect(200);
-
-    const [, binds] = mockConnection.execute.mock.calls[0];
-
-    expect(binds).toHaveProperty('name', '%stephannie%');
-  });
-
-//Location filter
-  test('applies location filter', async () => {
-    const mockConnection = {
-      execute: jest.fn().mockResolvedValue({ rows: [] }),
-    };
-
-    mockGetConnection.mockResolvedValue(mockConnection);
-    mockCloseDatabaseConnection.mockResolvedValue();
-
-    await request(app)
-      .get('/management/users?locationId=3')
-      .expect(200);
-
-    const [, binds] = mockConnection.execute.mock.calls[0];
-
-    expect(binds).toHaveProperty('locationId', 3);
-  });
-
-//Location invalit
-  test('returns 400 when location filter is invalid', async () => {
-    const response = await request(app)
-      .get('/management/users?locationId=abc')
-      .expect(400);
-
-    expect(response.body).toEqual({
-      message: 'Invalid location filter',
-    });
-
-    expect(mockGetConnection).not.toHaveBeenCalled();
-  });
+  }
+);
 
 //Multiple filters
   test('supports multiple filters at the same time', async () => {
