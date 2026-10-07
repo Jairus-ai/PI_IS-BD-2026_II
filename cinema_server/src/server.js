@@ -2,11 +2,20 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 
 import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
+import movieRoutes from './movie_module/routes/movie_routes.js';
+import genreRoutes from './movie_module/routes/genre_routes.js';
+import languageRoutes from './movie_module/routes/language_routes.js';
+import ratingRoutes from './movie_module/routes/rating_routes.js';
+import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
 import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
+import { globalErrorHandler } from './middleware/errorHandler.js';
+import clientRoutes from './client_module/routes/client_routes.js';
+import authRoutes from './auth_module/routes/auth_routes.js';
 
 dotenv.config();
 
@@ -20,7 +29,17 @@ app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
+// Route for poster images
+app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters')));
+
 //Mount routes in the app
+app.use('/auth', authRoutes);
+app.use('/clients', clientRoutes);
+app.use('/management/movies', movieRoutes);
+app.use('/management/genres', genreRoutes);
+app.use('/management/languages', languageRoutes);
+app.use('/management/ratings', ratingRoutes);
+app.use('/management/audiovisual_format', audiovisualFormatRoutes);
 app.use('/management/discounts', discountRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
@@ -43,6 +62,7 @@ app.use((error, req, res, next) => {
         : error.message,
   });
 });
+app.use(globalErrorHandler);
 
 async function startServer() {
   await initializeDatabasePool();

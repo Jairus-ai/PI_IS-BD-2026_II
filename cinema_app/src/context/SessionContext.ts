@@ -1,7 +1,19 @@
 import { createContext } from 'react';
 
+export const ROLES = {
+  CLIENT: 'CLIENT',
+  SUPERUSER: 'SUPERUSER',
+  ADMINISTRATOR: 'ADMINISTRATOR',
+  EMPLOYEE: 'EMPLOYEE'
+} as const;
+
+export type Role = (typeof ROLES)[keyof typeof ROLES];
+
+export const WORKER_ROLES: Role[] = [ROLES.SUPERUSER, ROLES.ADMINISTRATOR, ROLES.EMPLOYEE];
+
 export interface SessionUser {
-  idClient: number;
+  id: number;
+  role: Role;
   email: string;
   firstName: string;
   firstSurname: string;
@@ -10,6 +22,7 @@ export interface SessionUser {
 export interface SessionContextValue {
   user: SessionUser | null;
   isLoggedIn: boolean;
+  isCheckingSession: boolean;
   startSession: (user: SessionUser) => void;
   endSession: () => void;
 }

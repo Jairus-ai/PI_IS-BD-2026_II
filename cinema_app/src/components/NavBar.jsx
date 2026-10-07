@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import logo from '../assets/logo.png'
 import useSession from '../hooks/useSession'
+import LogOutButton from './common/LogOutButton'
 
 function NavBar()
 {
@@ -10,10 +11,13 @@ function NavBar()
         <div id = "navigationBar">
             <img id = "logoImageNavBar" src={logo} alt="logo" />
             {isLoggedIn ? (
-                <p id = "welcomeMessage" className='detailTextBold'>Bienvenido, {user.firstName}</p>
+                <div id = "sessionButtons">
+                    <p id = "welcomeMessage" className='detailTextBold'>Bienvenido, {user.firstName}</p>
+                    <LogOutButton id = "logOutButton" color = "inherit" />
+                </div>
             ) : (
                 <div id = "sessionButtons">
-                    <p id = "logInButton" className='detailTextBold'>Iniciar Sesión</p>
+                    <Link id = "logInButton" className='detailTextBold' to="/login">Iniciar Sesión</Link>
                     <Link id = "signUpButton" className='detailTextBold' to="/register">Registrarse</Link>
                 </div>
             )}

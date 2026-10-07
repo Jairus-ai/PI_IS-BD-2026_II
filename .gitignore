@@ -1,6 +1,9 @@
 */node_modules
 *.env
 
+# Poster images
+uploads/
+
 # Logs
 *logs
 *.log
