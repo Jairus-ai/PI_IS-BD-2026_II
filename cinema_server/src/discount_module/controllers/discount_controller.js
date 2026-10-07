@@ -109,11 +109,17 @@ export const getDiscountByID = async (req, res, next) =>
       )
     );
 
+    const movieNames = await Promise.all(
+      result.rows.map(row =>
+        row.ID_MOVIE_IN_BILLBOARD == null ? null : movieNames(connection, row.ID_MOVIE_IN_BILLBOARD)
+      )
+    );
+
     for (const [index, row] of result.rows.entries()) {
       if (row.ID_SNACKS == null)
       {
         row.TYPE = 'PELICULA EN CARTELERA';
-        row.NAME_FK_PRODUCT = row.ID_MOVIE_IN_BILLBOARD;
+        row.NAME_FK_PRODUCT = movieNames[index];
       }else{
         row.TYPE = 'SNACK';
         row.NAME_FK_PRODUCT = snackNames[index];
@@ -192,7 +198,7 @@ export const addDiscount = async (req, res, next) =>
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
 
-    const lastId = result.rows[0].LAST_ID ?? 0;   // 121, o 0 si la tabla está vacía
+    const lastId = result.rows[0].LAST_ID ?? 0;
     const newId = lastId + 1;  
 
     const { DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE,  ID_FK_PRODUCT } = req.body;
