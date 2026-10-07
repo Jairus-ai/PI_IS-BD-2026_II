@@ -32,7 +32,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
     <Box component="form" id={formId} onSubmit={form.handleSubmit} noValidate autoComplete="off">
       <Stack spacing={2}>
         <TextField
-          label="TÃ­tulo"
+          label="Título"
           value={form.title}
           onChange={form.handleTitleChange}
           onBlur={form.handleBlur('MOVIE_TITLE')}
@@ -56,7 +56,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <DatePicker
-              label="AÃ±o de publicaciÃ³n"
+              label="Año de publicación"
               views={['year']}
               openTo="year"
               value={form.yearDate}
@@ -72,7 +72,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
               }}
             />
             <TimePicker
-              label="DuraciÃ³n"
+              label="Duración"
               views={['hours', 'minutes']}
               format="H:mm"
               ampm={false}
@@ -91,17 +91,17 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
           </Stack>
         </LocalizationProvider>
         <FormControl fullWidth required error={err('ID_RATING')}>
-          <InputLabel id="movie-rating-label">ClasificaciÃ³n</InputLabel>
+          <InputLabel id="movie-rating-label">Clasificación</InputLabel>
           <Select
             labelId="movie-rating-label"
             value={form.ratingId}
-            label="ClasificaciÃ³n"
+            label="Clasificación"
             onChange={(e) => form.handleRatingChange(e.target.value as number)}
             onBlur={form.handleBlur('ID_RATING')}
           >
             {(form.catalogs.ratings as Rating[]).map((r) => (
               <MenuItem key={r.ID_RATING} value={r.ID_RATING}>
-                {r.RATING_CODE} â€” {r.RATING_NAME}
+                {r.RATING_CODE} - {r.RATING_NAME}
               </MenuItem>
             ))}
           </Select>
@@ -118,7 +118,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
           renderInput={(params) => (
             <TextField
               {...params}
-              label="GÃ©neros"
+              label="Géneros"
               required
               error={err('GENRE_IDS')}
               helperText={<FieldError show={err('GENRE_IDS')} message={firstError(form.fieldErrors.GENRE_IDS)} />}
@@ -203,7 +203,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
         />
         <Box>
           <Typography variant="overline" sx={{ color: 'primary.dark' }}>
-            PÃ³ster
+            Póster
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start', mt: 1 }}>
             <Button variant="outlined" component="label">
@@ -219,7 +219,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
               <Box
                 component="img"
                 src={form.previewSrc}
-                alt="PÃ³ster de la pelÃ­cula"
+                alt="Póster de la película"
                 sx={{ width: 120, borderRadius: 1, objectFit: 'cover' }}
               />
             ) : (
@@ -231,7 +231,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
         </Box>
         <RequiredFieldsHint />
         {form.saving ? (
-          <Alert severity="info">{form.isCreate ? 'Subiendo pÃ³ster y creando pelÃ­culaâ€¦' : 'Subiendo pÃ³ster y actualizando pelÃ­culaâ€¦'}</Alert>
+          <Alert severity="info">{form.isCreate ? 'Subiendo póster y creando película' : 'Subiendo póster y actualizando póster de la película'}</Alert>
         ) : null}
       </Stack>
     </Box>
