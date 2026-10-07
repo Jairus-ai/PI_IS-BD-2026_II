@@ -2,7 +2,9 @@ import * as React from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import {
   DataGrid,
   GridActionsCellItem,
@@ -16,6 +18,9 @@ import useNotifications from '../../../hooks/useNotifications';
 import PageContainer from '../../../components/common/PageContainer';
 import type { Discount } from '../types/discounts';
 import DiscountShow from '../components/DiscountShow';
+import DiscountCreate from '../components/DiscountCreate';
+import RefreshIcon from '@mui/icons-material/Refresh';
+
 
 export default function DiscountList() {
   const navigate = useNavigate();
@@ -25,7 +30,7 @@ export default function DiscountList() {
   const [selectedDiscountId, setSelectedDiscountId] = React.useState<number | null>(null);
 
   // Uncomment delete and refetch once implemented.
-  const { discounts, isLoadingDiscounts, discountsError, /* deleteDiscount, refetchDiscounts */ } = useDiscounts();
+  const { discounts, isLoadingDiscounts, discountsError, /*deleteDiscount,*/ refetchDiscounts } = useDiscounts();
 
   const handleRowDelete = React.useCallback(
     (discount: Discount) => async () => {
@@ -117,16 +122,25 @@ export default function DiscountList() {
     [navigate, handleRowDelete],
   );
 
+  const [createOpen, setCreateOpen] = React.useState(false);
+
   return (
     <PageContainer
       title="Descuentos"
       actions={
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Tooltip title="Reload data" placement="right" enterDelay={1000}>
+            <div>
+              <IconButton size="small" aria-label="refresh" onClick={() => void refetchDiscounts()}>
+                <RefreshIcon />
+              </IconButton>
+            </div>
+          </Tooltip>
           <Button
             variant="contained"
-            onClick={() => navigate('/discounts/new')}
+            onClick={() => setCreateOpen(true)}
           >
-            Crear Descuento
+            Añadir Descuento
           </Button>
         </Stack>
       }
@@ -154,6 +168,11 @@ export default function DiscountList() {
           />
         )}
         <DiscountShow discountId={selectedDiscountId} onClose={() => setSelectedDiscountId(null)}/>
+          <DiscountCreate
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            onCreated={refetchDiscounts}
+          />
       </Box>
     </PageContainer>
   );

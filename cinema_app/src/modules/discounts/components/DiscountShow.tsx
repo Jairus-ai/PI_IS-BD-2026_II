@@ -140,7 +140,7 @@ export default function DiscountShow({ discountId, onClose }: Props) {
             </div>
             <div>
                 <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Tipo de descuento</Typography>
-                <Typography>{discount.TYPE}: {discount.ID_FK_PRODUCT}</Typography>
+                <Typography>{discount.TYPE}: {discount.NAME_FK_PRODUCT}</Typography>
               </div>
           </Box>
         )}
