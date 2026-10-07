@@ -25,7 +25,7 @@ export interface ShowNotificationOptions {
   onAction?: () => void;
 }
 
-export interface ShowNotification {
+export type ShowNotification = (
   /**
    * Show a snackbar in the application.
    *
@@ -34,17 +34,18 @@ export interface ShowNotification {
    * @returns The key that represents the notification. Useful for programmatically
    * closing it.
    */
-  (message: React.ReactNode, options?: ShowNotificationOptions): string;
-}
+  message: React.ReactNode,
+  options?: ShowNotificationOptions,
+) => string;
 
-export interface CloseNotification {
+export type CloseNotification = (
   /**
    * Close a snackbar in the application.
    *
    * @param key The key of the notification to close.
    */
-  (key: string): void;
-}
+  key: string,
+) => void;
 
 interface UseNotifications {
   show: ShowNotification;

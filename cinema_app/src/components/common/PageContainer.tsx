@@ -47,7 +47,7 @@ export interface PageContainerProps extends ContainerProps {
   actions?: React.ReactNode;
 }
 
-export default function PageContainer(props: PageContainerProps) {
+export default function PageContainer(props: Readonly<PageContainerProps>) {
   const { children, breadcrumbs, title, actions = null } = props;
 
   return (
@@ -59,10 +59,10 @@ export default function PageContainer(props: PageContainerProps) {
             separator={<NavigateNextRoundedIcon fontSize="small" />}
           >
             {breadcrumbs
-              ? breadcrumbs.map((breadcrumb, index) => {
+              ? breadcrumbs.map((breadcrumb) => {
                   return breadcrumb.path ? (
                     <MuiLink
-                      key={index}
+                      key={breadcrumb.path}
                       component={Link}
                       underline="hover"
                       color="inherit"
@@ -72,7 +72,7 @@ export default function PageContainer(props: PageContainerProps) {
                     </MuiLink>
                   ) : (
                     <Typography
-                      key={index}
+                      key={breadcrumb.title}
                       sx={{ color: 'text.primary', fontWeight: 600 }}
                     >
                       {breadcrumb.title}

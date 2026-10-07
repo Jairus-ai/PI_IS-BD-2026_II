@@ -3,12 +3,12 @@ import oracledb from 'oracledb';
 
 import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 import { validateClientRegistration } from '../validators/client_validator.js';
-import { createSessionToken, setSessionCookie } from '../../session/session.js';
+import { ROLES, createSessionToken, setSessionCookie } from '../../session/session.js';
 import emailService from '../../email/email_service.js';
 
 const HASH_SALT_ROUNDS = 10;
 const UNIQUE_CONSTRAINT_ERROR = 1;
-const CLIENT_ROLE = 'CLIENT';
+const INITIAL_SESSION_VERSION = 0;
 const DUPLICATE_FIELD_ERRORS = {
   UQ_CLIENT_EMAIL: { email: 'Ya existe un usuario con ese correo' },
   UQ_CLIENT_IDENTIFICATION: { identificationNumber: 'Ya existe un usuario con esa identificación' }
@@ -70,7 +70,11 @@ export const registerClient = async (req, res, next) => {
     const idClient = clientResult.outBinds.idClient[0];
 
     await connection.execute(INSERT_CREDENTIAL_SQL, { passwordHash, idClient });
-    const sessionToken = createSessionToken({ id: idClient, role: CLIENT_ROLE });
+    const sessionToken = createSessionToken({
+      id: idClient,
+      role: ROLES.CLIENT,
+      sessionVersion: INITIAL_SESSION_VERSION
+    });
     await connection.commit();
 
     emailService.sendWelcomeEmail(client).catch((error) => {
@@ -80,7 +84,8 @@ export const registerClient = async (req, res, next) => {
     
     res.status(201).json({
       data: {
-        idClient,
+        id: idClient,
+        role: ROLES.CLIENT,
         email: client.email,
         firstName: client.firstName,
         firstSurname: client.firstSurname

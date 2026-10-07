@@ -2,7 +2,9 @@ import * as React from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import {
   DataGrid,
   GridActionsCellItem,
@@ -15,14 +17,20 @@ import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
 import PageContainer from '../../../components/common/PageContainer';
 import type { Discount } from '../types/discounts';
+import DiscountShow from '../components/DiscountShow';
+import DiscountCreate from '../components/DiscountCreate';
+import RefreshIcon from '@mui/icons-material/Refresh';
+
 
 export default function DiscountList() {
   const navigate = useNavigate();
   const dialogs = useDialogs();
   const notifications = useNotifications();
 
+  const [selectedDiscountId, setSelectedDiscountId] = React.useState<number | null>(null);
+
   // Uncomment delete and refetch once implemented.
-  const { discounts, isLoadingDiscounts, discountsError, /* deleteDiscount, refetchDiscounts */ } = useDiscounts();
+  const { discounts, isLoadingDiscounts, discountsError, /*deleteDiscount,*/ refetchDiscounts } = useDiscounts();
 
   const handleRowDelete = React.useCallback(
     (discount: Discount) => async () => {
@@ -39,7 +47,7 @@ export default function DiscountList() {
       if (confirmed) {
         try {
           // await deleteDiscount(discount.ID_DISCOUNTS);
-          notifications.show('Descuent eliminado correctamente.', {
+          notifications.show('Descuento eliminado correctamente.', {
             severity: 'success',
             autoHideDuration: 3000,
           });
@@ -63,39 +71,47 @@ export default function DiscountList() {
         field: 'DISCOUNT_NAME',
         headerName: 'Nombre',
         flex: 1,
-        minWidth: 200,
+        minWidth: 200
       },
       {
         field: 'DISCOUNT_PORCENTAGE',
-        headerName: 'Porcentaje de descuento',
-        width: 160,
+        headerName: 'Porcentaje',
+        maxWidth: 100,
+        minWidth: 100,
         type: 'number',
+      },
+      {
+        field: 'DISCOUNT_STATE',
+        headerName: 'Estado',
+        maxWidth: 100,
+        minWidth: 100,
+        type: 'string',
       },
       {
         field: 'actions',
         type: 'actions',
+        align: 'right',
         headerName: 'Acciones',
         flex: 1,
         minWidth: 220,
-        align: 'right',
         getActions: ({ row }: { row: Discount }) => [
           <GridActionsCellItem
             key="show"
-            icon={<span style={{ fontWeight: 500 }}>Mostrar</span>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
             label="Mostrar"
-            onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}`)}
+            onClick={() => setSelectedDiscountId(row.ID_DISCOUNT)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<span style={{ fontWeight: 500 }}>Editar</span>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'secondary.main', border: '1px solid', borderColor: 'secondary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
             label="Editar"
             onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<span style={{ fontWeight: 500, color: '#d32f2f' }}>Eliminar</span>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'error.main', border: '1px solid', borderColor: 'error.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -106,20 +122,25 @@ export default function DiscountList() {
     [navigate, handleRowDelete],
   );
 
+  const [createOpen, setCreateOpen] = React.useState(false);
+
   return (
     <PageContainer
       title="Descuentos"
-      breadcrumbs={[{ title: 'Descuentos' }]}
       actions={
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-          <Button variant="outlined" size="small" /* onClick={() => refetchMovies()} */>
-            Recargar
-          </Button>
+          <Tooltip title="Reload data" placement="right" enterDelay={1000}>
+            <div>
+              <IconButton size="small" aria-label="refresh" onClick={() => void refetchDiscounts()}>
+                <RefreshIcon />
+              </IconButton>
+            </div>
+          </Tooltip>
           <Button
             variant="contained"
-            onClick={() => navigate('/discounts/new')}
+            onClick={() => setCreateOpen(true)}
           >
-            Crear Película
+            Añadir Descuento
           </Button>
         </Stack>
       }
@@ -136,9 +157,8 @@ export default function DiscountList() {
             columns={columns}
             loading={isLoadingDiscounts}
             disableRowSelectionOnClick
-            pageSizeOptions={[5, 10, 25]}
             initialState={{
-              pagination: { paginationModel: { pageSize: 10 } },
+              pagination: { paginationModel: { pageSize: 15 } },
             }}
             sx={{
               [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
@@ -147,6 +167,12 @@ export default function DiscountList() {
             }}
           />
         )}
+        <DiscountShow discountId={selectedDiscountId} onClose={() => setSelectedDiscountId(null)}/>
+          <DiscountCreate
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            onCreated={refetchDiscounts}
+          />
       </Box>
     </PageContainer>
   );

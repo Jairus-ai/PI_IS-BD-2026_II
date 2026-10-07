@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { useMemo, useState, type ChangeEvent, type FocusEvent, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -7,14 +7,20 @@ import FormLabel from '@mui/material/FormLabel';
 import LinearProgress from '@mui/material/LinearProgress';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
-import MuiCard from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { esES } from '@mui/x-date-pickers/locales';
+import dayjs, { type Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
 import { isAxiosError } from 'axios';
 
-import logo from '../../../assets/logo.png';
+import AuthLayout from '../../../components/common/AuthLayout';
+import PasswordField from '../../../components/common/PasswordField';
+import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useNotifications from '../../../hooks/useNotifications';
 import useSession from '../../../hooks/useSession';
 import type { SessionUser } from '../../../context/SessionContext';
@@ -22,12 +28,14 @@ import { useRegisterClient } from '../hooks/useRegisterClient';
 import {
   checkPasswordStrength,
   MINIMUM_PASSWORD_SCORE,
-  validateClientForm
+  validateClientForm,
+  validateRequiredField
 } from '../validators/clientValidator';
 
 type ClientFormValues = {
   email: string;
   password: string;
+  confirmPassword: string;
   firstName: string;
   middleName: string;
   firstSurname: string;
@@ -43,6 +51,7 @@ type ClientFormErrors = Partial<Record<keyof ClientFormValues, string>>;
 const INITIAL_VALUES: ClientFormValues = {
   email: '',
   password: '',
+  confirmPassword: '',
   firstName: '',
   middleName: '',
   firstSurname: '',
@@ -65,30 +74,15 @@ type RegisterErrorResponse = {
   passwordSuggestions?: string[];
 };
 
+const BIRTHDATE_FORMAT = 'DD/MM/YYYY';
+const DATE_PICKER_TEXT = esES.components.MuiLocalizationProvider.defaultProps.localeText;
+const API_DATE_FORMAT = 'YYYY-MM-DD';
+
+type RegisterResponse = {
+  data: SessionUser;
+};
+
 const GENERIC_ERROR_MESSAGE = 'No se pudo completar el registro. Intenta de nuevo.';
-
-const Card = styled(MuiCard)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignSelf: 'center',
-  width: '100%',
-  padding: theme.spacing(4),
-  gap: theme.spacing(2),
-  margin: 'auto',
-  boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
-  [theme.breakpoints.up('sm')]: {
-    width: '560px'
-  }
-}));
-
-const SignUpContainer = styled(Stack)(({ theme }) => ({
-  minHeight: '100dvh',
-  backgroundColor: theme.palette.background.default,
-  padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(4)
-  }
-}));
 
 type FormFieldProps = Omit<TextFieldProps, 'name' | 'onChange'> & {
   label: string;
@@ -102,7 +96,7 @@ type FormFieldProps = Omit<TextFieldProps, 'name' | 'onChange'> & {
 function FormField({ label, name, values, errors, onChange, ...textFieldProps }: FormFieldProps) {
   return (
     <FormControl fullWidth>
-      <FormLabel htmlFor={name}>{label}</FormLabel>
+      <FormLabel htmlFor={name} required={textFieldProps.required}>{label}</FormLabel>
       <TextField
         id={name}
         name={name}
@@ -141,9 +135,31 @@ export default function ClientSignUp() {
     setErrors((previousErrors) => ({ ...previousErrors, [name]: undefined }));
   };
 
-  const handleRegisterSuccess = ({ data }: { data: SessionUser }) => {
-    startSession(data);
-    notifications.show(`¡Bienvenido, ${data.firstName}! Tu cuenta fue creada.`, {
+  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    const requiredError = validateRequiredField(name, value);
+    if (requiredError) {
+      setErrors((previousErrors) => ({ ...previousErrors, [name]: requiredError }));
+    }
+  };
+
+  const handleBirthdateBlur = () => {
+    const requiredError = validateRequiredField('birthdate', values.birthdate);
+    if (requiredError) {
+      setErrors((previousErrors) => ({ ...previousErrors, birthdate: requiredError }));
+    }
+  };
+
+  const handleBirthdateChange = (birthdate: Dayjs | null) => {
+    const formattedBirthdate = birthdate?.isValid() ? birthdate.format(API_DATE_FORMAT) : '';
+    setValues((previousValues) => ({ ...previousValues, birthdate: formattedBirthdate }));
+    setErrors((previousErrors) => ({ ...previousErrors, birthdate: undefined }));
+  };
+
+  const handleRegisterSuccess = (response: RegisterResponse) => {
+    const client = response.data;
+    startSession(client);
+    notifications.show(`¡Bienvenido, ${client.firstName}! Tu cuenta fue creada.`, {
       severity: 'success',
       autoHideDuration: 5000
     });
@@ -172,119 +188,140 @@ export default function ClientSignUp() {
       return;
     }
 
-    register(values, { onSuccess: handleRegisterSuccess, onError: handleRegisterError });
+    const { confirmPassword: _confirmPassword, ...client } = values;
+    register(client, { onSuccess: handleRegisterSuccess, onError: handleRegisterError });
   };
 
-  const fieldProps = { values, errors, onChange: handleChange };
+  const fieldProps = { values, errors, onChange: handleChange, onBlur: handleBlur };
   const isPasswordWeak = Boolean(values.password) && passwordStrength.score < MINIMUM_PASSWORD_SCORE;
 
   return (
-    <SignUpContainer direction="column" sx={{ justifyContent: 'center' }}>
-      <Card variant="outlined">
-        <Box component="img" src={logo} alt="CinePI" sx={{ height: 48, alignSelf: 'flex-start' }} />
-        <Typography component="h1" variant="h4" sx={{ fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}>
-          Crear cuenta
-        </Typography>
-        <Box
-          component="form"
-          noValidate
-          onSubmit={handleSubmit}
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+    <AuthLayout title="Crear cuenta" cardWidth={560}>
+      <Box
+        component="form"
+        noValidate
+        onSubmit={handleSubmit}
+        sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+      >
+        <RequiredFieldsHint />
+
+        <FormField
+          label="Correo electrónico"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="tu@correo.com"
+          required
+          {...fieldProps}
+        />
+
+        <PasswordField
+          label="Contraseña"
+          name="password"
+          value={values.password}
+          error={errors.password}
+          onChange={handleChange}
+          onBlur={handleBlur}
         >
+          {values.password && (
+            <Box sx={{ mt: 1 }}>
+              <LinearProgress
+                variant="determinate"
+                value={(passwordStrength.score + 1) * 20}
+                color={isPasswordWeak ? 'error' : 'success'}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Seguridad: {PASSWORD_STRENGTH_LABELS[passwordStrength.score]}
+              </Typography>
+            </Box>
+          )}
+          {isPasswordWeak && passwordSuggestions.length > 0 && (
+            <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+              {passwordSuggestions.map((suggestion) => (
+                <Typography component="li" variant="caption" key={suggestion}>
+                  {suggestion}
+                </Typography>
+              ))}
+            </Box>
+          )}
+        </PasswordField>
+
+        <PasswordField
+          label="Confirmar contraseña"
+          name="confirmPassword"
+          value={values.confirmPassword}
+          error={errors.confirmPassword}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <FormField label="Nombre" name="firstName" autoComplete="given-name" required {...fieldProps} />
+          <FormField label="Segundo nombre (opcional)" name="middleName" {...fieldProps} />
+        </Stack>
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <FormField label="Primer apellido" name="firstSurname" autoComplete="family-name" required {...fieldProps} />
+          <FormField label="Segundo apellido (opcional)" name="lastSurname" {...fieldProps} />
+        </Stack>
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Box sx={{ minWidth: { sm: 170 } }}>
+            <FormField label="Tipo de identificación" name="identificationType" select required {...fieldProps}>
+              {IDENTIFICATION_TYPES.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
+                </MenuItem>
+              ))}
+            </FormField>
+          </Box>
+          <FormField label="Número de identificación" name="identificationNumber" required {...fieldProps} />
+        </Stack>
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <FormControl fullWidth>
+            <FormLabel htmlFor="birthdate" required>Fecha de nacimiento</FormLabel>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es" localeText={DATE_PICKER_TEXT}>
+              <DatePicker
+                value={values.birthdate ? dayjs(values.birthdate) : null}
+                onChange={handleBirthdateChange}
+                format={BIRTHDATE_FORMAT}
+                openTo="year"
+                views={['year', 'month', 'day']}
+                disableFuture
+                slotProps={{
+                  textField: {
+                    id: 'birthdate',
+                    fullWidth: true,
+                    required: true,
+                    onBlur: handleBirthdateBlur,
+                    error: Boolean(errors.birthdate),
+                    helperText: errors.birthdate
+                  }
+                }}
+              />
+            </LocalizationProvider>
+          </FormControl>
           <FormField
-            label="Correo electrónico"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@correo.com"
+            label="Celular"
+            name="phoneNumber"
+            type="tel"
+            autoComplete="tel"
+            placeholder="8888-8888"
             required
             {...fieldProps}
           />
+        </Stack>
 
-          <FormControl fullWidth>
-            <FormLabel htmlFor="password">Contraseña</FormLabel>
-            <TextField
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              required
-              fullWidth
-              value={values.password}
-              onChange={handleChange}
-              error={Boolean(errors.password)}
-              helperText={errors.password}
-            />
-            {values.password && (
-              <Box sx={{ mt: 1 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={(passwordStrength.score + 1) * 20}
-                  color={isPasswordWeak ? 'error' : 'success'}
-                />
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  Seguridad: {PASSWORD_STRENGTH_LABELS[passwordStrength.score]}
-                </Typography>
-              </Box>
-            )}
-            {isPasswordWeak && passwordSuggestions.length > 0 && (
-              <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
-                {passwordSuggestions.map((suggestion) => (
-                  <Typography component="li" variant="caption" key={suggestion}>
-                    {suggestion}
-                  </Typography>
-                ))}
-              </Box>
-            )}
-          </FormControl>
-
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <FormField label="Nombre" name="firstName" autoComplete="given-name" required {...fieldProps} />
-            <FormField label="Segundo nombre (opcional)" name="middleName" {...fieldProps} />
-          </Stack>
-
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <FormField label="Primer apellido" name="firstSurname" autoComplete="family-name" required {...fieldProps} />
-            <FormField label="Segundo apellido (opcional)" name="lastSurname" {...fieldProps} />
-          </Stack>
-
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Box sx={{ minWidth: { sm: 170 } }}>
-              <FormField label="Tipo de identificación" name="identificationType" select required {...fieldProps}>
-                {IDENTIFICATION_TYPES.map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    {type.label}
-                  </MenuItem>
-                ))}
-              </FormField>
-            </Box>
-            <FormField label="Número de identificación" name="identificationNumber" required {...fieldProps} />
-          </Stack>
-
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <FormField label="Fecha de nacimiento" name="birthdate" type="date" required {...fieldProps} />
-            <FormField
-              label="Celular"
-              name="phoneNumber"
-              type="tel"
-              autoComplete="tel"
-              placeholder="8888-8888"
-              required
-              {...fieldProps}
-            />
-          </Stack>
-
-          <Button type="submit" fullWidth variant="contained" disabled={isRegistering}>
-            {isRegistering ? 'Registrando…' : 'Registrarme'}
-          </Button>
-        </Box>
-        <Typography sx={{ textAlign: 'center' }}>
-          <Link component={RouterLink} to="/" variant="body2">
-            Volver al inicio
-          </Link>
-        </Typography>
-      </Card>
-    </SignUpContainer>
+        <Button type="submit" fullWidth variant="contained" disabled={isRegistering}>
+          {isRegistering ? 'Registrando…' : 'Registrarme'}
+        </Button>
+      </Box>
+      <Typography sx={{ textAlign: 'center' }}>
+        <Link component={RouterLink} to="/" variant="body2">
+          Volver al inicio
+        </Link>
+      </Typography>
+    </AuthLayout>
   );
 }

@@ -36,7 +36,7 @@ function Billboard()
       }
     ]
     
-    {/*return(
+    /*return(
         <div id = "billboard">
             <div>
                 <p className='titleTextBold'>Cartelera</p>
@@ -60,7 +60,7 @@ function Billboard()
                 <img className='arrow' src={rightArrow} alt="" />
             </div>
         </div>
-    )*/}
+    )*/
 
     return (
     <div id="billboard">

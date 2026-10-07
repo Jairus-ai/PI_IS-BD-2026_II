@@ -17,6 +17,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { AudiovisualFormat, Director, Genre, Language, Rating } from '../types/movies';
 import { firstError } from '../utils/movieFormUtils';
+import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import type { MovieForm } from '../hooks/useMovieForm';
 
 function FieldError({ show, message }: { show: boolean | undefined; message: string }) {
@@ -31,7 +32,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
     <Box component="form" id={formId} onSubmit={form.handleSubmit} noValidate autoComplete="off">
       <Stack spacing={2}>
         <TextField
-          label="Título"
+          label="TÃ­tulo"
           value={form.title}
           onChange={form.handleTitleChange}
           onBlur={form.handleBlur('MOVIE_TITLE')}
@@ -55,7 +56,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <DatePicker
-              label="Año de publicación"
+              label="AÃ±o de publicaciÃ³n"
               views={['year']}
               openTo="year"
               value={form.yearDate}
@@ -71,7 +72,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
               }}
             />
             <TimePicker
-              label="Duración"
+              label="DuraciÃ³n"
               views={['hours', 'minutes']}
               format="H:mm"
               ampm={false}
@@ -90,17 +91,17 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
           </Stack>
         </LocalizationProvider>
         <FormControl fullWidth required error={err('ID_RATING')}>
-          <InputLabel id="movie-rating-label">Clasificación</InputLabel>
+          <InputLabel id="movie-rating-label">ClasificaciÃ³n</InputLabel>
           <Select
             labelId="movie-rating-label"
             value={form.ratingId}
-            label="Clasificación"
+            label="ClasificaciÃ³n"
             onChange={(e) => form.handleRatingChange(e.target.value as number)}
             onBlur={form.handleBlur('ID_RATING')}
           >
             {(form.catalogs.ratings as Rating[]).map((r) => (
               <MenuItem key={r.ID_RATING} value={r.ID_RATING}>
-                {r.RATING_CODE} — {r.RATING_NAME}
+                {r.RATING_CODE} â€” {r.RATING_NAME}
               </MenuItem>
             ))}
           </Select>
@@ -117,7 +118,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Géneros"
+              label="GÃ©neros"
               required
               error={err('GENRE_IDS')}
               helperText={<FieldError show={err('GENRE_IDS')} message={firstError(form.fieldErrors.GENRE_IDS)} />}
@@ -202,7 +203,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
         />
         <Box>
           <Typography variant="overline" sx={{ color: 'primary.dark' }}>
-            Póster
+            PÃ³ster
           </Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start', mt: 1 }}>
             <Button variant="outlined" component="label">
@@ -218,7 +219,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
               <Box
                 component="img"
                 src={form.previewSrc}
-                alt="Póster de la película"
+                alt="PÃ³ster de la pelÃ­cula"
                 sx={{ width: 120, borderRadius: 1, objectFit: 'cover' }}
               />
             ) : (
@@ -228,11 +229,9 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
             )}
           </Stack>
         </Box>
-        <Typography variant="caption" color="text.secondary">
-          * Los campos son obligatorios
-        </Typography>
+        <RequiredFieldsHint />
         {form.saving ? (
-          <Alert severity="info">{form.isCreate ? 'Subiendo póster y creando película…' : 'Subiendo póster y actualizando película…'}</Alert>
+          <Alert severity="info">{form.isCreate ? 'Subiendo pÃ³ster y creando pelÃ­culaâ€¦' : 'Subiendo pÃ³ster y actualizando pelÃ­culaâ€¦'}</Alert>
         ) : null}
       </Stack>
     </Box>

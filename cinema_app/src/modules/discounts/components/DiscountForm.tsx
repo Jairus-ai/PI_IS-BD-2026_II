@@ -1,24 +1,19 @@
 import * as React from 'react';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
-import FormHelperText from '@mui/material/FormHelperText';
 import Grid from '@mui/material/Grid';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent, SelectProps } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import Typography from '@mui/material/Typography';
+import type { Dayjs } from 'dayjs';
+import type { Discount, DiscountProduct } from '../types/discounts';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useNavigate } from 'react-router';
-import dayjs, { Dayjs } from 'dayjs';
-import type { Discount } from '../types/discounts';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useDiscountProducts } from '../hooks/useDiscounts';
 
 export interface DiscountFormState {
   values: Partial<Omit<Discount, 'id'>>;
@@ -29,36 +24,30 @@ export interface DiscountFormState {
 export type FormFieldValue = string | string[] | number | boolean | File | null;
 
 export interface DiscountFormProps {
-  formState: DiscountFormState;
-  onFieldChange: (
-    name: keyof DiscountFormState['values'],
-    value: FormFieldValue,
-  ) => void;
-  onSubmit: (formValues: Partial<DiscountFormState['values']>) => Promise<void>;
-  onReset?: (formValues: Partial<DiscountFormState['values']>) => void;
-  submitButtonLabel: string;
-  backButtonPath?: string;
+  readonly formState: DiscountFormState;
+  readonly onFieldChange: (name: keyof DiscountFormState['values'], value: FormFieldValue) => void;
+  readonly onSubmit: (formValues: Partial<DiscountFormState['values']>) => Promise<void>;
+  readonly onCancel?: () => void;
+  readonly submitButtonLabel: string;
 }
 
-export default function MovieForm(props: DiscountFormProps) {
-const {
+export default function MovieForm(props:DiscountFormProps) {
+  const {
     formState,
     onFieldChange,
     onSubmit,
-    onReset,
     submitButtonLabel,
-    backButtonPath,
   } = props;
 
   const formValues = formState.values;
   const formErrors = formState.errors;
 
-  const navigate = useNavigate();
-
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { products: rawProducts} = useDiscountProducts();
+  const products = rawProducts as DiscountProduct[];
 
   const handleSubmit = React.useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.SubmitEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       setIsSubmitting(true);
@@ -91,37 +80,16 @@ const {
     [onFieldChange],
   );
 
-  const handleCheckboxFieldChange = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-      onFieldChange(event.target.name as keyof DiscountFormState['values'], checked);
-    },
-    [onFieldChange],
-  );
-
   const handleDateFieldChange = React.useCallback(
-    (fieldName: keyof DiscountFormState['values']) => (value: Dayjs | null) => {
-      if (value?.isValid()) {
-        onFieldChange(fieldName, value.toISOString() ?? null);
-      } else if (formValues[fieldName]) {
-        onFieldChange(fieldName, null);
-      }
-    },
-    [formValues, onFieldChange],
-  );
-
-  const handleSelectFieldChange = React.useCallback(
-    (event: SelectChangeEvent) => {
-      onFieldChange(
-        event.target.name as keyof DiscountFormState['values'],
-        event.target.value,
-      );
-    },
-    [onFieldChange],
-  );
-
-  const handleBack = React.useCallback(() => {
-    navigate(backButtonPath ?? '/discounts');
-  }, [navigate, backButtonPath]);
+  (fieldName: keyof DiscountFormState['values']) => (value: Dayjs | null) => {
+    if (value?.isValid()) {
+      onFieldChange(fieldName, value.format('YYYY-MM-DD'));
+    } else if (formValues[fieldName]) {
+      onFieldChange(fieldName, null);
+    }
+  },
+  [formValues, onFieldChange],
+);
 
   return (
     <Box
@@ -133,7 +101,8 @@ const {
     >
       <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Nombre</Typography>
             <TextField
               value={formValues.DISCOUNT_NAME ?? ''}
               onChange={handleTextFieldChange}
@@ -144,29 +113,8 @@ const {
               fullWidth
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            <TextField
-              value={formValues.DISCOUNT_START_DATE ?? ''}
-              onChange={handleTextFieldChange}
-              name="DISCOUNT_START_DATE"
-              label="Fecha de inicio"
-              error={!!formErrors.DISCOUNT_START_DATE}
-              helperText={formErrors.DISCOUNT_START_DATE ?? ' '}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            <TextField
-              value={formValues.DISCOUNT_FINISH_DATE ?? ''}
-              onChange={handleTextFieldChange}
-              name="DISCOUNT_FINISH_DATE"
-              label="Fecha de finalización"
-              error={!!formErrors.DISCOUNT_FINISH_DATE}
-              helperText={formErrors.DISCOUNT_FINISH_DATE ?? ' '}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Porcentaje</Typography>
             <TextField
               type="number"
               value={formValues.DISCOUNT_PORCENTAGE ?? ''}
@@ -178,14 +126,65 @@ const {
               fullWidth
             />
           </Grid>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de inicio</Typography>
+              <DatePicker
+                value={formValues.DISCOUNT_START_DATE ? dayjs(formValues.DISCOUNT_START_DATE) : null}
+                onChange={handleDateFieldChange('DISCOUNT_START_DATE')}
+                name="fecha de inicio del descuento"
+                label="fecha de inicio del descuento"
+                slotProps={{
+                  textField: {
+                    error: !!formErrors.DISCOUNT_START_DATE,
+                    helperText: formErrors.DISCOUNT_START_DATE ?? ' ',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+         <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de finalización</Typography>
+              <DatePicker
+                value={formValues.DISCOUNT_FINISH_DATE ? dayjs(formValues.DISCOUNT_FINISH_DATE) : null}
+                onChange={handleDateFieldChange('DISCOUNT_FINISH_DATE')}
+                name="fecha de finalización del descuento"
+                label="fecha de finalización del descuento"
+                slotProps={{
+                  textField: {
+                    error: !!formErrors.DISCOUNT_FINISH_DATE,
+                    helperText: formErrors.DISCOUNT_FINISH_DATE ?? ' ',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column',  marginLeft: '25%'}}>
+            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Producto del descuento</Typography>
+            <Autocomplete
+              options={products}
+              getOptionLabel={(p) => p.SNACK_NAME}
+              isOptionEqualToValue={(a, b) => a.ID_SNACK === b.ID_SNACK}
+              value={products.find((p) => p.ID_SNACK === formValues.ID_FK_PRODUCT) ?? null}
+              onChange={(_, selected) => onFieldChange('ID_FK_PRODUCT', selected?.ID_SNACK ?? null)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Producto"
+                  error={!!formErrors.ID_FK_PRODUCT}
+                  helperText={formErrors.ID_FK_PRODUCT ?? ' '}
+                />
+              )}
+            />
+          </Grid>
         </Grid>
       </FormGroup>
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
         <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
-        >
+          variant="contained" onClick={props.onCancel} disabled={isSubmitting}>
           Volver
         </Button>
         <Button
