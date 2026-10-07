@@ -1,7 +1,8 @@
 import oracledb from "oracledb";
 import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
-export const getDiscountList = async (req, res, next) => {
+export const getDiscountList = async (req, res, next) => 
+  {
   let connection;
   
   try 
@@ -53,22 +54,13 @@ export const getDiscountList = async (req, res, next) => {
   {
     if(connection)
     {
-      try
-      {
-        await connection.close();
-      }catch (error)
-      {
-        console.error("Error closing connection to the database: ", error);
-      }finally 
-      {
-        await closeDatabaseConnection(connection);
-      }
-      
+      await closeDatabaseConnection(connection);
     }
   }
 };
 
-async function SnackName(connection, idSnack) {
+async function SnackName(connection, idSnack) 
+{
 
   const request = `
     SELECT SNACK_NAME
@@ -85,7 +77,8 @@ async function SnackName(connection, idSnack) {
   return result.rows[0]?.SNACK_NAME ?? null;
 }
 
-export const getDiscountByID = async (req, res, next) => {
+export const getDiscountByID = async (req, res, next) => 
+  {
   let connection;
   
   try 
@@ -143,16 +136,22 @@ export const getDiscountByID = async (req, res, next) => {
   {
     if(connection)
     {
-      try
-      {
-        await connection.close();
-      }catch (error)
-      {
-        console.error("Error closing connection to the database: ", error);
-      }finally 
-      {
-        await closeDatabaseConnection(connection);
-      }
+      await closeDatabaseConnection(connection);
     }
   }
 }
+
+/*export const addDiscount = async (req, res, next) => 
+  {
+  let connection;
+  try
+  {
+
+  }catch
+  {
+
+  } finally
+  {
+
+  }
+}*/

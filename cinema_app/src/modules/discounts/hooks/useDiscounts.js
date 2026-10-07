@@ -13,14 +13,14 @@ export const useDiscounts = (discountName = null) => {
     enabled: !!discountName,
   });
 
-  console.log(discountsQuery.data);
-
   return {
     discounts: discountsQuery.data ?? [],
     isLoadingDiscounts: discountsQuery.isLoading,
     discountsError: discountsQuery.error,
+    refetchDiscounts: discountsQuery.refetch,
 
     discountDetail: discountDetailQuery.data ?? null,
     isLoadingDetail: discountDetailQuery.isLoading,
+    discountDetailError: discountDetailQuery.error,
   };
 };

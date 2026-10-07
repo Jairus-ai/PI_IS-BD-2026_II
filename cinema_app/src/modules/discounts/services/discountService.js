@@ -14,3 +14,8 @@ export const getDiscountsByID = async (id) => {
   const { data } = await api.get(`/management/discounts/${id}`);
   return data;
 };
+
+export const addDiscount = async (discount) =>
+{
+
+}

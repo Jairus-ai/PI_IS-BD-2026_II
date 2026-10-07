@@ -5,8 +5,13 @@ import FormGroup from '@mui/material/FormGroup';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Typography from '@mui/material/Typography';
+import type { Dayjs } from 'dayjs';
 import type { Discount } from '../types/discounts';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 export interface DiscountFormState {
   values: Partial<Omit<Discount, 'id'>>;
@@ -17,16 +22,14 @@ export interface DiscountFormState {
 export type FormFieldValue = string | string[] | number | boolean | File | null;
 
 export interface DiscountFormProps {
-  formState: DiscountFormState;
-  onFieldChange: (
-    name: keyof DiscountFormState['values'],
-    value: FormFieldValue,
-  ) => void;
-  onSubmit: (formValues: Partial<DiscountFormState['values']>) => Promise<void>;
-  submitButtonLabel: string;
+  readonly formState: DiscountFormState;
+  readonly onFieldChange: (name: keyof DiscountFormState['values'], value: FormFieldValue) => void;
+  readonly onSubmit: (formValues: Partial<DiscountFormState['values']>) => Promise<void>;
+  readonly onCancel?: () => void;
+  readonly submitButtonLabel: string;
 }
 
-export default function MovieForm(props:Readonly<DiscountFormProps>) {
+export default function MovieForm(props:DiscountFormProps) {
 const {
     formState,
     onFieldChange,
@@ -73,23 +76,22 @@ const {
     [onFieldChange],
   );
 
+  const handleDateFieldChange = React.useCallback(
+  (fieldName: keyof DiscountFormState['values']) => (value: Dayjs | null) => {
+    if (value?.isValid()) {
+      onFieldChange(fieldName, value.format('YYYY-MM-DD'));
+    } else if (formValues[fieldName]) {
+      onFieldChange(fieldName, null);
+    }
+  },
+  [formValues, onFieldChange],
+);
   //for other histories
   /*const handleCheckboxFieldChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
       onFieldChange(event.target.name as keyof DiscountFormState['values'], checked);
     },
     [onFieldChange],
-  );
-
-  const handleDateFieldChange = React.useCallback(
-    (fieldName: keyof DiscountFormState['values']) => (value: Dayjs | null) => {
-      if (value?.isValid()) {
-        onFieldChange(fieldName, value.toISOString() ?? null);
-      } else if (formValues[fieldName]) {
-        onFieldChange(fieldName, null);
-      }
-    },
-    [formValues, onFieldChange],
   );
 
   const handleSelectFieldChange = React.useCallback(
@@ -112,19 +114,8 @@ const {
     >
       <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              type="number"
-              value={formValues.ID_DISCOUNT ?? ''}
-              onChange={handleNumberFieldChange}
-              name="ID_DISCOUNT"
-              label="ID"
-              error={!!formErrors.ID_DISCOUNT}
-              helperText={formErrors.ID_DISCOUNT ?? ' '}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Nombre</Typography>
             <TextField
               value={formValues.DISCOUNT_NAME ?? ''}
               onChange={handleTextFieldChange}
@@ -135,29 +126,8 @@ const {
               fullWidth
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            <TextField
-              value={formValues.DISCOUNT_START_DATE ?? ''}
-              onChange={handleTextFieldChange}
-              name="DISCOUNT_START_DATE"
-              label="Fecha de inicio"
-              error={!!formErrors.DISCOUNT_START_DATE}
-              helperText={formErrors.DISCOUNT_START_DATE ?? ' '}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            <TextField
-              value={formValues.DISCOUNT_FINISH_DATE ?? ''}
-              onChange={handleTextFieldChange}
-              name="DISCOUNT_FINISH_DATE"
-              label="Fecha de finalización"
-              error={!!formErrors.DISCOUNT_FINISH_DATE}
-              helperText={formErrors.DISCOUNT_FINISH_DATE ?? ' '}
-              fullWidth
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Porcentaje</Typography>
             <TextField
               type="number"
               value={formValues.DISCOUNT_PORCENTAGE ?? ''}
@@ -169,13 +139,47 @@ const {
               fullWidth
             />
           </Grid>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de inicio</Typography>
+              <DatePicker
+                value={formValues.DISCOUNT_START_DATE ? dayjs(formValues.DISCOUNT_START_DATE) : null}
+                onChange={handleDateFieldChange('DISCOUNT_START_DATE')}
+                name="fecha de inicio del descuento"
+                label="fecha de inicio del descuento"
+                slotProps={{
+                  textField: {
+                    error: !!formErrors.DISCOUNT_START_DATE,
+                    helperText: formErrors.DISCOUNT_START_DATE ?? ' ',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+         <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de finalización</Typography>
+              <DatePicker
+                value={formValues.DISCOUNT_FINISH_DATE ? dayjs(formValues.DISCOUNT_FINISH_DATE) : null}
+                onChange={handleDateFieldChange('DISCOUNT_FINISH_DATE')}
+                name="fecha de finalización del descuento"
+                label="fecha de finalización del descuento"
+                slotProps={{
+                  textField: {
+                    error: !!formErrors.DISCOUNT_FINISH_DATE,
+                    helperText: formErrors.DISCOUNT_FINISH_DATE ?? ' ',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
         </Grid>
       </FormGroup>
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
         <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-        >
+          variant="contained" onClick={props.onCancel} disabled={isSubmitting}>
           Volver
         </Button>
         <Button
