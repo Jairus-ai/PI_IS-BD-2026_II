@@ -6,7 +6,7 @@ export const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
 export const MINIMUM_PASSWORD_SCORE = 3;
 
 const MINIMUM_AGE = 18;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 const REQUIRED_FIELDS = [
   'email',

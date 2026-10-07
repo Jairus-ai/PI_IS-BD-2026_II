@@ -9,7 +9,7 @@ const MAX_PASSWORD_BYTES = 72;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_NAME_LENGTH = 50;
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 const PHONE_PATTERN = /^\+?\d{8,15}$/;
 const BIRTHDATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const IDENTIFICATION_PATTERNS = {
@@ -62,17 +62,10 @@ export function isAdult(birthdateText, today = new Date()) {
   return adulthoodDate <= todayWithoutTime;
 }
 
-function validateNameLength(errors, fieldName, value) {
-  if (value.length > MAX_NAME_LENGTH) {
-    errors[fieldName] = `Máximo ${MAX_NAME_LENGTH} caracteres`;
-  }
-}
+const NAME_FIELDS = ['firstName', 'middleName', 'firstSurname', 'lastSurname'];
 
-export function validateClientRegistration(body = {}) {
-  const errors = {};
-  let passwordSuggestions = [];
-
-  const client = {
+function normalizeClient(body) {
+  return {
     email: cleanText(body.email).toLowerCase(),
     firstName: cleanText(body.firstName),
     middleName: cleanText(body.middleName),
@@ -83,61 +76,93 @@ export function validateClientRegistration(body = {}) {
     birthdate: cleanText(body.birthdate),
     phoneNumber: cleanText(body.phoneNumber).replace(/[\s-]/g, '')
   };
-  const password = typeof body.password === 'string' ? body.password : '';
+}
 
+function validateRequiredFields(errors, client, password) {
   for (const fieldName of REQUIRED_FIELDS) {
     const value = fieldName === 'password' ? password : client[fieldName];
     if (!value) {
       errors[fieldName] = REQUIRED_FIELD_MESSAGE;
     }
   }
+}
 
-  if (client.email && !errors.email) {
-    if (client.email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(client.email)) {
-      errors.email = 'El correo electrónico no tiene un formato válido';
-    }
+function validateEmail(errors, email) {
+  if (!email || errors.email) {
+    return;
   }
+  if (email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) {
+    errors.email = 'El correo electrónico no tiene un formato válido';
+  }
+}
 
-  if (client.identificationType && !IDENTIFICATION_PATTERNS[client.identificationType]) {
+function validateIdentification(errors, { identificationType, identificationNumber }) {
+  if (!identificationType) {
+    return;
+  }
+  const pattern = IDENTIFICATION_PATTERNS[identificationType];
+  if (!pattern) {
     errors.identificationType = 'El tipo de identificación debe ser C, P o D';
-  } else if (client.identificationNumber && client.identificationType) {
-    const pattern = IDENTIFICATION_PATTERNS[client.identificationType];
-    if (!pattern.test(client.identificationNumber)) {
-      errors.identificationNumber = IDENTIFICATION_MESSAGES[client.identificationType];
-    }
+  } else if (identificationNumber && !pattern.test(identificationNumber)) {
+    errors.identificationNumber = IDENTIFICATION_MESSAGES[identificationType];
   }
+}
 
-  if (client.phoneNumber && !PHONE_PATTERN.test(client.phoneNumber)) {
+function validatePhoneNumber(errors, phoneNumber) {
+  if (phoneNumber && !PHONE_PATTERN.test(phoneNumber)) {
     errors.phoneNumber = 'El celular debe tener entre 8 y 15 dígitos';
   }
+}
 
-  validateNameLength(errors, 'firstName', client.firstName);
-  validateNameLength(errors, 'middleName', client.middleName);
-  validateNameLength(errors, 'firstSurname', client.firstSurname);
-  validateNameLength(errors, 'lastSurname', client.lastSurname);
-
-  if (client.birthdate) {
-    if (!BIRTHDATE_PATTERN.test(client.birthdate) || !isRealCalendarDate(client.birthdate)) {
-      errors.birthdate = 'La fecha de nacimiento no es válida';
-    } else if (!isAdult(client.birthdate)) {
-      errors.birthdate = 'Debes ser mayor de edad para registrarte';
+function validateNameLengths(errors, client) {
+  for (const fieldName of NAME_FIELDS) {
+    if (client[fieldName].length > MAX_NAME_LENGTH) {
+      errors[fieldName] = `Máximo ${MAX_NAME_LENGTH} caracteres`;
     }
   }
+}
 
-  if (password) {
-    if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) {
-      errors.password = `La contraseña no puede superar ${MAX_PASSWORD_BYTES} caracteres`;
-    } else {
-      const userInputs = [client.email, client.firstName, client.firstSurname, client.lastSurname]
-        .filter(Boolean);
-      const strength = passwordStrengthChecker.check(password, userInputs);
-      if (strength.score < MINIMUM_PASSWORD_SCORE) {
-        errors.password = 'La contraseña es débil';
-        passwordSuggestions = [strength.feedback.warning, ...strength.feedback.suggestions]
-          .filter(Boolean);
-      }
-    }
+function validateBirthdate(errors, birthdate) {
+  if (!birthdate) {
+    return;
   }
+  if (!BIRTHDATE_PATTERN.test(birthdate) || !isRealCalendarDate(birthdate)) {
+    errors.birthdate = 'La fecha de nacimiento no es válida';
+  } else if (!isAdult(birthdate)) {
+    errors.birthdate = 'Debes ser mayor de edad para registrarte';
+  }
+}
+
+function validatePassword(errors, password, client) {
+  if (!password) {
+    return [];
+  }
+  if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) {
+    errors.password = `La contraseña no puede superar ${MAX_PASSWORD_BYTES} caracteres`;
+    return [];
+  }
+  const userInputs = [client.email, client.firstName, client.firstSurname, client.lastSurname]
+    .filter(Boolean);
+  const strength = passwordStrengthChecker.check(password, userInputs);
+  if (strength.score >= MINIMUM_PASSWORD_SCORE) {
+    return [];
+  }
+  errors.password = 'La contraseña es débil';
+  return [strength.feedback.warning, ...strength.feedback.suggestions].filter(Boolean);
+}
+
+export function validateClientRegistration(body = {}) {
+  const errors = {};
+  const client = normalizeClient(body);
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  validateRequiredFields(errors, client, password);
+  validateEmail(errors, client.email);
+  validateIdentification(errors, client);
+  validatePhoneNumber(errors, client.phoneNumber);
+  validateNameLengths(errors, client);
+  validateBirthdate(errors, client.birthdate);
+  const passwordSuggestions = validatePassword(errors, password, client);
 
   return { errors, passwordSuggestions, client, password };
 }

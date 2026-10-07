@@ -1,5 +1,5 @@
 const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 export function validateRequiredField(value) {
   return String(value ?? '').trim() ? undefined : REQUIRED_FIELD_MESSAGE;

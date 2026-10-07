@@ -1,7 +1,7 @@
 const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
 const INVALID_EMAIL_MESSAGE = 'El correo electrónico no tiene un formato válido';
 const MAX_EMAIL_LENGTH = 254;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 export function validateLogIn(body = {}) {
   const errors = {};
