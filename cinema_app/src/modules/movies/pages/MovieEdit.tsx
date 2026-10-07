@@ -57,7 +57,7 @@ function EmployeeEditForm({
 
   const handleFormFieldChange = React.useCallback(
     (name: keyof MovieFormState['values'], value: FormFieldValue) => {
-      const validateField = async (values: Partial<MovieFormState['values']>) => {
+      const validateField = (values: Partial<MovieFormState['values']>) => {
         const { issues } = validateEmployee(values);
         setFormErrors({
           ...formErrors,
