@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/auth', authRoutes);
 
-const PASSWORD = 'Cine!Prueba#2026';
+const PASSWORD = 'Pi!Prueba#test42';
 const PASSWORD_HASH = bcrypt.hashSync(PASSWORD, 4);
 
 function accountRow(overrides = {}) {
@@ -184,9 +184,11 @@ describe('GET /auth/me', () => {
     mockDatabaseConnection(async () => ({ rows: [[1]] }));
     const oldToken = createSessionToken({ id: 3, role: ROLES.ADMINISTRATOR, sessionVersion: 0 });
 
-    await request(app)
+    const response = await request(app)
       .get('/auth/me')
       .set('Cookie', sessionCookie(oldToken))
       .expect(401);
+
+    expect(response.body.message).toBe('La sesión expiró. Inicia sesión de nuevo');
   });
 });

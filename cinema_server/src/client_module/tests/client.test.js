@@ -98,10 +98,12 @@ describe('POST /clients/register', () => {
     mockDatabaseConnection(async () => ({ outBinds: { idClient: [8] } }));
     sendWelcomeEmailSpy.mockRejectedValue(new Error('SMTP error'));
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    await request(app)
+    const response = await request(app)
       .post(REGISTER_URL)
       .send(validClient)
       .expect(201);
+
+    expect(response.body.data.id).toBe(8);
   });
 
   test('Register client 400 when required fields are empty', async () => {
