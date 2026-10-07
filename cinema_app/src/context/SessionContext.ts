@@ -7,9 +7,9 @@ export const ROLES = {
   EMPLOYEE: 'EMPLOYEE'
 } as const;
 
-export const WORKER_ROLES = [ROLES.SUPERUSER, ROLES.ADMINISTRATOR, ROLES.EMPLOYEE];
-
 export type Role = (typeof ROLES)[keyof typeof ROLES];
+
+export const WORKER_ROLES: Role[] = [ROLES.SUPERUSER, ROLES.ADMINISTRATOR, ROLES.EMPLOYEE];
 
 export interface SessionUser {
   id: number;

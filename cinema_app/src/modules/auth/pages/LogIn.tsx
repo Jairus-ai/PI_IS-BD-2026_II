@@ -40,7 +40,7 @@ const WORKER_HOME_PATH = '/movies';
 const CLIENT_HOME_PATH = '/';
 
 function getHomePath(user: SessionUser) {
-  return WORKER_ROLES.some((role) => role === user.role) ? WORKER_HOME_PATH : CLIENT_HOME_PATH;
+  return WORKER_ROLES.includes(user.role) ? WORKER_HOME_PATH : CLIENT_HOME_PATH;
 }
 
 export default function LogIn() {
