@@ -9,7 +9,7 @@ export async function initializeDatabasePool() {
       configDir: process.env.ORACLE_WALLET_DIR,
       walletLocation: process.env.ORACLE_WALLET_DIR,
       walletPassword: process.env.ORACLE_WALLET_PASSWORD,
-      poolAlias: 'connections',
+      poolAlias: 'default',
       poolMin: 1,
       poolMax: 5
     });
@@ -22,7 +22,7 @@ export async function initializeDatabasePool() {
 }
 
 export async function getConnection () {
-  return await oracledb.getConnection('connections')
+  return await oracledb.getConnection('default')
 }
 
 export async function closeDatabaseConnection(connection) {
@@ -37,7 +37,7 @@ export async function closeDatabaseConnection(connection) {
 
 export async function closeDatabasePool() {
   try {
-    await oracledb.getPool('connections').close(5);
+    await oracledb.getPool('default').close(5);
     console.log("Database connection pool closed");
   } catch (error) {
     console.error("Failed to close database pool: ", error);
