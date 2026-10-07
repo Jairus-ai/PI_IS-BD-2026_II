@@ -47,7 +47,7 @@ export interface PageContainerProps extends ContainerProps {
   actions?: React.ReactNode;
 }
 
-export default function PageContainer(props:Readonly<PageContainerProps>) {
+export default function PageContainer(props: Readonly<PageContainerProps>) {
   const { children, breadcrumbs, title, actions = null } = props;
 
   return (

@@ -32,4 +32,4 @@ createRoot(document.getElementById('root')).render(
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>,
-);
+);
