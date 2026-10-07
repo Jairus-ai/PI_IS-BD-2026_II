@@ -29,6 +29,9 @@ function validateDiscount(discount: Partial<Discount>): ValidationResult {
   if (!discount.DISCOUNT_FINISH_DATE) {
     issues.push({ message: 'Fecha de finalización es requerida', path: ['DISCOUNT_FINISH_DATE'] });
   }
+  if (!discount.ID_FK_PRODUCT) {
+    issues.push({ message: 'Producto es requerido', path: ['ID_FK_PRODUCT'] });
+  }
 
   return { issues };
 }
@@ -119,7 +122,7 @@ function CreateDiscountContent({
 
     try {
       await addDiscount(formValues);
-      notifications.show('Descuento creado correctamente.', {
+      notifications.show('Descuento añadido correctamente.', {
         severity: 'success',
         autoHideDuration: 3000,
       });
@@ -127,7 +130,7 @@ function CreateDiscountContent({
       onClose();
     } catch (createError) {
       notifications.show(
-        `No se pudo crear el descuento. Motivo: ${(createError as Error).message}`,
+        `No se pudo añadir el descuento. Motivo: ${(createError as Error).message}`,
         {
           severity: 'error',
           autoHideDuration: 3000,

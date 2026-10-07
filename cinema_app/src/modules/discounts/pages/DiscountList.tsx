@@ -140,7 +140,7 @@ export default function DiscountList() {
             variant="contained"
             onClick={() => setCreateOpen(true)}
           >
-            Crear Descuento
+            Añadir Descuento
           </Button>
         </Stack>
       }
