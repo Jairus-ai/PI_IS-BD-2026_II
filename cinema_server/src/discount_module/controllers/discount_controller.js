@@ -77,6 +77,19 @@ async function SnackName(connection, idSnack)
   return result.rows[0]?.SNACK_NAME ?? null;
 }
 
+async function MovieName(connection, idMovieInBillboard) {
+  const result = await connection.execute(
+    `SELECT m.MOVIE_NAME
+       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARD b
+       JOIN PI_DEVELOPERS.MOVIES m ON m.ID_MOVIE = b.ID_MOVIE
+      WHERE b.ID_MOVIE_IN_BILLBOARD = :id`,
+    { id: Number(idMovieInBillboard) },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows[0]?.MOVIE_NAME ?? null;
+}
+
 export const getDiscountByID = async (req, res, next) => 
   {
   let connection;
@@ -111,7 +124,7 @@ export const getDiscountByID = async (req, res, next) =>
 
     const movieNames = await Promise.all(
       result.rows.map(row =>
-        row.ID_MOVIE_IN_BILLBOARD == null ? null : movieNames(connection, row.ID_MOVIE_IN_BILLBOARD)
+        row.ID_MOVIE_IN_BILLBOARD == null ? null : MovieName(connection, row.ID_MOVIE_IN_BILLBOARD)
       )
     );
 

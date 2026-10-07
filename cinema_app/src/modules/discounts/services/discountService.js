@@ -20,6 +20,6 @@ export const getDiscountProducts = async() =>
 
 export const addDiscount = async (discount) =>
 {
-  const {data} = api.post(`/management/discounts`, discount);
+  const {data} = await api.post(`/management/discounts`, discount);
   return data;
 }
