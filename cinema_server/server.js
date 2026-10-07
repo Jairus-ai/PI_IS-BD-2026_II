@@ -11,7 +11,7 @@ const port = 3000;
 
 const app = express();
 app.disable('x-powered-by');
-app.use(cors({oring: 'http://localhost:5173', credentials: true}));
+app.use(cors({origin: 'http://localhost:5173',credentials: true,}));
 app.use(express.json());
 
 app.use('/management/users', userRoutes);
