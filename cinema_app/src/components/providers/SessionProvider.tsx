@@ -12,7 +12,7 @@ function readStoredUser(): SessionUser | null {
   }
 }
 
-export default function SessionProvider({ children }: { children: ReactNode }) {
+export default function SessionProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<SessionUser | null>(readStoredUser);
 
   const startSession = useCallback((sessionUser: SessionUser) => {

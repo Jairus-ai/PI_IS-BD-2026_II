@@ -10,7 +10,7 @@ export const getDiscountList = async (req, res, next) => {
 
     const request = 
     `SELECT ID_DISCOUNT, DISCOUNT_NAME, 
-      DISCOUNT_PORCENTAGE, 
+      DISCOUNT_PORCENTAGE,  
       TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE, 
       TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE
       FROM PI_DEVELOPERS.DISCOUNTS`;
@@ -24,20 +24,20 @@ export const getDiscountList = async (req, res, next) => {
 
     const today = new Date().toLocaleDateString('en-CA');
 
-    for (let i = 0; i < result.rows.length; i++) {
-      const SD = result.rows[i].DISCOUNT_START_DATE;
-      const FD = result.rows[i].DISCOUNT_FINISH_DATE;
+    for (const row of result.rows) {
+      const SD = row.DISCOUNT_START_DATE;
+      const FD = row.DISCOUNT_FINISH_DATE;
 
       if (today < SD) {
-        result.rows[i].DISCOUNT_STATE = 'próximo';
+        row.DISCOUNT_STATE = 'próximo';
       } else if (today > FD) {
-        result.rows[i].DISCOUNT_STATE = 'finalizado';
+        row.DISCOUNT_STATE = 'finalizado';
       } else {
-        result.rows[i].DISCOUNT_STATE = 'activo';
+        row.DISCOUNT_STATE = 'activo';
       }
 
-      delete result.rows[i].DISCOUNT_FINISH_DATE;
-      delete result.rows[i].DISCOUNT_START_DATE;
+      delete row.DISCOUNT_FINISH_DATE;
+      delete row.DISCOUNT_START_DATE;
     }
 
     res.status(200).json(
@@ -59,7 +59,11 @@ export const getDiscountList = async (req, res, next) => {
       }catch (error)
       {
         console.error("Error closing connection to the database: ", error);
+      }finally 
+      {
+        await closeDatabaseConnection(connection);
       }
+      
     }
   }
 };
@@ -89,8 +93,6 @@ export const getDiscountByID = async (req, res, next) => {
     const { id } = req.params;
     
     connection = await oracledb.getConnection();
-
-    /*TODO: define better what is going to get gotten*/
     const request = `
       SELECT ID_DISCOUNT,
       DISCOUNT_NAME,
@@ -108,21 +110,24 @@ export const getDiscountByID = async (req, res, next) => {
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
 
-    for (let i = 0; i < result.rows.length; i++) {
-      const Snack = result.rows[i].ID_SNACKS;
-      const movie = result.rows[i].ID_MOVIE_IN_BILLBOARD;
+    const snackNames = await Promise.all(
+      result.rows.map(row =>
+        row.ID_SNACKS == null ? null : SnackName(connection, row.ID_SNACKS)
+      )
+    );
 
-      if(Snack == null)
+    for (const [index, row] of result.rows.entries()) {
+      if (row.ID_SNACKS == null)
       {
-        result.rows[i].TYPE = 'PELICULA EN CARTELERA';
-        result.rows[i].ID_FK_PRODUCT = result.rows[i].ID_MOVIE_IN_BILLBOARD;
+        row.TYPE = 'PELICULA EN CARTELERA';
+        row.ID_FK_PRODUCT = row.ID_MOVIE_IN_BILLBOARD;
       }else{
-        result.rows[i].TYPE = 'SNACK';
-        result.rows[i].ID_FK_PRODUCT = await SnackName(connection, Snack);
+        row.TYPE = 'SNACK';
+        row.ID_FK_PRODUCT = snackNames[index];
       }
 
-      delete result.rows[i].ID_SNACKS;
-      delete result.rows[i].ID_MOVIE_IN_BILLBOARD;
+      delete row.ID_SNACKS;
+      delete row.ID_MOVIE_IN_BILLBOARD;
     }
 
     res.status(200).json(
@@ -144,6 +149,9 @@ export const getDiscountByID = async (req, res, next) => {
       }catch (error)
       {
         console.error("Error closing connection to the database: ", error);
+      }finally 
+      {
+        await closeDatabaseConnection(connection);
       }
     }
   }

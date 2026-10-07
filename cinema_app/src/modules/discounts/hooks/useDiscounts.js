@@ -1,8 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  getDiscounts,
-  getDiscountsByID
-} from '../services/discountService';
+import { getDiscounts } from '../services/discountService';
 
 export const useDiscounts = (discountName = null) => {
   const discountsQuery = useQuery({

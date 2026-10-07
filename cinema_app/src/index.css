@@ -181,9 +181,6 @@ footer
 
 #logInButton
 {
-    /*margin-top: 20px;
-    margin-right: 3%;
-    height: 20px;*/
     margin: 0;
     cursor: pointer;
     color: var(--mui-palette-primary-contrastText);
@@ -222,7 +219,6 @@ footer
 
 #suggestions
 {
-    /*height: 50vh;*/
     height: 400px;
     width: 100%;
     overflow: hidden;
@@ -234,9 +230,7 @@ footer
 #movieSuggestionImage
 {
     width: 100%;
-    /*height: auto;*/
     height: 100%;
-    /*margin: 2% 1%;*/
     border-radius: 10px;
     cursor: pointer;
 }
@@ -442,7 +436,6 @@ footer
   font-size: 11px;
   color: #bbb;
   display: -webkit-box;
-  /*-webkit-line-clamp: 4;*/
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

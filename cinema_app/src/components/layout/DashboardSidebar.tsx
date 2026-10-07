@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Toolbar from '@mui/material/Toolbar';
-import type {} from '@mui/material/themeCssVarsAugmentation';
 import PersonIcon from '@mui/icons-material/Person';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -30,7 +29,7 @@ export default function DashboardSidebar({
   setExpanded,
   disableCollapsibleSidebar = false,
   container,
-}: DashboardSidebarProps) {
+}: Readonly<DashboardSidebarProps>) {
   const theme = useTheme();
 
   const { pathname } = useLocation();
