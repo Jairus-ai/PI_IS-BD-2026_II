@@ -6,17 +6,17 @@ import {
 } from '../../database/database.js';
 
 
-const VALID_ROLES = [
+const VALID_ROLES = new Set([
   'CLIENT',
   'SUPERUSER',
   'ADMINISTRATOR',
   'EMPLOYEE',
-];
+]);
 
-const VALID_STATUSES = [
+const VALID_STATUSES = new Set([
   'ACTIVE',
   'INACTIVE',
-];
+]);
 
 
 const buildUserFilters = (queryParams) => {
@@ -30,7 +30,7 @@ const buildUserFilters = (queryParams) => {
   if (role) {
     const normalizedRole = String(role).toUpperCase();
 
-    if (!VALID_ROLES.includes(normalizedRole)) {
+    if (!VALID_ROLES.has(normalizedRole)) {
       const error = new Error('Invalid role filter');
       error.status = 400;
       throw error;
@@ -44,7 +44,7 @@ const buildUserFilters = (queryParams) => {
   if (status) {
     const normalizedStatus = String(status).toUpperCase();
 
-    if (!VALID_STATUSES.includes(normalizedStatus)) {
+    if (!VALID_STATUSES.has(normalizedStatus)) {
       const error = new Error('Invalid status filter');
       error.status = 400;
       throw error;

@@ -22,7 +22,7 @@ export interface DialogProviderProps {
  * Provider for Dialog stacks. The subtree of this component can use the `useDialogs` hook to
  * access the dialogs API. The dialogs are rendered in the order they are requested.
  */
-export default function DialogsProvider(props: DialogProviderProps) {
+export default function DialogsProvider(props: Readonly<DialogProviderProps>) {
   const { children, unmountAfter = 1000 } = props;
   const [stack, setStack] = React.useState<DialogStackEntry<any, any>[]>([]);
   const keyPrefix = React.useId();

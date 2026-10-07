@@ -1,4 +1,4 @@
-import { use,useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getUsers } from '../services/userService.js';
 
 export function useUsers(filters = {}) {

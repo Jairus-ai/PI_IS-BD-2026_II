@@ -10,7 +10,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import type {} from '@mui/material/themeCssVarsAugmentation';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Link } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
@@ -40,7 +39,7 @@ export default function DashboardSidebarPageItem({
   selected = false,
   disabled = false,
   nestedNavigation,
-}: DashboardSidebarPageItemProps) {
+}: Readonly<DashboardSidebarPageItemProps>) {
   const sidebarContext = React.useContext(DashboardSidebarContext);
   if (!sidebarContext) {
     throw new Error('Sidebar context was used without a provider.');

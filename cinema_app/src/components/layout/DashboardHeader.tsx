@@ -43,7 +43,7 @@ export default function DashboardHeader({
   title,
   menuOpen,
   onToggleMenu,
-}: DashboardHeaderProps) {
+}: Readonly<DashboardHeaderProps>) {
   const theme = useTheme();
 
   const handleMenuOpen = React.useCallback(() => {

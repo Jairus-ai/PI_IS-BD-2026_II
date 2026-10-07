@@ -22,7 +22,7 @@ export function useLocations() {
       }
     }
 
-    loadLocations();
+    void loadLocations();
   }, []);
 
   return {
