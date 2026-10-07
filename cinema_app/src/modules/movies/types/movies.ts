@@ -38,6 +38,12 @@ export interface Rating {
   RATING_CODE: string;
 }
 
+export interface Director {
+  ID_DIRECTOR: number;
+  DIRECTOR_FIRST_NAME: string;
+  DIRECTOR_LAST_NAME: string;
+}
+
 export interface Language {
   ISO_CODE: string;
   LANGUAGE_NAME: string;

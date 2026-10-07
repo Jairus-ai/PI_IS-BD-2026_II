@@ -9,16 +9,15 @@ import {
   GridColDef,
   gridClasses,
 } from '@mui/x-data-grid';
-import { useNavigate } from 'react-router';
 import { useMovies } from '../hooks/useMovies';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
 import PageContainer from '../../../components/common/PageContainer';
 import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
+import MovieFormDialog from '../components/MovieFormDialog';
 
 export default function MovieList() {
-  const navigate = useNavigate();
   const dialogs = useDialogs();
   const notifications = useNotifications();
 
@@ -26,6 +25,23 @@ export default function MovieList() {
   const serverPage = paginationModel.page + 1;
 
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
+  const [formMovieId, setFormMovieId] = React.useState<number | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+
+  const openCreate = () => {
+    setFormMovieId(null);
+    setFormOpen(true);
+  };
+
+  const openEdit = (id: number) => {
+    setFormMovieId(id);
+    setFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setFormOpen(false);
+    setFormMovieId(null);
+  };
 
   // TODO(Jesus): Uncomment delete and refetch once implemented.
   const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies(serverPage);
@@ -103,7 +119,7 @@ export default function MovieList() {
             key="edit"
             icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
             label="Editar"
-            onClick={() => navigate(`/movies/${row.ID_MOVIE}/edit`)}
+            onClick={() => openEdit(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
@@ -116,7 +132,7 @@ export default function MovieList() {
         ],
       },
     ],
-    [navigate, handleRowDelete],
+    [handleRowDelete],
   );
 
   return (
@@ -130,7 +146,7 @@ export default function MovieList() {
           </Button>
           <Button
             variant="contained"
-            onClick={() => navigate('/movies/new')}
+            onClick={() => openCreate()}
           >
             Crear Película
           </Button>
@@ -168,6 +184,7 @@ export default function MovieList() {
           />
         )}
         <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
+        <MovieFormDialog movieId={formMovieId} open={formOpen} onClose={closeForm} />
       </Box>
     </PageContainer>
   );

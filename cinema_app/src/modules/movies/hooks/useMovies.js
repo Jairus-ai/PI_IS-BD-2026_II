@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  createMovie,
+  updateMovie,
   getMovies,
   getMoviesCount,
   getMovieById,
@@ -7,6 +9,8 @@ import {
   getRatings,
   getLanguages,
   getAudiovisualFormats,
+  getDirectors,
+  uploadPoster,
 } from '../services/movieService';
 
 export const useMovies = (page = 1, movieId = null) => {
@@ -46,6 +50,28 @@ export const useMovies = (page = 1, movieId = null) => {
     queryFn: getAudiovisualFormats,
   });
 
+  const directorsQuery = useQuery({
+    queryKey: ['directors'],
+    queryFn: getDirectors,
+  });
+
+  const queryClient = useQueryClient();
+  const createMovieMutation = useMutation({
+    mutationFn: createMovie,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
+      queryClient.invalidateQueries({ queryKey: ['moviesCount'] });
+    },
+  });
+
+  const updateMovieMutation = useMutation({
+    mutationFn: ({ id, movie }) => updateMovie(id, movie),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
+      queryClient.invalidateQueries({ queryKey: ['movie', variables.id] });
+    },
+  });
+
   return {
     movies: moviesQuery.data?.data ?? [],
     totalMovies: countQuery.data?.total ?? 0,
@@ -59,10 +85,19 @@ export const useMovies = (page = 1, movieId = null) => {
     ratings: ratingsQuery.data?.data ?? [],
     languages: languagesQuery.data?.data ?? [],
     formats: formatsQuery.data?.data ?? [],
+    directors: directorsQuery.data?.data ?? [],
     isLoadingCatalogs:
       genresQuery.isLoading ||
       ratingsQuery.isLoading ||
       languagesQuery.isLoading ||
-      formatsQuery.isLoading,
+      formatsQuery.isLoading ||
+      directorsQuery.isLoading,
+
+    uploadPoster,
+    createMovie: createMovieMutation.mutateAsync,
+    isCreatingMovie: createMovieMutation.isPending,
+    createMovieError: createMovieMutation.error,
+    updateMovie: (id, movie) => updateMovieMutation.mutateAsync({ id, movie }),
+    isUpdatingMovie: updateMovieMutation.isPending,
   };
 };
