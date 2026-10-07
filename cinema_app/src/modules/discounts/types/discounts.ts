@@ -6,5 +6,11 @@ export interface Discount {
   DISCOUNT_NAME: string;
   DISCOUNT_STATE: string; //finished/active/future
   TYPE: string;
-  ID_FK_PRODUCT: string;
+  NAME_FK_PRODUCT: string;
+  ID_FK_PRODUCT:number;
+}
+
+export interface DiscountProduct {
+  ID_SNACK: number;
+  SNACK_NAME: string;
 }

@@ -46,10 +46,11 @@ export default function DiscountCreate({
   onClose,
   onCreated,
 }: DiscountCreateProps) {
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>Nuevo descuento</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent>
         {open ? (
           <CreateDiscountContent onClose={onClose} onCreated={onCreated} />
         ) : null}

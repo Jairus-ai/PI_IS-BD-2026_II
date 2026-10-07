@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormGroup from '@mui/material/FormGroup';
@@ -7,11 +8,12 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { Dayjs } from 'dayjs';
-import type { Discount } from '../types/discounts';
+import type { Discount, DiscountProduct } from '../types/discounts';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useDiscountProducts } from '../hooks/useDiscounts';
 
 export interface DiscountFormState {
   values: Partial<Omit<Discount, 'id'>>;
@@ -30,7 +32,7 @@ export interface DiscountFormProps {
 }
 
 export default function MovieForm(props:DiscountFormProps) {
-const {
+  const {
     formState,
     onFieldChange,
     onSubmit,
@@ -41,6 +43,8 @@ const {
   const formErrors = formState.errors;
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { products: rawProducts} = useDiscountProducts();
+  const products = rawProducts as DiscountProduct[];
 
   const handleSubmit = React.useCallback(
     async (event: React.SubmitEvent<HTMLFormElement>) => {
@@ -86,23 +90,6 @@ const {
   },
   [formValues, onFieldChange],
 );
-  //for other histories
-  /*const handleCheckboxFieldChange = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-      onFieldChange(event.target.name as keyof DiscountFormState['values'], checked);
-    },
-    [onFieldChange],
-  );
-
-  const handleSelectFieldChange = React.useCallback(
-    (event: SelectChangeEvent) => {
-      onFieldChange(
-        event.target.name as keyof DiscountFormState['values'],
-        event.target.value,
-      );
-    },
-    [onFieldChange],
-  );*/
 
   return (
     <Box
@@ -174,6 +161,24 @@ const {
                 }}
               />
             </LocalizationProvider>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column',  marginLeft: '25%'}}>
+            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Producto del descuento</Typography>
+            <Autocomplete
+              options={products}
+              getOptionLabel={(p) => p.SNACK_NAME}
+              isOptionEqualToValue={(a, b) => a.ID_SNACK === b.ID_SNACK}
+              value={products.find((p) => p.ID_SNACK === formValues.ID_FK_PRODUCT) ?? null}
+              onChange={(_, selected) => onFieldChange('ID_FK_PRODUCT', selected?.ID_SNACK ?? null)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Producto"
+                  error={!!formErrors.ID_FK_PRODUCT}
+                  helperText={formErrors.ID_FK_PRODUCT ?? ' '}
+                />
+              )}
+            />
           </Grid>
         </Grid>
       </FormGroup>

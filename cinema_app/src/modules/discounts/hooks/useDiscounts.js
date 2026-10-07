@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDiscounts } from '../services/discountService';
+import { getDiscounts, getDiscountProducts } from '../services/discountService';
 
 export const useDiscounts = (discountName = null) => {
   const discountsQuery = useQuery({
@@ -22,5 +22,18 @@ export const useDiscounts = (discountName = null) => {
     discountDetail: discountDetailQuery.data ?? null,
     isLoadingDetail: discountDetailQuery.isLoading,
     discountDetailError: discountDetailQuery.error,
+  };
+};
+
+export const useDiscountProducts = () => {
+  const query = useQuery({
+    queryKey: ['discount-products'],
+    queryFn: getDiscountProducts,
+  });
+
+  return {
+    products: Array.isArray(query.data) ? query.data : [],
+    isLoadingProducts: query.isLoading,
+    productsError: query.error,
   };
 };

@@ -113,10 +113,10 @@ export const getDiscountByID = async (req, res, next) =>
       if (row.ID_SNACKS == null)
       {
         row.TYPE = 'PELICULA EN CARTELERA';
-        row.ID_FK_PRODUCT = row.ID_MOVIE_IN_BILLBOARD;
+        row.NAME_FK_PRODUCT = row.ID_MOVIE_IN_BILLBOARD;
       }else{
         row.TYPE = 'SNACK';
-        row.ID_FK_PRODUCT = snackNames[index];
+        row.NAME_FK_PRODUCT = snackNames[index];
       }
 
       delete row.ID_SNACKS;
@@ -141,17 +141,96 @@ export const getDiscountByID = async (req, res, next) =>
   }
 }
 
-/*export const addDiscount = async (req, res, next) => 
+export const getDiscountProducts = async (req, res, next ) =>
+{
+  let connection;
+  
+  try 
+  {
+    connection = await oracledb.getConnection();
+
+    const request = 
+    `SELECT SNACK_NAME, ID_SNACK
+      FROM PI_DEVELOPERS.SNACKS`
+
+    const result = await connection.execute(
+      request, [], 
+      { 
+        outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
+      }
+    );
+
+    res.status(200).json(
+      {
+        data: result.rows
+      }
+    );
+
+  } catch (error) 
+  {
+    next(error);
+  } finally 
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
+
+
+export const addDiscount = async (req, res, next) => 
   {
   let connection;
+
   try
   {
+    connection = await oracledb.getConnection();
 
-  }catch
+    const result = await connection.execute(
+      'SELECT MAX(ID_DISCOUNT) AS LAST_ID FROM PI_DEVELOPERS.DISCOUNTS', [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
+    );
+
+    const lastId = result.rows[0].LAST_ID ?? 0;   // 121, o 0 si la tabla está vacía
+    const newId = lastId + 1;  
+
+    const { DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE,  ID_FK_PRODUCT } = req.body;
+
+    const request = 
+    `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
+      ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE, ID_SNACKS
+      )
+      VALUES (
+      :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
+      )`
+
+      await connection.execute(
+        request,
+        {
+          ID:newId,
+          NAME: DISCOUNT_NAME,
+          PORCENTAGE: Number(DISCOUNT_PORCENTAGE),
+          START_DATE: DISCOUNT_START_DATE,
+          FINISH_DATE: DISCOUNT_FINISH_DATE,
+          PRODUCT: ID_FK_PRODUCT
+        },
+        { autoCommit: true }
+      )
+
+    res.status(200).json(
+      {
+        message:'succes'
+      }
+    );
+  } catch (error) 
   {
-
-  } finally
+    next(error);
+  } finally 
   {
-
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
   }
-}*/
+}
