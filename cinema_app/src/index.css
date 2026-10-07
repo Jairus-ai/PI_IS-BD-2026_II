@@ -1,6 +1,3 @@
-html{
-    overflow-y: auto;
-}
 
 * {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -63,6 +60,11 @@ html{
     margin-left: 64px;
 }
 /*Font heriarchy___________________________________________________*/
+
+html, body, #root
+{
+    height: 100%;
+}
 
 body
 {
@@ -181,9 +183,12 @@ footer
 
 #logInButton
 {
+    /*margin-top: 20px;
+    margin-right: 3%;
+    height: 20px;*/
     margin: 0;
-    cursor: pointer;
     color: var(--mui-palette-primary-contrastText);
+    text-decoration: none;
 }
 
 #logInButton:hover
@@ -215,10 +220,17 @@ footer
     color: var(--mui-palette-primary-contrastText);
 }
 
+#logOutButton
+{
+    color: var(--mui-palette-primary-contrastText);
+    text-transform: none;
+}
+
 /*Sugestions_____________________________________________________*/
 
 #suggestions
 {
+    /*height: 50vh;*/
     height: 400px;
     width: 100%;
     overflow: hidden;
@@ -230,7 +242,9 @@ footer
 #movieSuggestionImage
 {
     width: 100%;
+    /*height: auto;*/
     height: 100%;
+    /*margin: 2% 1%;*/
     border-radius: 10px;
     cursor: pointer;
 }
@@ -436,6 +450,7 @@ footer
   font-size: 11px;
   color: #bbb;
   display: -webkit-box;
+  /*-webkit-line-clamp: 4;*/
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
