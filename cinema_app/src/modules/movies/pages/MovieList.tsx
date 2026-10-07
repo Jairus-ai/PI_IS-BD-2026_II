@@ -98,7 +98,7 @@ export default function MovieList() {
         field: 'PUBLISHING_YEAR',
         headerName: 'Año de Publicación',
         width: 160,
-        type: 'number',
+        valueFormatter: (value: number) => `${value ?? ''}`,
       },
       {
         field: 'actions',
