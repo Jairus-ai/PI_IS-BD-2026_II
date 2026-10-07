@@ -1,17 +1,11 @@
-import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
 import MuiAppBar from '@mui/material/AppBar';
-import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import MenuIcon from '@mui/icons-material/Menu';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import Stack from '@mui/material/Stack';
 import { Link } from 'react-router';
-import ThemeSwitcher from '../common/ThemeSwitcher';
 import LogOutButton from '../common/LogOutButton';
+import type * as React from 'react';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -35,46 +29,13 @@ const LogoContainer = styled('div')({
 export interface DashboardHeaderProps {
   logo?: React.ReactNode;
   title?: string;
-  menuOpen: boolean;
-  onToggleMenu: (open: boolean) => void;
 }
 
 export default function DashboardHeader({
   logo,
   title,
-  menuOpen,
-  onToggleMenu,
 }: Readonly<DashboardHeaderProps>) {
   const theme = useTheme();
-
-  const handleMenuOpen = React.useCallback(() => {
-    onToggleMenu(!menuOpen);
-  }, [menuOpen, onToggleMenu]);
-
-  const getMenuIcon = React.useCallback(
-    (isExpanded: boolean) => {
-      const expandMenuActionText = 'Expand';
-      const collapseMenuActionText = 'Collapse';
-
-      return (
-        <Tooltip
-          title={`${isExpanded ? collapseMenuActionText : expandMenuActionText} menu`}
-          enterDelay={1000}
-        >
-          <div>
-            <IconButton
-              size="small"
-              aria-label={`${isExpanded ? collapseMenuActionText : expandMenuActionText} navigation menu`}
-              onClick={handleMenuOpen}
-            >
-              {isExpanded ? <MenuOpenIcon /> : <MenuIcon />}
-            </IconButton>
-          </div>
-        </Tooltip>
-      );
-    },
-    [handleMenuOpen],
-  );
 
   return (
     <AppBar color="inherit" position="absolute" sx={{ displayPrint: 'none' }}>
@@ -89,7 +50,6 @@ export default function DashboardHeader({
           }}
         >
           <Stack direction="row" sx={{ alignItems: 'center' }}>
-            <Box sx={{ mr: 1 }}>{getMenuIcon(menuOpen)}</Box>
             <Link to="/" style={{ textDecoration: 'none' }}>
               <Stack direction="row" sx={{ alignItems: 'center' }}>
                 {logo ? <LogoContainer>{logo}</LogoContainer> : null}
@@ -115,9 +75,6 @@ export default function DashboardHeader({
             spacing={1}
             sx={{ alignItems: 'center', marginLeft: 'auto' }}
           >
-            <Stack direction="row" sx={{ alignItems: 'center' }}>
-              <ThemeSwitcher />
-            </Stack>
             <LogOutButton size="small" />
           </Stack>
         </Stack>
