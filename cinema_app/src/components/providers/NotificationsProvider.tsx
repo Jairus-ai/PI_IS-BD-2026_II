@@ -21,11 +21,11 @@ const RootPropsContext = React.createContext<NotificationsProviderProps | null>(
 );
 
 interface NotificationProps {
-  notificationKey: string;
-  badge: string | null;
-  open: boolean;
-  message: React.ReactNode;
-  options: ShowNotificationOptions;
+  readonly notificationKey: string;
+  readonly badge: string | null;
+  readonly open: boolean;
+  readonly message: React.ReactNode;
+  readonly options: ShowNotificationOptions;
 }
 
 function Notification({
@@ -141,7 +141,7 @@ const generateId = () => {
  * Provider for Notifications. The subtree of this component can use the `useNotifications` hook to
  * access the notifications API. The notifications are shown in the same order they are requested.
  */
-export default function NotificationsProvider(props: NotificationsProviderProps) {
+export default function NotificationsProvider(props: Readonly<NotificationsProviderProps>) {
   const { children } = props;
   const [state, setState] = React.useState<NotificationsState>({ queue: [] });
 

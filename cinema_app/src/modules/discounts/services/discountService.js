@@ -6,6 +6,11 @@ export const getDiscounts = async () => {
 };
 
 export const getDiscountsByName = async (name) => {
-  const { data } = await api.get(`/discounts/${name}`);
+  const { data } = await api.get(`/management/discounts/${name}`);
+  return data;
+};
+
+export const getDiscountsByID = async (id) => {
+  const { data } = await api.get(`/management/discounts/${id}`);
   return data;
 };
