@@ -8,6 +8,7 @@ import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import RequireSession from '../components/common/RequireSession';
 import { WORKER_ROLES } from '../context/SessionContext';
+import UserList from '../modules/users/pages/UserList.jsx';
 
 const router = createHashRouter([
   {
@@ -36,6 +37,10 @@ const router = createHashRouter([
       {
         path: '/discounts',
         Component: DiscountList,
+      },
+      {
+        path: '/users',
+        Component: UserList,
       },
     ],
   },
