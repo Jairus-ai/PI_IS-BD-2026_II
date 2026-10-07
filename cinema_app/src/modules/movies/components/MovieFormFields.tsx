@@ -229,7 +229,7 @@ export default function MovieFormFields({ form, formId }: { form: MovieForm; for
           </Stack>
         </Box>
         <Typography variant="caption" color="text.secondary">
-          Los campos marcados son obligatorios
+          * Los campos son obligatorios
         </Typography>
         {form.saving ? (
           <Alert severity="info">{form.isCreate ? 'Subiendo póster y creando película…' : 'Subiendo póster y actualizando película…'}</Alert>
