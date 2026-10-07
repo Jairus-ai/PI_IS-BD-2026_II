@@ -2,7 +2,6 @@ import * as React from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
 import {
   DataGrid,
   GridActionsCellItem,
@@ -138,19 +137,13 @@ export default function MovieList() {
   return (
     <PageContainer
       title="Películas"
-      breadcrumbs={[{ title: 'Películas' }]}
       actions={
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-          <Button variant="outlined" size="small" /* onClick={() => refetchMovies()} */>
-            Recargar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => openCreate()}
-          >
-            Crear Película
-          </Button>
-        </Stack>
+        <Button
+          variant="contained"
+          onClick={() => openCreate()}
+        >
+          Crear Película
+        </Button>
       }
     >
       <Box sx={{ flex: 1, width: '100%' }}>
