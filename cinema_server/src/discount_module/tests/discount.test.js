@@ -13,6 +13,7 @@ const MOCK_DISCOUNTS = [
 const MOCK_PRODUCTS = [
   { ID_SNACK: 1, SNACK_NAME: 'PALOMITAS' },
   { ID_SNACK: 2, SNACK_NAME: 'REFRESCO' },
+  { ID_MOVIE_IN_BILLBOARD:1, ID_LOCATION:1, ID_MOVIE:1}
 ];
 
 const NEW_DISCOUNT = {
@@ -57,7 +58,7 @@ afterEach(() => {
 describe('GET endpoints', () => {
   test.each([
     ['/management/discounts', MOCK_DISCOUNTS],
-    ['/management/discounts/DP', MOCK_PRODUCTS],
+    ['/management/discounts/DP/', MOCK_PRODUCTS],
   ])('%s 200 OK', async (path, rows) => {
     const connection = useConnection([{ rows }]);
 
