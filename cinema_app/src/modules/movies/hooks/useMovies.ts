@@ -13,7 +13,7 @@ import {
   uploadPoster,
 } from '../services/movieService';
 
-export const useMovies = (page = 1, movieId = null) => {
+export const useMovies = (page: number = 1, movieId: number | null | undefined = null) => {
   const moviesQuery = useQuery({
     queryKey: ['movies', page],
     queryFn: ()  => getMovies(page),
@@ -58,17 +58,17 @@ export const useMovies = (page = 1, movieId = null) => {
   const queryClient = useQueryClient();
   const createMovieMutation = useMutation({
     mutationFn: createMovie,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movies'] });
-      queryClient.invalidateQueries({ queryKey: ['moviesCount'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['movies'] });
+      await queryClient.invalidateQueries({ queryKey: ['moviesCount'] });
     },
   });
 
   const updateMovieMutation = useMutation({
-    mutationFn: ({ id, movie }) => updateMovie(id, movie),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['movies'] });
-      queryClient.invalidateQueries({ queryKey: ['movie', variables.id] });
+    mutationFn: ({ id, movie }: {id: number, movie: any}) => updateMovie(id, movie),
+    onSuccess: async(_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['movies'] });
+      await queryClient.invalidateQueries({ queryKey: ['movie', variables.id] });
     },
   });
 
@@ -97,7 +97,7 @@ export const useMovies = (page = 1, movieId = null) => {
     createMovie: createMovieMutation.mutateAsync,
     isCreatingMovie: createMovieMutation.isPending,
     createMovieError: createMovieMutation.error,
-    updateMovie: (id, movie) => updateMovieMutation.mutateAsync({ id, movie }),
+    updateMovie: (id: number, movie: any) => updateMovieMutation.mutateAsync({ id, movie }),
     isUpdatingMovie: updateMovieMutation.isPending,
   };
 };
