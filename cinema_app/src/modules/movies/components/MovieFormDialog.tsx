@@ -11,12 +11,19 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useMovieForm } from '../hooks/useMovieForm';
 import MovieFormFields from './MovieFormFields';
 
-export default function MovieFormDialog({ movieId, open, onClose, onSaved }: {
-  movieId: number | null;
-  open: boolean;
+interface MovieFormDialogProps {
+  readonly movieId: number | null;
+  readonly open: boolean;
   onClose: () => void;
   onSaved?: () => void;
-}) {
+}
+
+export default function MovieFormDialog({
+  movieId,
+  open,
+  onClose,
+  onSaved
+}: MovieFormDialogProps) {
   const form = useMovieForm({ movieId, open, onClose, onSaved });
 
   return (
@@ -27,6 +34,7 @@ export default function MovieFormDialog({ movieId, open, onClose, onSaved }: {
       fullWidth
       slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}
     >
+
       <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700, pr: 6 }}>
         {form.isCreate ? 'Crear película' : 'Editar película'}
         <IconButton
@@ -37,6 +45,7 @@ export default function MovieFormDialog({ movieId, open, onClose, onSaved }: {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
+
       <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
         {form.loading || (!form.isCreate && !form.detail) ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -46,6 +55,7 @@ export default function MovieFormDialog({ movieId, open, onClose, onSaved }: {
           <MovieFormFields form={form} formId="movie-form" />
         )}
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
         <Button type="submit" form="movie-form" variant="contained" disabled={form.saving}>
