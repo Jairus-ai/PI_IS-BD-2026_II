@@ -24,7 +24,7 @@ export function splitNames(value: string | null): string[] {
   return value.split(',').map((x) => x.trim()).filter(Boolean);
 }
 
-export function parseLanguageEntry(entry: string): { isoCode: string; type: LanguageType } | null {
+export function parseLanguageEntry(entry: string): { name: string; type: LanguageType } | null {
   const lastBracketIndex = entry.lastIndexOf('[');
   if (lastBracketIndex === -1) return null;
 
@@ -36,8 +36,38 @@ export function parseLanguageEntry(entry: string): { isoCode: string; type: Lang
     return null;
   }
 
-  return { isoCode: name, type };
+  return { name, type };
 }
+
+export function classifyLanguageEntries(
+  entries: string[],
+  langList: { ISO_CODE: string; LANGUAGE_NAME: string }[]
+) {
+  const originalLangs: { ISO_CODE: string; LANGUAGE_NAME: string }[] = [];
+  const dubLangs: { ISO_CODE: string; LANGUAGE_NAME: string }[] = [];
+  const subLangs: { ISO_CODE: string; LANGUAGE_NAME: string }[] = [];
+
+  for (const entry of entries) {
+    const parsed = parseLanguageEntry(entry);
+    if (!parsed) continue;
+
+    const found = langList.find((language) => language.LANGUAGE_NAME === parsed.name);
+    if (!found) continue;
+
+    const type: LanguageType = parsed.type as LanguageType;
+
+    if (type === 'OG') {
+      originalLangs.push({ ISO_CODE: found.ISO_CODE, LANGUAGE_NAME: found.LANGUAGE_NAME });
+    } else if (type === 'DUB') {
+      dubLangs.push({ ISO_CODE: found.ISO_CODE, LANGUAGE_NAME: found.LANGUAGE_NAME });
+    } else if (type === 'SUB') {
+      subLangs.push({ ISO_CODE: found.ISO_CODE, LANGUAGE_NAME: found.LANGUAGE_NAME });
+    }
+  }
+
+  return { originalLangs, dubLangs, subLangs };
+}
+
 
 export function posterUrl(poster: string | null): string | undefined {
   if (!poster) return undefined;

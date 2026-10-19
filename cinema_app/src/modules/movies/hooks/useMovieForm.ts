@@ -3,7 +3,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useMovies } from './useMovies';
 import useNotifications from '../../../hooks/useNotifications';
 import type { AudiovisualFormat, Director, Genre, Language, MovieDetail, Rating } from '../types/movies';
-import { parseLanguageEntry, posterUrl, readServerErrors, splitNames } from '../utils/movieFormUtils';
+import { classifyLanguageEntries, posterUrl, readServerErrors, splitNames } from '../utils/movieFormUtils';
 import { validateAll } from '../utils/movieFormValidation';
 import type { ServerErrors } from '../utils/movieFormUtils';
 
@@ -79,60 +79,60 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     validateAndSet({ ...snapshot, ...overrides }, nt);
   };
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
-    setTitle(v);
-    touchAndValidate('MOVIE_TITLE', { title: v });
+  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setTitle(value);
+    touchAndValidate('MOVIE_TITLE', { title: value });
   };
 
-  const handleSynopsisChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
-    setSynopsis(v);
-    touchAndValidate('SYNOPSIS', { synopsis: v });
+  const handleSynopsisChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSynopsis(value);
+    touchAndValidate('SYNOPSIS', { synopsis: value });
   };
 
   const handleBlur = (name: string) => () => {
     touchAndValidate(name);
   };
 
-  const handleYearChange = (v: Dayjs | null) => {
-    setYearDate(v);
-    touchAndValidate('PUBLISHING_YEAR', { yearDate: v });
+  const handleYearChange = (value: Dayjs | null) => {
+    setYearDate(value);
+    touchAndValidate('PUBLISHING_YEAR', { yearDate: value });
   };
 
-  const handleDurationChange = (v: Dayjs | null) => {
-    setDurationTime(v);
-    touchAndValidate('MOVIE_DURATION', { durationTime: v });
+  const handleDurationChange = (value: Dayjs | null) => {
+    setDurationTime(value);
+    touchAndValidate('MOVIE_DURATION', { durationTime: value });
   };
 
-  const handleRatingChange = (v: number) => {
-    setRatingId(v);
+  const handleRatingChange = (value: number) => {
+    setRatingId(value);
     touchAndValidate('ID_RATING');
   };
 
-  const handleGenresChange = (v: Genre[]) => {
-    setGenreIds(v);
-    touchAndValidate('GENRE_IDS', { genreIds: v });
+  const handleGenresChange = (value: Genre[]) => {
+    setGenreIds(value);
+    touchAndValidate('GENRE_IDS', { genreIds: value });
   };
 
-  const handleDirectorsChange = (v: Director[]) => {
-    setDirectorIds(v);
-    touchAndValidate('DIRECTOR_IDS', { directorIds: v });
+  const handleDirectorsChange = (value: Director[]) => {
+    setDirectorIds(value);
+    touchAndValidate('DIRECTOR_IDS', { directorIds: value });
   };
 
-  const handleFormatsChange = (v: AudiovisualFormat[]) => {
-    setFormatIds(v);
-    touchAndValidate('FORMAT_IDS', { formatIds: v });
+  const handleFormatsChange = (value: AudiovisualFormat[]) => {
+    setFormatIds(value);
+    touchAndValidate('FORMAT_IDS', { formatIds: value });
   };
 
-  const handleOriginalLangsChange = (v: Language[]) => {
-    setOriginalLangs(v);
-    touchAndValidate('LANGUAGES_ORIGINAL', { originalLangs: v });
+  const handleOriginalLangsChange = (value: Language[]) => {
+    setOriginalLangs(value);
+    touchAndValidate('LANGUAGES_ORIGINAL', { originalLangs: value });
   };
 
-  const handlePosterChange = (f: File | null) => {
-    setPosterFile(f);
-    touchAndValidate('POSTER', { posterFile: f });
+  const handlePosterChange = (file: File | null) => {
+    setPosterFile(file);
+    touchAndValidate('POSTER', { posterFile: file });
   };
 
   const resetTouched = () => {
@@ -175,17 +175,17 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     }
 
     const ratingList = ratings as Rating[];
-    const matchedRating = ratingList.find((r) => r.RATING_CODE === detail.RATING_CODE);
+    const matchedRating = ratingList.find((rating) => rating.RATING_CODE === detail.RATING_CODE);
     setRatingId(matchedRating ? matchedRating.ID_RATING : '');
 
     const genreList = genres as Genre[];
     const genreNames = splitNames(detail.GENRES);
-    setGenreIds(genreList.filter((g) => genreNames.includes(g.GENRE_NAME)));
+    setGenreIds(genreList.filter((genre) => genreNames.includes(genre.GENRE_NAME)));
 
     const directorList = directors as Director[];
     const directorNames = splitNames(detail.DIRECTORS);
     setDirectorIds(
-      directorList.filter((d) => directorNames.includes(`${d.DIRECTOR_FIRST_NAME} ${d.DIRECTOR_LAST_NAME}`))
+      directorList.filter((director) => directorNames.includes(`${director.DIRECTOR_FIRST_NAME} ${director.DIRECTOR_LAST_NAME}`))
     );
 
     const formatList = formats as AudiovisualFormat[];
@@ -194,23 +194,13 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
       formatList.filter((format) => formatNames.includes(`${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`))
     );
 
+    // Languages processing
     const langList = languages as Language[];
-    const langEntries = splitNames(detail.LANGUAGES);
-    const og: Language[] = [];
-    const dub: Language[] = [];
-    const sub: Language[] = [];
-    for (const entry of langEntries) {
-      const parsed = parseLanguageEntry(entry);
-      if (!parsed) continue;
-      const found = langList.find((language) => language.LANGUAGE_NAME === parsed.name);
-      if (!found) continue;
-      if (parsed.type === 'OG' && !og.some((language) => language.ISO_CODE === found.ISO_CODE)) og.push(found);
-      else if (parsed.type === 'DUB' && !dub.some((language) => language.ISO_CODE === found.ISO_CODE)) dub.push(found);
-      else if (parsed.type === 'SUB' && !sub.some((language) => language.ISO_CODE === found.ISO_CODE)) sub.push(found);
-    }
-    setOriginalLangs(og);
-    setDubLangs(dub);
-    setSubLangs(sub);
+    const langEntries = detail.LANGUAGES ? detail.LANGUAGES.split(',').map((value: string) => value.trim()).filter(Boolean) : [];
+    const { originalLangs, dubLangs, subLangs } = classifyLanguageEntries(langEntries, langList);
+    setOriginalLangs(originalLangs);
+    setDubLangs(dubLangs);
+    setSubLangs(subLangs);
 
     setExistingPoster(detail.POSTER ?? null);
   }, [open, detail, isLoadingCatalogs, genres, ratings, languages, formats, directors, isCreate]);
@@ -227,7 +217,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
 
   const previewSrc = posterPreview ?? (!isCreate ? posterUrl(existingPoster) : undefined);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const allTouched: Record<string, boolean> = {
