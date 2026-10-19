@@ -191,7 +191,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     const formatList = formats as AudiovisualFormat[];
     const formatNames = splitNames(detail.FORMATS);
     setFormatIds(
-      formatList.filter((f) => formatNames.includes(`${f.VIDEO_FORMAT_NAME} ${f.AUDIO_FORMAT_NAME}`))
+      formatList.filter((format) => formatNames.includes(`${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`))
     );
 
     const langList = languages as Language[];
@@ -202,11 +202,11 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     for (const entry of langEntries) {
       const parsed = parseLanguageEntry(entry);
       if (!parsed) continue;
-      const found = langList.find((l) => l.LANGUAGE_NAME === parsed.name);
+      const found = langList.find((language) => language.LANGUAGE_NAME === parsed.name);
       if (!found) continue;
-      if (parsed.type === 'OG' && !og.some((l) => l.ISO_CODE === found.ISO_CODE)) og.push(found);
-      else if (parsed.type === 'DUB' && !dub.some((l) => l.ISO_CODE === found.ISO_CODE)) dub.push(found);
-      else if (parsed.type === 'SUB' && !sub.some((l) => l.ISO_CODE === found.ISO_CODE)) sub.push(found);
+      if (parsed.type === 'OG' && !og.some((language) => language.ISO_CODE === found.ISO_CODE)) og.push(found);
+      else if (parsed.type === 'DUB' && !dub.some((language) => language.ISO_CODE === found.ISO_CODE)) dub.push(found);
+      else if (parsed.type === 'SUB' && !sub.some((language) => language.ISO_CODE === found.ISO_CODE)) sub.push(found);
     }
     setOriginalLangs(og);
     setDubLangs(dub);
