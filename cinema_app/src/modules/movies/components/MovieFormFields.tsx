@@ -20,11 +20,21 @@ import { firstError } from '../utils/movieFormUtils';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import type { MovieForm } from '../hooks/useMovieForm';
 
-function FieldError({ show, message }: { show: boolean | undefined; message: string }) {
+interface FieldErrorProps {
+  readonly show: boolean;
+  readonly message: string;
+}
+
+interface MovieFormFieldsProps {
+  readonly form: MovieForm;
+  readonly formId: string;
+}
+
+function FieldError({ show, message }: FieldErrorProps) {
   return <>{(show && message) || ' '}</>;
 }
 
-export default function MovieFormFields({ form, formId }: { form: MovieForm; formId: string }) {
+export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) {
   const langError = firstError(form.fieldErrors.LANGUAGES_ORIGINAL) || firstError(form.fieldErrors.LANGUAGES);
   const err = (name: string) => form.touched[name] && Boolean((form.fieldErrors as Record<string, unknown>)[name]);
 
