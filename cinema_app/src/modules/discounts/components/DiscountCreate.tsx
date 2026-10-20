@@ -20,6 +20,9 @@ function validateDiscount(discount: Partial<Discount>): ValidationResult {
   if (!discount.DISCOUNT_NAME) {
     issues.push({ message: 'Nombre es requerido', path: ['DISCOUNT_NAME'] });
   }
+  else if (discount.DISCOUNT_NAME.length > 50) {
+    issues.push({ message: 'Nombre demasiado largo', path: ['DISCOUNT_NAME'] });
+  }
   if (discount.DISCOUNT_PORCENTAGE == null) {
     issues.push({ message: 'Porcentaje es requerido', path: ['DISCOUNT_PORCENTAGE'] });
   }

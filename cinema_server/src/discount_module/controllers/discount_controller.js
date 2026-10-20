@@ -177,15 +177,18 @@ export const getDiscountProducts = async (req, res, next ) =>
       request =
       `SELECT SNACK_NAME, ID_SNACK
         FROM PI_DEVELOPERS.SNACKS`
-    }else if (TYPE == 'PELICULA EN CARTELERA')
+    }else if (type == 'PELICULA EN CARTELERA')
     {
       request =
-      `SELECT m.MOVIE_NAME||" from "|| l.LOCATION_NAME AS 'Movie', b.ID_MOVIE_IN_BILLBOARD 
-       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARD b
-       JOIN PI_DEVELOPERS.MOVIES m 
-       ON m.ID_MOVIE = b.ID_MOVIE
-       JOIN PI_DEVELOPERS.LOCATIONS l
-       ON b.ID_LOCATION = l.ID_LOCATION`
+      `SELECT m.MOVIE_TITLE||'from'|| l.LOCATION_NAME AS "Movie", b.ID_MOVIE_IN_BILLBOARD 
+      FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS b
+      JOIN PI_DEVELOPERS.MOVIES m 
+      ON m.ID_MOVIE = b.ID_MOVIE
+      JOIN PI_DEVELOPERS.LOCATIONS l
+      ON b.ID_LOCATION = l.ID_LOCATION;`
+    }else
+    {
+      return res.status(400).json({ message: 'Invalid product type' });
     }
     const result = await connection.execute(
       request, [], 
@@ -233,7 +236,7 @@ export const addDiscount = async (req, res, next) =>
     const { DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE,  ID_FK_PRODUCT } = req.body;
 
     let request;
-    if(type = 'SNACK')
+    if(type == 'SNACK')
     {
       request = 
         `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
@@ -242,15 +245,18 @@ export const addDiscount = async (req, res, next) =>
           VALUES (
           :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
           )` 
-    }(TYPE == 'PELICULA EN CARTELERA')
+    }else if(type == 'PELICULA EN CARTELERA')
     {
       request =
         `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
-          ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE, ID_MOVIES_IN_BILLBOARD
+          ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE, ID_MOVIE_IN_BILLBOARD
           )
           VALUES (
           :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
           )`
+    }else
+    {
+      return res.status(400).json({ message: 'Invalid product type' });
     }
 
       await connection.execute(
