@@ -11,6 +11,6 @@ export interface Discount {
 }
 
 export interface DiscountProduct {
-  ID_SNACK: number;
-  SNACK_NAME: string;
+  ID_PRODUCT: number;
+  PRODUCT_NAME: string;
 }

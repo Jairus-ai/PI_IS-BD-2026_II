@@ -79,15 +79,18 @@ async function SnackName(connection, idSnack)
 
 async function MovieName(connection, idMovieInBillboard) {
   const result = await connection.execute(
-    `SELECT m.MOVIE_NAME
-       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARD b
-       JOIN PI_DEVELOPERS.MOVIES m ON m.ID_MOVIE = b.ID_MOVIE
+    `SELECT m.MOVIE_TITLE||' del cine '|| l.LOCATION_NAME AS "Movie"
+       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS b
+       JOIN PI_DEVELOPERS.MOVIES m 
+       ON m.ID_MOVIE = b.ID_MOVIE
+       JOIN PI_DEVELOPERS.LOCATIONS l
+       ON b.ID_LOCATION = l.ID_LOCATION
       WHERE b.ID_MOVIE_IN_BILLBOARD = :id`,
     { id: Number(idMovieInBillboard) },
     { outFormat: oracledb.OUT_FORMAT_OBJECT }
   );
 
-  return result.rows[0]?.MOVIE_NAME ?? null;
+  return result.rows[0]?.Movie ?? null;
 }
 
 export const getDiscountByID = async (req, res, next) => 
@@ -131,7 +134,7 @@ export const getDiscountByID = async (req, res, next) =>
     for (const [index, row] of result.rows.entries()) {
       if (row.ID_SNACKS == null)
       {
-        row.TYPE = 'PELICULA EN CARTELERA';
+        row.TYPE = 'PELICULA';
         row.NAME_FK_PRODUCT = movieNames[index];
       }else
       {
@@ -177,15 +180,15 @@ export const getDiscountProducts = async (req, res, next ) =>
       request =
       `SELECT SNACK_NAME, ID_SNACK
         FROM PI_DEVELOPERS.SNACKS`
-    }else if (type == 'PELICULA EN CARTELERA')
+    }else if (type == 'PELICULA')
     {
       request =
-      `SELECT m.MOVIE_TITLE||'from'|| l.LOCATION_NAME AS "Movie", b.ID_MOVIE_IN_BILLBOARD 
+      `SELECT m.MOVIE_TITLE||' del cine '|| l.LOCATION_NAME AS "Movie", b.ID_MOVIE_IN_BILLBOARD 
       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS b
       JOIN PI_DEVELOPERS.MOVIES m 
       ON m.ID_MOVIE = b.ID_MOVIE
       JOIN PI_DEVELOPERS.LOCATIONS l
-      ON b.ID_LOCATION = l.ID_LOCATION;`
+      ON b.ID_LOCATION = l.ID_LOCATION`
     }else
     {
       return res.status(400).json({ message: 'Invalid product type' });
@@ -202,6 +205,8 @@ export const getDiscountProducts = async (req, res, next ) =>
         data: result.rows
       }
     );
+
+    console.log(result.rows[0])
 
   } catch (error) 
   {
@@ -245,7 +250,7 @@ export const addDiscount = async (req, res, next) =>
           VALUES (
           :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
           )` 
-    }else if(type == 'PELICULA EN CARTELERA')
+    }else if(type == 'PELICULA')
     {
       request =
         `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
