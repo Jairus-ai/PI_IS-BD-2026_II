@@ -1,3 +1,4 @@
+import type * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -5,7 +6,6 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { Link } from 'react-router';
 import LogOutButton from '../common/LogOutButton';
-import type * as React from 'react';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -34,6 +34,8 @@ export interface DashboardHeaderProps {
 export default function DashboardHeader({
   logo,
   title,
+  menuOpen,
+  onToggleMenu,
 }: Readonly<DashboardHeaderProps>) {
   const theme = useTheme();
 
@@ -75,6 +77,9 @@ export default function DashboardHeader({
             spacing={1}
             sx={{ alignItems: 'center', marginLeft: 'auto' }}
           >
+            <Stack direction="row" sx={{ alignItems: 'center' }}>
+              <ThemeSwitcher />
+            </Stack>
             <LogOutButton size="small" />
           </Stack>
         </Stack>
