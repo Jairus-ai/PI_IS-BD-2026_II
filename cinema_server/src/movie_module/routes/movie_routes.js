@@ -8,8 +8,7 @@ import {
   deleteMovie
 } from '../controllers/movie_controller.js';
 import { uploadPosterFile } from '../controllers/poster_controller.js';
-import { validateQuery } from '../../middleware/validate.js';
-import { validateParams, validateBody } from '../../middleware/validate.js';
+import { validateQuery, validateParams, validateBody } from '../../middleware/validate.js';
 import { uploadPoster } from '../../middleware/upload.js';
 import {
   movieQuerySchema,
