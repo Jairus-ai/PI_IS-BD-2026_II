@@ -1,13 +1,13 @@
 import oracledb from 'oracledb';
 
-const MOVIE_BODY_FIELDS = [
+const MOVIE_BODY_FIELDS = new Set ([
   'MOVIE_TITLE',
   'PUBLISHING_YEAR',
   'SYNOPSIS',
   'MOVIE_DURATION',
   'POSTER',
   'ID_RATING'
-];
+]);
 
 export async function rollback(connection) {
   if (!connection) return;
@@ -73,7 +73,7 @@ export function splitMovieBody(validatedBody) {
   const movie = {};
   const relations = {};
   for (const key of Object.keys(validatedBody ?? {})) {
-    if (MOVIE_BODY_FIELDS.includes(key)) movie[key] = validatedBody[key];
+    if (MOVIE_BODY_FIELDS.has(key)) movie[key] = validatedBody[key];
     else relations[key] = validatedBody[key];
   }
   return { movie, relations };
@@ -201,9 +201,10 @@ export async function insertMovie(connection, movie) {
   return result.outBinds.idmovie[0];
 }
 
+// TODO(Jesus): Awaits are removed, but errors are not handled. To do pending.
 async function insertMovieGenres(connection, idMovie, ids) {
   for (const idGenre of ids) {
-    await connection.execute(
+    connection.execute(
       `INSERT INTO PI_DEVELOPERS.movies_genres
         (ID_MOVIE, ID_GENRE)
         VALUES (:idmovie, :idgenre)`,
@@ -214,7 +215,7 @@ async function insertMovieGenres(connection, idMovie, ids) {
 
 async function insertMovieDirectors(connection, idMovie, ids) {
   for (const idDirector of ids) {
-    await connection.execute(
+    connection.execute(
       `INSERT INTO PI_DEVELOPERS.movies_directors
         (ID_MOVIE, ID_DIRECTOR)
         VALUES (:idmovie, :iddirector)`,
@@ -225,7 +226,7 @@ async function insertMovieDirectors(connection, idMovie, ids) {
 
 async function insertMovieFormats(connection, idMovie, ids) {
   for (const idFormat of ids) {
-    await connection.execute(
+    connection.execute(
       `INSERT INTO PI_DEVELOPERS.movies_formats
         (ID_MOVIE, ID_AUDIOVISUAL_FORMAT)
         VALUES (:idmovie, :idformat)`,
@@ -236,7 +237,7 @@ async function insertMovieFormats(connection, idMovie, ids) {
 
 async function insertMovieLanguages(connection, idMovie, languages) {
   for (const lang of languages) {
-    await connection.execute(
+    connection.execute(
       `INSERT INTO PI_DEVELOPERS.movies_languages
         (LANGUAGE_TYPE, ID_MOVIE, ISO_CODE)
         VALUES (:languagetype, :idmovie, :isocode)`,
@@ -309,7 +310,7 @@ export async function movieExists(connection, id) {
 }
 
 export async function updateMovieBase(connection, id, movie) {
-  const fields = Object.keys(movie).filter((key) => MOVIE_BODY_FIELDS.includes(key));
+  const fields = Object.keys(movie).filter((key) => MOVIE_BODY_FIELDS.has(key));
   if (fields.length === 0) return null;
 
   const setClause = fields.map((field) => `${field} = :${field.toLowerCase()}`).join(', ');
@@ -338,7 +339,7 @@ export async function replaceMovieRelations(connection, idMovie, relations) {
 
 export async function updateMovieWithRelations(connection, id, movie, relations) {
   const idMovie = Number(id);
-  const fields = Object.keys(movie).filter((key) => MOVIE_BODY_FIELDS.includes(key));
+  const fields = Object.keys(movie).filter((key) => MOVIE_BODY_FIELDS.has(key));
   const hasRelations = Object.keys(relations).length > 0;
   if (fields.length === 0 && !hasRelations) return 'empty';
 
