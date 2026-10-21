@@ -79,15 +79,18 @@ async function SnackName(connection, idSnack)
 
 async function MovieName(connection, idMovieInBillboard) {
   const result = await connection.execute(
-    `SELECT m.MOVIE_NAME
-       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARD b
-       JOIN PI_DEVELOPERS.MOVIES m ON m.ID_MOVIE = b.ID_MOVIE
+    `SELECT m.MOVIE_TITLE||' del cine '|| l.LOCATION_NAME AS "Movie"
+       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS b
+       JOIN PI_DEVELOPERS.MOVIES m 
+       ON m.ID_MOVIE = b.ID_MOVIE
+       JOIN PI_DEVELOPERS.LOCATIONS l
+       ON b.ID_LOCATION = l.ID_LOCATION
       WHERE b.ID_MOVIE_IN_BILLBOARD = :id`,
     { id: Number(idMovieInBillboard) },
     { outFormat: oracledb.OUT_FORMAT_OBJECT }
   );
 
-  return result.rows[0]?.MOVIE_NAME ?? null;
+  return result.rows[0]?.Movie ?? null;
 }
 
 export const getDiscountByID = async (req, res, next) => 
@@ -131,9 +134,10 @@ export const getDiscountByID = async (req, res, next) =>
     for (const [index, row] of result.rows.entries()) {
       if (row.ID_SNACKS == null)
       {
-        row.TYPE = 'PELICULA EN CARTELERA';
+        row.TYPE = 'PELICULA';
         row.NAME_FK_PRODUCT = movieNames[index];
-      }else{
+      }else
+      {
         row.TYPE = 'SNACK';
         row.NAME_FK_PRODUCT = snackNames[index];
       }
@@ -166,12 +170,29 @@ export const getDiscountProducts = async (req, res, next ) =>
   
   try 
   {
+    const {type} = req.params;
+    let request;
+
     connection = await oracledb.getConnection();
 
-    const request = 
-    `SELECT SNACK_NAME, ID_SNACK
-      FROM PI_DEVELOPERS.SNACKS`
-
+    if(type == 'SNACK')
+    {
+      request =
+      `SELECT SNACK_NAME as "PRODUCT_NAME", ID_SNACK as "ID_PRODUCT"
+        FROM PI_DEVELOPERS.SNACKS`
+    }else if (type == 'PELICULA')
+    {
+      request =
+      `SELECT m.MOVIE_TITLE||' del cine '|| l.LOCATION_NAME AS "PRODUCT_NAME", b.ID_MOVIE_IN_BILLBOARD as "ID_PRODUCT"
+      FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS b
+      JOIN PI_DEVELOPERS.MOVIES m 
+      ON m.ID_MOVIE = b.ID_MOVIE
+      JOIN PI_DEVELOPERS.LOCATIONS l
+      ON b.ID_LOCATION = l.ID_LOCATION`
+    }else
+    {
+      return res.status(400).json({ message: 'Invalid product type' });
+    }
     const result = await connection.execute(
       request, [], 
       { 
@@ -184,6 +205,8 @@ export const getDiscountProducts = async (req, res, next ) =>
         data: result.rows
       }
     );
+
+    console.log(result.rows[0])
 
   } catch (error) 
   {
@@ -205,6 +228,7 @@ export const addDiscount = async (req, res, next) =>
   try
   {
     connection = await oracledb.getConnection();
+    const { type } = req.params;
 
     const result = await connection.execute(
       'SELECT MAX(ID_DISCOUNT) AS LAST_ID FROM PI_DEVELOPERS.DISCOUNTS', [],
@@ -216,13 +240,29 @@ export const addDiscount = async (req, res, next) =>
 
     const { DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE,  ID_FK_PRODUCT } = req.body;
 
-    const request = 
-    `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
-      ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE, ID_SNACKS
-      )
-      VALUES (
-      :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
-      )`
+    let request;
+    if(type == 'SNACK')
+    {
+      request = 
+        `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
+          ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE, ID_SNACKS
+          )
+          VALUES (
+          :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
+          )` 
+    }else if(type == 'PELICULA')
+    {
+      request =
+        `INSERT INTO PI_DEVELOPERS.DISCOUNTS (
+          ID_DISCOUNT, DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE, ID_MOVIE_IN_BILLBOARD
+          )
+          VALUES (
+          :ID, :NAME, :PORCENTAGE, TO_DATE(:START_DATE, 'YYYY-MM-DD'), TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), :PRODUCT
+          )`
+    }else
+    {
+      return res.status(400).json({ message: 'Invalid product type' });
+    }
 
       await connection.execute(
         request,

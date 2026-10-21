@@ -111,7 +111,7 @@ export default function DiscountShow({ discountId, onClose }: Props) {
     }
     return discount ? (
     <Dialog open={discountId !== null} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2, display:'flex', alignItems:'center' } } }}>
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>Descuento #{discount.ID_DISCOUNT}</DialogTitle>
+      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700}}>Descuento #{discount.ID_DISCOUNT}</DialogTitle>
       <DialogContent>
         {isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
@@ -121,25 +121,25 @@ export default function DiscountShow({ discountId, onClose }: Props) {
         {discount && (
           <Box sx={{ display: 'grid', gap: 2 }}>
             <div>
-              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Nombre</Typography>
+              <Typography sx={{ color: 'primary.dark' }}>Nombre</Typography>
               <Typography>{discount.DISCOUNT_NAME}</Typography>
             </div>
             <div>
-              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Porcentaje</Typography>
+              <Typography sx={{ color: 'primary.dark' }}>Porcentaje</Typography>
               <Typography>{discount.DISCOUNT_PORCENTAGE}%</Typography>
             </div>
             <div style = {{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
               <div>
-                <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de inicio</Typography>
+                <Typography sx={{ color: 'primary.dark' }}>Fecha de inicio</Typography>
                 <Typography>{discount.DISCOUNT_START_DATE}</Typography>
               </div>
               <div>
-                <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de finalización</Typography>
+                <Typography sx={{ color: 'primary.dark' }}>Fecha de finalización</Typography>
                 <Typography>{discount.DISCOUNT_FINISH_DATE}</Typography>
               </div>
             </div>
             <div>
-                <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Tipo de descuento</Typography>
+                <Typography sx={{ color: 'primary.dark' }}>Tipo de descuento</Typography>
                 <Typography>{discount.TYPE}: {discount.NAME_FK_PRODUCT}</Typography>
               </div>
           </Box>
