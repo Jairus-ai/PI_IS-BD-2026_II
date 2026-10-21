@@ -10,6 +10,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 import { useMovies } from '../hooks/useMovies';
 import { API_BASE_URL } from '../../../services/api';
 import type { MovieDetail } from '../types/movies';
@@ -49,7 +51,16 @@ export default function MovieDetailDialog({ movieId, open, onClose }: {
       fullWidth
       slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}
     >
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>{movie?.MOVIE_TITLE ?? (isLoadingDetail ? 'Cargando…' : 'Película')}</DialogTitle>
+      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700, pr: 6 }}>
+        {movie?.MOVIE_TITLE ?? (isLoadingDetail ? 'Cargando…' : 'Película')}
+        <IconButton
+          aria-label="Cerrar"
+          onClick={onClose}
+          sx={{ position: 'absolute', right: 8, top: 8 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
         {isLoadingDetail ? <Box sx={{display:'flex',justifyContent:'center',p:4}}><CircularProgress color="primary" /></Box>
         : !movie ? (movieId != null ? <Alert severity="warning">Sin datos.</Alert> : null)
