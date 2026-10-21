@@ -77,9 +77,6 @@ export default function DashboardHeader({
             spacing={1}
             sx={{ alignItems: 'center', marginLeft: 'auto' }}
           >
-            <Stack direction="row" sx={{ alignItems: 'center' }}>
-              <ThemeSwitcher />
-            </Stack>
             <LogOutButton size="small" />
           </Stack>
         </Stack>
