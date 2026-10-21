@@ -120,7 +120,7 @@ export default function MovieForm(props:DiscountFormProps) {
       <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
-            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Nombre*</Typography>
+            <Typography sx={{ color: 'primary.dark' }}>Nombre*</Typography>
             <TextField
               value={formValues.DISCOUNT_NAME ?? ''}
               onChange={handleTextFieldChange}
@@ -132,7 +132,7 @@ export default function MovieForm(props:DiscountFormProps) {
             />
           </Grid>
            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
-            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Porcentaje*</Typography>
+            <Typography sx={{ color: 'primary.dark'}}>Porcentaje*</Typography>
             <TextField
               type="number"
               value={formValues.DISCOUNT_PORCENTAGE ?? ''}
@@ -146,7 +146,7 @@ export default function MovieForm(props:DiscountFormProps) {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de inicio*</Typography>
+              <Typography sx={{ color: 'primary.dark'}}>Fecha de inicio*</Typography>
               <DatePicker
                 value={formValues.DISCOUNT_START_DATE ? dayjs(formValues.DISCOUNT_START_DATE) : null}
                 onChange={handleDateFieldChange('DISCOUNT_START_DATE')}
@@ -164,7 +164,7 @@ export default function MovieForm(props:DiscountFormProps) {
           </Grid>
          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de finalización*</Typography>
+              <Typography sx={{ color: 'primary.dark' }}>Fecha de finalización*</Typography>
               <DatePicker
                 value={formValues.DISCOUNT_FINISH_DATE ? dayjs(formValues.DISCOUNT_FINISH_DATE) : null}
                 onChange={handleDateFieldChange('DISCOUNT_FINISH_DATE')}
@@ -180,32 +180,35 @@ export default function MovieForm(props:DiscountFormProps) {
               />
             </LocalizationProvider>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            <FormControlLabel
-              label="PELICULA"
-              control={
-                <Checkbox
-                  size="large"
-                  checked={selectedType === 'PELICULA'}
-                  onChange ={(_event, checked) => handleBoxChecked('PELICULA',_event, checked,)}
-                />
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-            <FormControlLabel
-              label="SNACK"
-              control={
-                <Checkbox
-                  size="large"
-                  checked={selectedType === 'SNACK'}
-                  onChange ={(_event, checked) => handleBoxChecked('SNACK',_event, checked,)}
-                />
-              }
-            />
+          <Grid sx={{display:'flex', flexDirection:'row'}}>
+            <Typography  sx={{ color: 'primary.dark'}}>Producto del descuento*</Typography>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
+              <FormControlLabel
+                label="PELICULA"
+                control={
+                  <Checkbox
+                    size="large"
+                    checked={selectedType === 'PELICULA'}
+                    onChange ={(_event, checked) => handleBoxChecked('PELICULA',_event, checked,)}
+                  />
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
+              <FormControlLabel
+                label="SNACK"
+                control={
+                  <Checkbox
+                    size="large"
+                    checked={selectedType === 'SNACK'}
+                    onChange ={(_event, checked) => handleBoxChecked('SNACK',_event, checked,)}
+                  />
+                }
+              />
+            </Grid>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column',  marginLeft: '25%'}}>
-            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Producto del descuento*</Typography>
+            <Typography  sx={{ color: 'primary.dark'}}>Producto del descuento*</Typography>
             <Autocomplete
               options={products}
               getOptionLabel={(p) => p.PRODUCT_NAME}
