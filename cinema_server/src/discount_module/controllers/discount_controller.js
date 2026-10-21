@@ -292,4 +292,38 @@ export const addDiscount = async (req, res, next) =>
       await closeDatabaseConnection(connection);
     }
   }
-}
+};
+
+export const deleteDiscount = async (req,res,next) =>
+{
+  let connection;
+  try{
+    const { id } = req.params;
+
+    connection = await oracledb.getConnection();
+    const request = `
+      DELETE FROM PI_DEVELOPERS.DISCOUNTS
+      WHERE ID_DISCOUNT = :id`;
+
+    const result = await connection.execute(
+      request,
+      {id: Number(id)}, 
+      { autoCommit: true }  // Convert output to JSON
+    );
+    
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Discount not found' });
+    }
+  
+    res.status(204).send();
+  }catch (error) {
+    if (error.errorNum === 2292) {
+      return res.status(409).json({ message: 'Discount is in use and cannot be deleted' });
+    }
+    next(error);
+} finally {
+    if (connection) {
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
