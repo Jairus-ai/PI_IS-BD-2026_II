@@ -178,12 +178,12 @@ export const getDiscountProducts = async (req, res, next ) =>
     if(type == 'SNACK')
     {
       request =
-      `SELECT SNACK_NAME, ID_SNACK
+      `SELECT SNACK_NAME as "PRODUCT_NAME", ID_SNACK as "ID_PRODUCT"
         FROM PI_DEVELOPERS.SNACKS`
     }else if (type == 'PELICULA')
     {
       request =
-      `SELECT m.MOVIE_TITLE||' del cine '|| l.LOCATION_NAME AS "Movie", b.ID_MOVIE_IN_BILLBOARD 
+      `SELECT m.MOVIE_TITLE||' del cine '|| l.LOCATION_NAME AS "PRODUCT_NAME", b.ID_MOVIE_IN_BILLBOARD as "ID_PRODUCT"
       FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS b
       JOIN PI_DEVELOPERS.MOVIES m 
       ON m.ID_MOVIE = b.ID_MOVIE

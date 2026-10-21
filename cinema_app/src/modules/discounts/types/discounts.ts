@@ -6,7 +6,7 @@ export interface Discount {
   DISCOUNT_NAME: string;
   DISCOUNT_STATE: string; //finished/active/future
   TYPE: string;
-  NAME_FK_PRODUCT: string;
+  NAME_FK_PRODUCT:string;
   ID_FK_PRODUCT:number;
 }
 
