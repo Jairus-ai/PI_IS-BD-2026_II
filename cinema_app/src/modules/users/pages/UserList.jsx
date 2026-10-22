@@ -19,6 +19,7 @@ import { useLocations } from '../hooks/useLocations.js';
 import { deactivateWorker } from '../services/userService.js';
 import { useDialogs } from '../../../hooks/useDialogs.tsx';
 import useNotifications from '../../../hooks/useNotifications.tsx';
+import useSession from '../../../hooks/useSession';
 
 function formatRole(role) {
   const roles = {
@@ -68,6 +69,24 @@ export default function UserList() {
 
   const dialogs = useDialogs();
   const notifications = useNotifications();
+  const { user } = useSession();
+
+  const availableRoles = {
+    SUPERUSER: [
+      ['CLIENT', 'Cliente'],
+      ['ADMINISTRATOR', 'Administrador'],
+      ['EMPLOYEE', 'Empleado'],
+    ],
+    ADMINISTRATOR: [
+      ['CLIENT', 'Cliente'],
+      ['EMPLOYEE', 'Empleado'],
+    ],
+    EMPLOYEE: [
+      ['CLIENT', 'Cliente'],
+    ],
+};
+
+const roleOptions = availableRoles[user?.role] || [];
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -262,10 +281,13 @@ export default function UserList() {
               onChange={handleChange}
             >
               <MenuItem value="">Todos los roles</MenuItem>
-              <MenuItem value="CLIENT">Cliente</MenuItem>
-              <MenuItem value="SUPERUSER">Superusuario</MenuItem>
-              <MenuItem value="ADMINISTRATOR">Administrador</MenuItem>
-              <MenuItem value="EMPLOYEE">Empleado</MenuItem>
+              
+              {roleOptions.map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                {label}
+                </MenuItem>
+              ))}
+              
             </Select>
           </FormControl>
 
