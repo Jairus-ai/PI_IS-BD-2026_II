@@ -307,8 +307,8 @@ export const deleteDiscount = async (req,res,next) =>
 
     connection = await oracledb.getConnection();
     const request = `
-      UPDATE DISCOUNTS
-      SET IS_DELETED = 0
+      UPDATE PI_DEVELOPERS.DISCOUNTS
+      SET IS_DELETED = 1
       WHERE ID_DISCOUNT = :id`;
 
     const result = await connection.execute(
@@ -316,7 +316,7 @@ export const deleteDiscount = async (req,res,next) =>
       {id: Number(id)}, 
       { autoCommit: true }  // Convert output to JSON
     );
-    
+
     if (result.rowsAffected === 0) {
       return res.status(404).json({ message: 'Discount not found' });
     }

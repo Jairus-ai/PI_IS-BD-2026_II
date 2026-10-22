@@ -206,14 +206,16 @@ describe('POST /management/discounts/:type', () => {
   });
 });
 
-describe('DELETE /management/discounts/:id', () => {
-  test('204 when the discount is deleted', async () => {
+describe('PUT /management/discounts/:id', () => {
+  test('204 when the discount is deleted logically', async () => {
     const connection = useConnection([{ rowsAffected: 1 }]);
 
-    await request(app).delete('/management/discounts/4').expect(204);
+    await request(app).put('/management/discounts/4').expect(204);
 
     const [sql, binds, options] = connection.execute.mock.calls[0];
-    expect(sql).toMatch(/DELETE FROM PI_DEVELOPERS\.DISCOUNTS/);
+    expect(sql).toMatch(/UPDATE PI_DEVELOPERS\.DISCOUNTS/);
+    expect(sql).toMatch(/IS_DELETED\s*=\s*1/);
+    expect(sql).not.toMatch(/DELETE FROM/i);
     expect(binds).toEqual({ id: 4 });
     expect(options).toEqual({ autoCommit: true });
     expect(connection.close).toHaveBeenCalledTimes(1);
@@ -222,16 +224,15 @@ describe('DELETE /management/discounts/:id', () => {
   test('404 when the discount does not exist', async () => {
     const connection = useConnection([{ rowsAffected: 0 }]);
 
-    await request(app).delete('/management/discounts/999').expect(404);
+    await request(app).put('/management/discounts/999').expect(404);
 
     expect(connection.close).toHaveBeenCalledTimes(1);
   });
 
-  test('409 when the discount is referenced elsewhere', async () => {
-    const error = Object.assign(new Error('ORA-02292'), { errorNum: 2292 });
-    const connection = useConnection([error]);
+  test('500 when the update fails', async () => {
+    const connection = useConnection([new Error('ORA-01031: insufficient privileges')]);
 
-    await request(app).delete('/management/discounts/4').expect(409);
+    await request(app).put('/management/discounts/4').expect(500);
 
     expect(connection.close).toHaveBeenCalledTimes(1);
   });

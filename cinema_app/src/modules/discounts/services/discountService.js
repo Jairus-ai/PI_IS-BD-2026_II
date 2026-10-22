@@ -25,5 +25,5 @@ export const addDiscount = async (discount,type) =>
 };
 
 export const deleteDiscount = async (id) => {
-  await api.delete(`/management/discounts/${id}`);
+  await api.put(`/management/discounts/${id}`);
 };
