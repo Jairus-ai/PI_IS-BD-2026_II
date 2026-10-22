@@ -66,7 +66,7 @@ async function SnackName(connection, idSnack)
   const request = `
     SELECT SNACK_NAME
     FROM PI_DEVELOPERS.SNACKS
-    WHERE ID_SNACK = :id AND IS_DELETED=0`;
+    WHERE ID_SNACK = :id`;
 
 
   const result = await connection.execute(
@@ -86,7 +86,7 @@ async function MovieName(connection, idMovieInBillboard) {
        ON m.ID_MOVIE = b.ID_MOVIE
        JOIN PI_DEVELOPERS.LOCATIONS l
        ON b.ID_LOCATION = l.ID_LOCATION
-      WHERE b.ID_MOVIE_IN_BILLBOARD = :id AND IS_DELETED=0`,
+      WHERE b.ID_MOVIE_IN_BILLBOARD = :id`,
     { id: Number(idMovieInBillboard) },
     { outFormat: oracledb.OUT_FORMAT_OBJECT }
   );
@@ -97,7 +97,7 @@ async function MovieName(connection, idMovieInBillboard) {
 export const getDiscountByID = async (req, res, next) => 
   {
   let connection;
-  
+  console.log("getID");
   try 
   {
     const { id } = req.params;
@@ -112,7 +112,7 @@ export const getDiscountByID = async (req, res, next) =>
       ID_SNACKS,
       ID_MOVIE_IN_BILLBOARD
       FROM PI_DEVELOPERS.DISCOUNTS
-      WHERE ID_DISCOUNT = :id AND IS_DELETED=0`;
+      WHERE ID_DISCOUNT = :id AND IS_DELETED = 0`;
 
     const result = await connection.execute(
       request,
@@ -301,6 +301,8 @@ export const addDiscount = async (req, res, next) =>
 
 export const deleteDiscount = async (req,res,next) =>
 {
+
+  console.log("delID");
   let connection;
   try{
     const { id } = req.params;
