@@ -25,7 +25,9 @@ export async function getUsers(filters = {}) {
     ? `${API_URL}/users?${queryString}`
     : `${API_URL}/users`;
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -45,6 +47,7 @@ export async function deactivateWorker(workerId) {
     `${API_URL}/users/${workerId}/deactivate`,
     {
       method: 'PATCH',
+      credentials: 'include',
     }
   );
 

@@ -1,7 +1,7 @@
 const API_URL = 'http://localhost:3000/management';
 
 export async function getLocations() {
-  const response = await fetch(`${API_URL}/locations`);
+  const response = await fetch(`${API_URL}/locations`, {credentials: "include"});
 
   if (!response.ok) {
     const errorData = await response.json();

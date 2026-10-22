@@ -1,9 +1,6 @@
 import oracledb from 'oracledb';
-
-import {
-  getConnection,
-  closeDatabaseConnection,
-} from '../../database/database.js';
+import {getConnection, closeDatabaseConnection,} from '../../database/database.js';
+import { ROLES } from '../../session/session.js';
 
 
 const VALID_ROLES = new Set([
@@ -19,12 +16,25 @@ const VALID_STATUSES = new Set([
 ]);
 
 
-const buildUserFilters = (queryParams) => {
+const buildUserFilters = (queryParams, currentUserRole) => {
   const { role, locationId, status, name } = queryParams;
 
   const conditions = [];
   const workerConditions = [];
   const binds = {};
+
+  //Users visible according to the authenticated role
+  if(currentUserRole == ROLES.SUPERUSER) {
+    conditions.push(`u.ROLE IN ('CLIENT', 'ADMINISTRATOR', 'EMPLOYEE')`);
+  }
+
+  if(currentUserRole == ROLES.ADMINISTRATOR) {
+    conditions.push(`u.ROLE IN ('CLIENT', 'EMPLOYEE')`);
+  }
+
+  if(currentUserRole == ROLES.EMPLOYEE) {
+    conditions.push(`u.ROLE = 'CLIENT'`);
+  }
 
   // Filter by role
   if (role) {
@@ -116,7 +126,7 @@ export const getUsersList = async (req, res, next) => {
       whereClause,
       workerWhereClause,
       binds,
-    } = buildUserFilters(req.query);
+    } = buildUserFilters(req.query, req.user.role);
 
     connection = await getConnection();
 
@@ -275,6 +285,19 @@ export const deactivateWorker = async (req, res, next) => {
     }
 
     const worker = workerResult.rows[0];
+    const currentUserRole = req.user.role;
+
+    if(worker.ROLE === 'S') {
+      const error = new Error('No tiene permiso para desactivar este usuario.');
+      error.status = 403;
+      throw error;
+    }
+
+    if (currentUserRole === ROLES.ADMINISTRATOR && worker.ROLE !== 'E') {
+      const error = new Error('No tienes permiso para desactivar este usuario.');
+      error.status = 403;
+      throw error;
+    }
 
     if (worker.IS_ACTIVE === 0) {
       const error = new Error('La cuenta ya se encuentra inactiva.');
