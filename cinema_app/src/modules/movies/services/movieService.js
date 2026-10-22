@@ -34,3 +34,27 @@ export const getAudiovisualFormats = async () => {
   const { data } = await api.get('/management/audiovisual_format');
   return data;
 };
+
+export const getDirectors = async () => {
+  const { data } = await api.get('/management/directors');
+  return data;
+};
+
+export const uploadPoster = async (file) => {
+  const formData = new FormData();
+  formData.append('poster', file);
+  const { data } = await api.post('/management/movies/poster', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+export const createMovie = async (movie) => {
+  const { data } = await api.post('/management/movies', movie);
+  return data;
+};
+
+export const updateMovie = async (id, movie) => {
+  const { data } = await api.put(`/management/movies/${id}`, movie);
+  return data;
+};
