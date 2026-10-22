@@ -16,10 +16,15 @@ export const getDiscountProducts = async(type) =>
 {
   const {data} = await api.get(`/management/discounts/DP/${encodeURIComponent(type)}`);
   return data.data;
-}
+};
 
 export const addDiscount = async (discount,type) =>
 {
   const {data} = await api.post(`/management/discounts/${encodeURIComponent(type)}`, discount);
   return data;
-}
+};
+
+export const deleteDiscount = async (id) => {
+  const {data} = await api.put(`/management/discounts/${id}`);
+  return data;
+};
