@@ -14,7 +14,8 @@ export const getDiscountList = async (req, res, next) =>
       DISCOUNT_PORCENTAGE,  
       TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE, 
       TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE
-      FROM PI_DEVELOPERS.DISCOUNTS`;
+      FROM PI_DEVELOPERS.DISCOUNTS
+      WHERE IS_DELETED=0`;
 
     const result = await connection.execute(
       request, [], 
@@ -65,7 +66,7 @@ async function SnackName(connection, idSnack)
   const request = `
     SELECT SNACK_NAME
     FROM PI_DEVELOPERS.SNACKS
-    WHERE ID_SNACK = :id`;
+    WHERE ID_SNACK = :id AND IS_DELETED=0`;
 
 
   const result = await connection.execute(
@@ -85,7 +86,7 @@ async function MovieName(connection, idMovieInBillboard) {
        ON m.ID_MOVIE = b.ID_MOVIE
        JOIN PI_DEVELOPERS.LOCATIONS l
        ON b.ID_LOCATION = l.ID_LOCATION
-      WHERE b.ID_MOVIE_IN_BILLBOARD = :id`,
+      WHERE b.ID_MOVIE_IN_BILLBOARD = :id AND IS_DELETED=0`,
     { id: Number(idMovieInBillboard) },
     { outFormat: oracledb.OUT_FORMAT_OBJECT }
   );
@@ -111,7 +112,7 @@ export const getDiscountByID = async (req, res, next) =>
       ID_SNACKS,
       ID_MOVIE_IN_BILLBOARD
       FROM PI_DEVELOPERS.DISCOUNTS
-      WHERE ID_DISCOUNT = :id`;
+      WHERE ID_DISCOUNT = :id AND IS_DELETED=0`;
 
     const result = await connection.execute(
       request,
@@ -179,7 +180,8 @@ export const getDiscountProducts = async (req, res, next ) =>
     {
       request =
       `SELECT SNACK_NAME as "PRODUCT_NAME", ID_SNACK as "ID_PRODUCT"
-        FROM PI_DEVELOPERS.SNACKS`
+        FROM PI_DEVELOPERS.SNACKS
+        WHERE IS_DELETED=0`
     }else if (type == 'PELICULA')
     {
       request =
@@ -188,7 +190,8 @@ export const getDiscountProducts = async (req, res, next ) =>
       JOIN PI_DEVELOPERS.MOVIES m 
       ON m.ID_MOVIE = b.ID_MOVIE
       JOIN PI_DEVELOPERS.LOCATIONS l
-      ON b.ID_LOCATION = l.ID_LOCATION`
+      ON b.ID_LOCATION = l.ID_LOCATION
+      WHERE IS_DELETED=0`
     }else
     {
       return res.status(400).json({ message: 'Invalid product type' });
@@ -231,7 +234,9 @@ export const addDiscount = async (req, res, next) =>
     const { type } = req.params;
 
     const result = await connection.execute(
-      'SELECT MAX(ID_DISCOUNT) AS LAST_ID FROM PI_DEVELOPERS.DISCOUNTS', [],
+      `SELECT MAX(ID_DISCOUNT) AS LAST_ID 
+      FROM PI_DEVELOPERS.DISCOUNTS 
+      WHERE IS_DELETED = 0`, [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
 
@@ -302,7 +307,8 @@ export const deleteDiscount = async (req,res,next) =>
 
     connection = await oracledb.getConnection();
     const request = `
-      DELETE FROM PI_DEVELOPERS.DISCOUNTS
+      UPDATE DISCOUNTS
+      SET IS_DELETED = 0
       WHERE ID_DISCOUNT = :id`;
 
     const result = await connection.execute(
