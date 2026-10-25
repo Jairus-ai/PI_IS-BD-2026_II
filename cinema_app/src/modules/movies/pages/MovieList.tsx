@@ -63,13 +63,12 @@ export default function MovieList() {
     setFormOpen(true);
   };
 
-  // TODO(Jesus): Uncomment delete once implemented.
   const {
     movies,
     totalMovies,
     isLoadingMovies,
     moviesError,
-    /* deleteMovie */
+    deleteMovie,
     genres,
     languages,
     ratings,
@@ -100,7 +99,7 @@ export default function MovieList() {
 
       if (confirmed) {
         try {
-          // await deleteMovie(movie.ID_MOVIE);
+          await deleteMovie({ id: movie.ID_MOVIE });
           notifications.show('Película eliminada correctamente.', {
             severity: 'success',
             autoHideDuration: 3000,
@@ -116,7 +115,7 @@ export default function MovieList() {
         }
       }
     },
-    [dialogs, /* deleteMovie, */ notifications],
+    [dialogs, deleteMovie, notifications],
   );
 
   const columns = React.useMemo<GridColDef[]>(
