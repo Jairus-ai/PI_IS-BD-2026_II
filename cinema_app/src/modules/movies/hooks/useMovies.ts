@@ -13,10 +13,14 @@ import {
   uploadPoster,
 } from '../services/movieService';
 
-export const useMovies = (page: number = 1, movieId: number | null | undefined = null) => {
+export const useMovies = (
+  page: number = 1,
+  movieId: number | null | undefined = null,
+  filters: any = {},
+) => {
   const moviesQuery = useQuery({
-    queryKey: ['movies', page],
-    queryFn: ()  => getMovies(page),
+    queryKey: ['movies', page, filters],
+    queryFn: ()  => getMovies(page, filters),
   });
 
   const countQuery = useQuery({
