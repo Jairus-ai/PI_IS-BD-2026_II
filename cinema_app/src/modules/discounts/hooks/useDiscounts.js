@@ -25,10 +25,11 @@ export const useDiscounts = (discountId = null) => {
   };
 };
 
-export const useDiscountProducts = () => {
+export const useDiscountProducts = (type) => {
   const query = useQuery({
-    queryKey: ['discount-products'],
-    queryFn: getDiscountProducts,
+    queryKey: ['discount-products', type],
+    queryFn: () => getDiscountProducts(String(type)),
+    enabled: type != null,
   });
 
   return {

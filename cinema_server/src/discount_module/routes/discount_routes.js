@@ -9,8 +9,8 @@ import {
 const router = Router();
 
 router.get('/', getDiscountList);
-router.get('/DP', getDiscountProducts);
+router.get('/DP/:type', getDiscountProducts);
 router.get('/:id', getDiscountByID);
-router.post('/', addDiscount);
+router.post('/:type', addDiscount);
 
 export default router;

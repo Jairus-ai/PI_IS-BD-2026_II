@@ -1,3 +1,5 @@
+export type LanguageType = 'OG' | 'DUB' | 'SUB';
+
 export interface Movie {
   ID_MOVIE: number;
   MOVIE_TITLE: string;
@@ -38,6 +40,12 @@ export interface Rating {
   RATING_CODE: string;
 }
 
+export interface Director {
+  ID_DIRECTOR: number;
+  DIRECTOR_FIRST_NAME: string;
+  DIRECTOR_LAST_NAME: string;
+}
+
 export interface Language {
   ISO_CODE: string;
   LANGUAGE_NAME: string;
@@ -47,4 +55,9 @@ export interface AudiovisualFormat {
   ID_AUDIOVISUAL_FORMAT: number;
   VIDEO_FORMAT_NAME: string;
   AUDIO_FORMAT_NAME: string;
+}
+
+export interface Language {
+  ISO_CODE: string;
+  LANGUAGE_NAME: string;
 }

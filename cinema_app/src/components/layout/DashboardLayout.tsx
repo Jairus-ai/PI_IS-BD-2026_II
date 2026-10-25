@@ -6,7 +6,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { Outlet } from 'react-router';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
-import SitemarkIcon from '../common/SitemarkIcon';
+import logo from '../../assets/logo.png';
 
 export default function DashboardLayout() {
   const theme = useTheme();
@@ -54,12 +54,11 @@ export default function DashboardLayout() {
         display: 'flex',
         overflow: 'hidden',
         height: '100%',
-        minHeight: '100dvh',
         width: '100%',
       }}
     >
       <DashboardHeader
-        logo={<SitemarkIcon />}
+        logo={<Box component="img" src={logo} alt="CinePI" sx={{ height: 40 }} />}
         title=""
         menuOpen={isNavigationExpanded}
         onToggleMenu={handleToggleHeaderMenu}
