@@ -58,7 +58,7 @@ export default function FeeDetailDialog({ fee, onClose }: FeeDetailDialogProps) 
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={onClose} fullWidth sx={{ border: '1px solid', borderColor: 'primary.main' }}>
+            <Button variant="outlined" onClick={onClose}>
               Cerrar
             </Button>
           </DialogActions>

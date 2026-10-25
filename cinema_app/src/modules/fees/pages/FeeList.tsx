@@ -21,11 +21,10 @@ const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las tarifas.';
 
 const ACTION_BUTTON_SX = {
   typography: 'body2',
-  fontWeight: 500,
   color: 'primary.main',
   border: '1px solid',
   borderColor: 'primary.main',
-  borderRadius: '4px',
+  borderRadius: '8px',
   padding: '0.2rem',
   width: '5rem'
 };
@@ -82,6 +81,8 @@ export default function FeeList() {
       field: 'AMOUNT',
       headerName: 'Monto',
       type: 'number',
+      align: 'left',
+      headerAlign: 'left',
       flex: 1,
       minWidth: 140,
       valueFormatter: (value: number) => formatFeeAmount(value)
@@ -90,7 +91,8 @@ export default function FeeList() {
       field: 'actions',
       type: 'actions',
       headerName: 'Acciones',
-      align: 'right',
+      align: 'left',
+      headerAlign: 'left',
       flex: 2,
       minWidth: 300,
       getActions: ({ row }) => [
