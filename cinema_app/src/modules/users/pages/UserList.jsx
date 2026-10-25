@@ -192,11 +192,12 @@ const roleOptions = availableRoles[user?.role] || [];
                 <Box
                   component="span"
                   sx={{
+                    fontSize: '1rem',
                     fontWeight: 500,
                     color: 'primary.main',
                     border: '1px solid',
                     borderColor: 'primary.main',
-                    borderRadius: 1,
+                    borderRadius: '8px',
                     px: 1.5,
                     py: 0.5,
                     '&:hover': {
@@ -214,27 +215,29 @@ const roleOptions = availableRoles[user?.role] || [];
           ];
 
           if (
-            row.ROLE !== 'CLIENT' &&
             row.STATUS === 'ACTIVE'
           ) {
             actions.push(
               <GridActionsCellItem
                 key="deactivate"
                 label="Desactivar"
+                disabled={row.ROLE === 'CLIENT'}
                 icon={
                   <Box
                     component="span"
                     sx={{
+                      fontSize: '1rem',
                       fontWeight: 500,
-                      color: 'error.main',
+                      color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.main',
                       border: '1px solid',
-                      borderColor: 'error.main',
-                      borderRadius: 1,
+                      borderColor: 'primary.main',
+                      borderColor: row.ROLE === 'CLIENT' ? 'grey.400' : 'primary.main',
+                      borderRadius: '8px',
                       px: 1.5,
                       py: 0.5,
                       '&:hover': {
-                        bgcolor: 'error.main',
-                        color: 'error.contrastText',
+                        bgcolor: row.ROLE === 'CLIENT' ? 'transparent' : 'primary.main',
+                        color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.contrastText',
                       },
                     }}
                   >
