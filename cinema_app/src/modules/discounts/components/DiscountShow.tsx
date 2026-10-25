@@ -111,7 +111,7 @@ export default function DiscountShow({ discountId, onClose }: Props) {
     }
     return discount ? (
     <Dialog open={discountId !== null} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2, display:'flex', alignItems:'center' } } }}>
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700}}>Descuento #{discount.ID_DISCOUNT}</DialogTitle>
+      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700}}>{discount.DISCOUNT_NAME}</DialogTitle>
       <DialogContent>
         {isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
