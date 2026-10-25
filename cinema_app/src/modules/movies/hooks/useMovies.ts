@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createMovie,
   updateMovie,
+  deleteMovie,
   getMovies,
   getMoviesCount,
   getMovieById,
@@ -76,6 +77,14 @@ export const useMovies = (
     },
   });
 
+  const deleteMovieMutation = useMutation({
+    mutationFn: ({ id }: {id: number}) => deleteMovie(id),
+    onSuccess: async(_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['movies'] });
+      await queryClient.invalidateQueries({ queryKey: ['movie', variables.id] });
+    },
+  });
+
   return {
     movies: moviesQuery.data?.data ?? [],
     totalMovies: countQuery.data?.total ?? 0,
@@ -103,5 +112,8 @@ export const useMovies = (
     createMovieError: createMovieMutation.error,
     updateMovie: (id: number, movie: any) => updateMovieMutation.mutateAsync({ id, movie }),
     isUpdatingMovie: updateMovieMutation.isPending,
+    deleteMovie: deleteMovieMutation.mutateAsync,
+    isDeletingMovie: deleteMovieMutation.isPending,
+    deleteMovieError: deleteMovieMutation.error,
   };
 };

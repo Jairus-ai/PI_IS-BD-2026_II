@@ -69,3 +69,8 @@ export const updateMovie = async (id, movie) => {
   const { data } = await api.put(`/management/movies/${id}`, movie);
   return data;
 };
+
+export const deleteMovie = async (id) => {
+  const { data } = await api.delete(`/management/movies/${id}`);
+  return data;
+};
