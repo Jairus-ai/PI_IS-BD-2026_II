@@ -164,7 +164,7 @@ export default function FeeList() {
     <PageContainer
       title="Tarifas"
       actions={
-        <Button variant="contained">Agregar tarifa</Button>
+        <Button variant="contained">Crear tarifa</Button>
       }
     >
       <Stack spacing={2} sx={{ flex: 1, width: '100%' }}>
