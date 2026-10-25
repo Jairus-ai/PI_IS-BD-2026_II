@@ -10,6 +10,39 @@ jest.unstable_mockModule('../../database/database.js', () => ({
   closeDatabaseConnection: mockCloseDatabaseConnection,
 }));
 
+const ROLES = {
+  CLIENT: 'CLIENT',
+  SUPERUSER: 'SUPERUSER',
+  ADMINISTRATOR: 'ADMINISTRATOR',
+  EMPLOYEE: 'EMPLOYEE',
+};
+
+let currentUserRole = ROLES.SUPERUSER;
+
+const mockRequireSession = jest.fn(
+  (allowedRoles = Object.values(ROLES)) =>
+    (req, res, next) => {
+      if (!allowedRoles.includes(currentUserRole)) {
+        return res.status(403).json({
+          message: 'No tienes permiso para realizar esta acción',
+        });
+      }
+
+      req.user = {
+        id: 1,
+        role: currentUserRole,
+        sessionVersion: 1,
+      };
+
+      next();
+    }
+);
+
+jest.unstable_mockModule('../../session/session.js', () => ({
+  ROLES,
+  requireSession: mockRequireSession,
+}));
+
 const { default: userRoutes } = await import('../routes/user_routes.js');
 
 const app = express();
@@ -30,6 +63,7 @@ app.use((error, req, res, next) => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  currentUserRole = ROLES.SUPERUSER;
 });
 
 describe('GET /management/users', () => {
