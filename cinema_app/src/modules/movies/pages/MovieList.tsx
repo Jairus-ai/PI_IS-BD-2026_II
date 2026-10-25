@@ -149,21 +149,21 @@ export default function MovieList() {
         getActions: ({ row }: { row: Movie }) => [
           <GridActionsCellItem
             key="show"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
             label="Mostrar"
             onClick={() => setSelectedId(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
             label="Editar"
             onClick={() => openEdit(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -201,7 +201,7 @@ export default function MovieList() {
             size="small"
           />
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Género</InputLabel>
 
             <Select
@@ -225,7 +225,7 @@ export default function MovieList() {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Idioma</InputLabel>
 
             <Select
@@ -249,7 +249,7 @@ export default function MovieList() {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Formato audiovisual</InputLabel>
 
             <Select
@@ -273,7 +273,7 @@ export default function MovieList() {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Clasificación</InputLabel>
 
             <Select
@@ -297,7 +297,10 @@ export default function MovieList() {
             </Select>
           </FormControl>
 
-          <Button variant="outlined" onClick={clearFilters}>
+          <Button
+            variant="outlined"
+            onClick={clearFilters}
+            sx={{ whiteSpace: 'nowrap', minWidth: 'max-content'}}>
               Limpiar filtros
           </Button>
         </Stack>
