@@ -3,7 +3,8 @@ import {
     getDiscountList,
     getDiscountByID,
     getDiscountProducts,
-    addDiscount
+    addDiscount,
+    deleteDiscount
  } from '../controllers/discount_controller.js';
 
 const router = Router();
@@ -12,5 +13,6 @@ router.get('/', getDiscountList);
 router.get('/DP/:type', getDiscountProducts);
 router.get('/:id', getDiscountByID);
 router.post('/:type', addDiscount);
+router.put('/:id', deleteDiscount)
 
 export default router;
