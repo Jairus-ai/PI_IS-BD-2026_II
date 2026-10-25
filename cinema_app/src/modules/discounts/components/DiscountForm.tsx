@@ -33,7 +33,7 @@ export interface DiscountFormProps {
   readonly submitButtonLabel: string;
 }
 
-export default function MovieForm(props:DiscountFormProps) {
+export default function DiscountForm(props:DiscountFormProps) {
   const {
     formState,
     onFieldChange,

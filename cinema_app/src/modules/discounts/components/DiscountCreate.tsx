@@ -14,7 +14,7 @@ type ValidationResult = {
   issues: { message: string; path: (keyof Discount)[] }[];
 };
 
-function validateDiscount(discount: Partial<Discount>): ValidationResult {
+export function validateDiscount(discount: Partial<Discount>): ValidationResult {
   const issues: ValidationResult['issues'] = [];
 
   if (!discount.DISCOUNT_NAME) {

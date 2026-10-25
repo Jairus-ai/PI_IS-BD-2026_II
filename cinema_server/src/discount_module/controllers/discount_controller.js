@@ -137,10 +137,12 @@ export const getDiscountByID = async (req, res, next) =>
       {
         row.TYPE = 'PELICULA';
         row.NAME_FK_PRODUCT = movieNames[index];
+        row.ID_FK_PRODUCT = row.ID_MOVIE_IN_BILLBOARD;
       }else
       {
         row.TYPE = 'SNACK';
         row.NAME_FK_PRODUCT = snackNames[index];
+        row.ID_FK_PRODUCT = row.ID_SNACKS;
       }
 
       delete row.ID_SNACKS;
