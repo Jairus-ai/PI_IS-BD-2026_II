@@ -15,6 +15,21 @@ const VALID_STATUSES = new Set([
   'INACTIVE',
 ]);
 
+const addRoleVisibilityFilter = (conditions, currentUserRole) => {
+  if (currentUserRole === ROLES.SUPERUSER) {
+    conditions.push(`u.ROLE IN ('CLIENT', 'ADMINISTRATOR', 'EMPLOYEE')`);
+    return;
+  }
+
+  if (currentUserRole === ROLES.ADMINISTRATOR) {
+    conditions.push(`u.ROLE IN ('CLIENT', 'EMPLOYEE')`);
+    return;
+  }
+
+  if (currentUserRole === ROLES.EMPLOYEE) {
+    conditions.push(`u.ROLE = 'CLIENT'`);
+  }
+};
 
 const buildUserFilters = (queryParams, currentUserRole) => {
   const { role, locationId, status, name } = queryParams;
@@ -23,18 +38,7 @@ const buildUserFilters = (queryParams, currentUserRole) => {
   const workerConditions = [];
   const binds = {};
 
-  //Users visible according to the authenticated role
-  if(currentUserRole == ROLES.SUPERUSER) {
-    conditions.push(`u.ROLE IN ('CLIENT', 'ADMINISTRATOR', 'EMPLOYEE')`);
-  }
-
-  if(currentUserRole == ROLES.ADMINISTRATOR) {
-    conditions.push(`u.ROLE IN ('CLIENT', 'EMPLOYEE')`);
-  }
-
-  if(currentUserRole == ROLES.EMPLOYEE) {
-    conditions.push(`u.ROLE = 'CLIENT'`);
-  }
+  addRoleVisibilityFilter(conditions, currentUserRole);
 
   // Filter by role
   if (role) {
@@ -60,8 +64,10 @@ const buildUserFilters = (queryParams, currentUserRole) => {
       throw error;
     }
 
-    conditions.push('u.STATUS = :status');
-    conditions.push(`u.ROLE <> 'CLIENT'`);
+    conditions.push(
+      'u.STATUS = :status',
+      `u.ROLE <> 'CLIENT'`
+    );
     binds.status = normalizedStatus;
   }
 

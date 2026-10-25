@@ -230,7 +230,6 @@ const roleOptions = availableRoles[user?.role] || [];
                       fontWeight: 500,
                       color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.main',
                       border: '1px solid',
-                      borderColor: 'primary.main',
                       borderColor: row.ROLE === 'CLIENT' ? 'grey.400' : 'primary.main',
                       borderRadius: '8px',
                       px: 1.5,
