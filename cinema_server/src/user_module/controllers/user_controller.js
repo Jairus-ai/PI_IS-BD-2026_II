@@ -61,6 +61,7 @@ const buildUserFilters = (queryParams, currentUserRole) => {
     }
 
     conditions.push('u.STATUS = :status');
+    conditions.push(`u.ROLE <> 'CLIENT'`);
     binds.status = normalizedStatus;
   }
 
@@ -96,6 +97,7 @@ const buildUserFilters = (queryParams, currentUserRole) => {
           AND wl_filter.ID_LOCATION = :locationId
       )
     `);
+    conditions.push(`u.ROLE <> 'CLIENT'`);
 
     binds.locationId = parsedLocationId;
   }
@@ -225,6 +227,13 @@ export const getUsersList = async (req, res, next) => {
       ${whereClause}
 
       ORDER BY
+        CASE u.ROLE
+          WHEN 'SUPERUSUER' THEN 1
+          WHEN 'ADMINISTRATOR' THEN 2
+          WHEN 'EMPLOYEE' THEN 3
+          WHEN 'CLIENT' THEN 4
+          ELSE 5
+        END,
         u.FIRST_NAME ASC,
         u.FIRST_SURNAME ASC
     `;
