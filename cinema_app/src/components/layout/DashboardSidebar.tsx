@@ -10,6 +10,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import LayersIcon from '@mui/icons-material/Layers';
 import MovieIcon from '@mui/icons-material/Movie';
+import PaymentsIcon from '@mui/icons-material/Payments';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
@@ -165,6 +166,13 @@ export default function DashboardSidebar({
               icon={<PersonIcon />}
               href="/discounts"
               selected={!!matchPath('/discounts/*', pathname) || pathname === '/'}
+            />
+            <DashboardSidebarPageItem
+              id="fees"
+              title="Tarifas"
+              icon={<PaymentsIcon />}
+              href="/fees"
+              selected={!!matchPath('/fees/*', pathname)}
             />
             <DashboardSidebarDividerItem />
             <DashboardSidebarHeaderItem>Example items</DashboardSidebarHeaderItem>
