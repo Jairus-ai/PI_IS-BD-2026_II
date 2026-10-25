@@ -19,7 +19,6 @@ const NO_FEES_MESSAGE = 'No hay tarifas registradas.';
 const NO_FILTER_RESULTS_MESSAGE = 'No se encontraron tarifas con ese filtro';
 const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las tarifas.';
 
-// Same font as the list rows and same color and border as the "Mostrar" button in discounts
 const ACTION_BUTTON_SX = {
   typography: 'body2',
   fontWeight: 500,
@@ -41,7 +40,6 @@ interface FeeFilters {
   type: FeeType | '';
   formatId: number | '';
 }
-
 const EMPTY_FILTERS: FeeFilters = { type: '', formatId: '' };
 
 function matchesFilters(fee: Fee, filters: FeeFilters): boolean {
@@ -64,10 +62,8 @@ export default function FeeList() {
   const { fees, isLoadingFees, feesError, refetchFees } = useFees();
   const [filters, setFilters] = useState<FeeFilters>(EMPTY_FILTERS);
   const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
-
   const filteredFees = useMemo(() => fees.filter((fee: Fee) => matchesFilters(fee, filters)), [fees, filters]);
   const audiovisualFormats = useMemo(() => getAudiovisualFormats(fees), [fees]);
-
   const columns: GridColDef<Fee>[] = [
     {
       field: 'TYPE',
@@ -108,13 +104,11 @@ export default function FeeList() {
           key="edit"
           icon={<Box component="span" sx={ACTION_BUTTON_SX}>Editar</Box>}
           label="Editar"
-          // TODO: open the edit form (RF33)
         />,
         <GridActionsCellItem
           key="delete"
           icon={<Box component="span" sx={ACTION_BUTTON_SX}>Eliminar</Box>}
           label="Eliminar"
-          // TODO: open the deactivation confirmation (RF34)
         />
       ]
     }
@@ -168,7 +162,6 @@ export default function FeeList() {
     <PageContainer
       title="Tarifas"
       actions={
-        // TODO: open the add fee form (RF31)
         <Button variant="contained">Agregar tarifa</Button>
       }
     >

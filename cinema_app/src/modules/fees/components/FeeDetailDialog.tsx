@@ -30,12 +30,10 @@ function DetailField({ label, value }: DetailFieldProps) {
 }
 
 export default function FeeDetailDialog({ fee, onClose }: FeeDetailDialogProps) {
-  // Keeps the last fee visible while the dialog plays its closing animation
   const [displayedFee, setDisplayedFee] = useState<Fee | null>(fee);
   if (fee && fee !== displayedFee) {
     setDisplayedFee(fee);
   }
-
   return (
     <Dialog
       open={fee !== null}

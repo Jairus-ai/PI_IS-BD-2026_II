@@ -1,6 +1,6 @@
 import { api } from '../../../services/api';
 
-// The fee routes require the session cookie
+//fee routes requires the session cookie
 const SESSION_REQUEST_CONFIG = { withCredentials: true };
 
 export const getFees = async () => {
