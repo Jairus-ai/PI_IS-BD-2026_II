@@ -1,11 +1,21 @@
 import { z } from 'zod';
 
+const emptyToUndefined = z.literal('').transform(() => undefined);
+
+const optionalCoerceNumber = z
+  .union([emptyToUndefined, z.coerce.number().int().positive()])
+  .optional();
+
+const optionalCoerceString = z
+  .union([emptyToUndefined, z.string().min(1).max(100)])
+  .optional();
+
 export const movieQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  genreId: z.coerce.number().int().positive().optional(),
-  languageCode: z.string().min(2).max(3).optional(),
-  directorId: z.coerce.number().int().positive().optional(),
-  audiovisualFormatId: z.coerce.number().int().positive().optional(),
+  genreId: optionalCoerceNumber,
+  languageCode: optionalCoerceString,
+  directorId: optionalCoerceNumber,
+  audiovisualFormatId: optionalCoerceNumber,
 });
 
 export const movieIdSchema = z.object({ id: z.coerce.number().int().positive() });
