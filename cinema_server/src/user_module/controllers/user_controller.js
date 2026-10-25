@@ -234,7 +234,7 @@ export const getUsersList = async (req, res, next) => {
 
       ORDER BY
         CASE u.ROLE
-          WHEN 'SUPERUSUER' THEN 1
+          WHEN 'SUPERUSER' THEN 1
           WHEN 'ADMINISTRATOR' THEN 2
           WHEN 'EMPLOYEE' THEN 3
           WHEN 'CLIENT' THEN 4
