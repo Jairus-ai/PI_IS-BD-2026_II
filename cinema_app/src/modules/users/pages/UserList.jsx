@@ -183,6 +183,8 @@ const roleOptions = availableRoles[user?.role] || [];
         type: 'actions',
         headerName: 'Acciones',
         width: 230,
+        headerAlign: 'left',
+        align: 'left',
         getActions: ({ row }) => {
           const actions = [
             <GridActionsCellItem
@@ -369,7 +371,6 @@ const roleOptions = availableRoles[user?.role] || [];
             getRowId={(row) => row.USER_KEY}
             loading={loading}
             disableRowSelectionOnClick
-            pageSizeOptions={[5, 10, 25]}
             initialState={{
               pagination: {
                 paginationModel: {

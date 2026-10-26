@@ -7,6 +7,8 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 
 function formatRole(role) {
   const roles = {
@@ -55,7 +57,7 @@ function DetailItem({ label, value }) {
   return (
     <Box>
       <Typography
-        variant="overline"
+        variant="body2"
         sx={{ color: 'primary.dark' }}
       >
         {label}
@@ -96,9 +98,24 @@ export default function UserDetailDialog({
         sx={{
           color: 'primary.dark',
           fontWeight: 700,
+          position: 'relative',
+          pr: 6,
         }}
       >
         {formatFullName(user)}
+        
+        <IconButton
+          onClick={onClose}
+          aria-label="Cerrar"
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: 'text.secondary',
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
 
       <DialogContent
@@ -128,7 +145,7 @@ export default function UserDetailDialog({
 
           <Box>
             <Typography
-              variant="overline"
+              variant="body2"
               sx={{ color: 'primary.dark' }}
             >
               Rol
@@ -145,7 +162,7 @@ export default function UserDetailDialog({
 
           <Box>
             <Typography
-              variant="overline"
+              variant="body2"
               sx={{ color: 'primary.dark' }}
             >
               Estado
@@ -173,7 +190,22 @@ export default function UserDetailDialog({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: 'primary.main',
+            borderColor: 'primary.main',
+            borderRadius: '8px',
+            '&:hover': {
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              borderColor: 'primary.main',
+            },
+          }}
+        >
           Cerrar
         </Button>
       </DialogActions>
