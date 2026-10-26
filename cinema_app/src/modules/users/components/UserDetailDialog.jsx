@@ -191,19 +191,11 @@ export default function UserDetailDialog({
 
       <DialogActions>
         <Button
-          onClick={onClose}
           variant="outlined"
+          onClick={onClose}
           sx={{
             fontSize: '14px',
-            fontWeight: 500,
-            color: 'primary.main',
-            borderColor: 'primary.main',
             borderRadius: '8px',
-            '&:hover': {
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              borderColor: 'primary.main',
-            },
           }}
         >
           Cerrar
