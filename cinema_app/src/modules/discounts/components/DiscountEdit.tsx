@@ -123,8 +123,8 @@ function ModifyDiscountContent({
     setFormErrors({});
 
     try {
-      await editDiscount(formValues, formValues.TYPE);
-      notifications.show('Descuento modificado correctamente.', {
+      await editDiscount(discount.ID_DISCOUNT,formValues, formValues.TYPE);
+      notifications.show('Descuento editado correctamente.', {
         severity: 'success',
         autoHideDuration: 3000,
       });
@@ -132,7 +132,7 @@ function ModifyDiscountContent({
       onClose();
     } catch (createError) {
       notifications.show(
-        `No se pudo modificar el descuento. Motivo: ${(createError as Error).message}`,
+        `No se pudo editar el descuento. Motivo: ${(createError as Error).message}`,
         {
           severity: 'error',
           autoHideDuration: 3000,

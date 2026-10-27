@@ -44,10 +44,11 @@ export default function DiscountForm(props:DiscountFormProps) {
   const formValues = formState.values;
   const formErrors = formState.errors;
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [selectedType, setSelectedType] = React.useState<'SNACK' | 'PELICULA' | null>(null);
+  const selectedType = formValues.TYPE ?? null;
   const { products: rawProducts } = useDiscountProducts(selectedType);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const products = rawProducts as DiscountProduct[];
+  
 
   const handleSubmit = React.useCallback(
     async (event: React.SubmitEvent<HTMLFormElement>) => {
@@ -95,15 +96,12 @@ export default function DiscountForm(props:DiscountFormProps) {
   );
 
   const handleBoxChecked = React.useCallback(
-    (type:string, _event: React.ChangeEvent<HTMLInputElement, Element>, checked:boolean) =>{
-      if(type === 'SNACK'){
-              setSelectedType(checked ? 'SNACK' : null)
-              onFieldChange('TYPE', 'SNACK');
-      }else if(type === 'PELICULA'){
-              setSelectedType(checked ? 'PELICULA' : null)
-              onFieldChange('TYPE', 'PELICULA');
-      }
-    }, [onFieldChange]);
+    (type: string) => (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+      onFieldChange('TYPE', checked ? type : null);
+      onFieldChange('ID_FK_PRODUCT', null);
+    },
+    [onFieldChange],
+  );
 
   return (
     <Box
@@ -189,7 +187,7 @@ export default function DiscountForm(props:DiscountFormProps) {
                   <Checkbox
                     size="large"
                     checked={selectedType === 'PELICULA'}
-                    onChange ={(_event, checked) => handleBoxChecked('PELICULA',_event, checked,)}
+                    onChange={handleBoxChecked('PELICULA')}
                   />
                 }
               />
@@ -201,7 +199,7 @@ export default function DiscountForm(props:DiscountFormProps) {
                   <Checkbox
                     size="large"
                     checked={selectedType === 'SNACK'}
-                    onChange ={(_event, checked) => handleBoxChecked('SNACK',_event, checked,)}
+                    onChange={handleBoxChecked('SNACK')}
                   />
                 }
               />
