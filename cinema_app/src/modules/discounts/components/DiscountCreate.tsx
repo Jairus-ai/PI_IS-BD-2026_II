@@ -2,13 +2,12 @@ import * as React from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
-import useNotifications from '../../../hooks/useNotifications';
 import type { Discount } from '../types/discounts';
 import { addDiscount } from '../services/discountService';
-import DiscountForm, {
-  type FormFieldValue,
+import {
   type DiscountFormState,
 } from './DiscountForm';
+import DiscountFormContainer from '../components/DiscountFormContainer'
 
 type ValidationResult = {
   issues: { message: string; path: (keyof Discount)[] }[];
@@ -46,9 +45,31 @@ export function validateDiscount(discount: Partial<Discount>): ValidationResult 
   }
 
   return { issues };
-}
+};
 
 const INITIAL_FORM_VALUES: Partial<DiscountFormState['values']> = {};
+
+export function DiscountDialog({
+  title,
+  children,
+  open,
+  onClose,
+}: Readonly<{
+  title: string;
+  children: React.ReactNode;
+  open: boolean;
+  onClose: () => void;
+}>) {
+  return(
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>{title}</DialogTitle>
+      <DialogContent sx={{ margin: 0, color: 'GrayText' }}>
+        Los campos marcados con * son obligatorios
+      </DialogContent>
+      <DialogContent>{children}</DialogContent>
+    </Dialog>
+  );
+}
 
 interface DiscountCreateProps {
   readonly open: boolean;
@@ -63,102 +84,18 @@ export default function DiscountCreate({
 }: DiscountCreateProps) {
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>Nuevo descuento</DialogTitle>
-      <DialogContent sx={{margin:0, color: 'GrayText' }}>Los campos marcados con * son obligatorios</DialogContent>
-      <DialogContent>
-        {open ? (
-          <CreateDiscountContent onClose={onClose} onCreated={onCreated} />
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function CreateDiscountContent({
-  onClose,
-  onCreated,
-}: Readonly<{ onClose: () => void; onCreated?: () => void }>) {
-  const notifications = useNotifications();
-
-  const [formState, setFormState] = React.useState<DiscountFormState>(() => ({
-    values: INITIAL_FORM_VALUES,
-    errors: {},
-  }));
-  const formValues = formState.values;
-
-  const setFormValues = React.useCallback(
-    (newFormValues: Partial<DiscountFormState['values']>) => {
-      setFormState((previousState) => ({
-        ...previousState,
-        values: newFormValues,
-      }));
-    },
-    [],
-  );
-
-  const setFormErrors = React.useCallback(
-    (newFormErrors: Partial<DiscountFormState['errors']>) => {
-      setFormState((previousState) => ({
-        ...previousState,
-        errors: newFormErrors,
-      }));
-    },
-    [],
-  );
-
-  const handleFormFieldChange = React.useCallback(
-    (name: keyof DiscountFormState['values'], value: FormFieldValue) => {
-      const newFormValues = { ...formValues, [name]: value };
-      setFormValues(newFormValues);
-
-      const { issues } = validateDiscount(newFormValues);
-      const message = issues.find((issue) => issue.path[0] === name)?.message;
-
-      setFormState((previousState) => ({
-        ...previousState,
-        errors: { ...previousState.errors, [name]: message },
-      }));
-    },
-    [formValues, setFormValues],
-  );
-
-  const handleFormSubmit = React.useCallback(async () => {
-    const { issues } = validateDiscount(formValues);
-    if (issues.length > 0) {
-      setFormErrors(
-        Object.fromEntries(issues.map((issue) => [issue.path[0], issue.message])),
-      );
-      return;
-    }
-    setFormErrors({});
-
-    try {
-      await addDiscount(formValues, formValues.TYPE);
-      notifications.show('Descuento añadido correctamente.', {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
-      onCreated?.();
-      onClose();
-    } catch (createError) {
-      notifications.show(
-        `No se pudo añadir el descuento. Motivo: ${(createError as Error).message}`,
-        {
-          severity: 'error',
-          autoHideDuration: 3000,
-        },
-      );
-    }
-  }, [formValues, notifications, onClose, onCreated, setFormErrors]);
-
-  return (
-    <DiscountForm
-      formState={formState}
-      onFieldChange={handleFormFieldChange}
-      onSubmit={handleFormSubmit}
-      onCancel={onClose}
-      submitButtonLabel="Crear"
-    />
+    <DiscountDialog title="Nuevo descuento" open={open} onClose={onClose}>
+      {open ? (
+        <DiscountFormContainer
+          initialValues={INITIAL_FORM_VALUES}
+          submitAction={(values) => addDiscount(values, values.TYPE)}
+          submitLabel="Crear"
+          successMessage="Descuento añadido correctamente."
+          errorMessage="No se pudo añadir el descuento."
+          onSuccess={onCreated}
+          onClose={onClose}
+        />
+      ) : null}
+    </DiscountDialog>
   );
 }

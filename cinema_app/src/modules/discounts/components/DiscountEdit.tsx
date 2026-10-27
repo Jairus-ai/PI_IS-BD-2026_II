@@ -1,17 +1,12 @@
 import * as React from 'react';
-import Dialog from '@mui/material/Dialog';
 import CircularProgress from '@mui/material/CircularProgress';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import useNotifications from '../../../hooks/useNotifications';
 import type { Discount } from '../types/discounts';
 import {  editDiscount } from '../services/discountService';
 import { useDiscounts } from '../hooks/useDiscounts';
-import DiscountForm, {
-  type FormFieldValue,
-  type DiscountFormState,
-} from './DiscountForm';
-import { validateDiscount} from '../components/DiscountCreate'
+import {type DiscountFormState,} from './DiscountForm';
+import { DiscountDialog} from '../components/DiscountCreate'
+import DiscountFormContainer from '../components/DiscountFormContainer'
+import { useQueryClient } from '@tanstack/react-query';
 
 function toFormValues(d: Discount): Partial<DiscountFormState['values']> {
   const toISO = (s: string) => s.split('/').reverse().join('-')
@@ -27,127 +22,42 @@ function toFormValues(d: Discount): Partial<DiscountFormState['values']> {
   };
 }
 
-interface DiscountModifyProps {
+interface DiscountEditProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly onEdited?: () => void;
   readonly discountID: number | null;
 }
 
-export default function DiscountModify({
+export default function DiscountEdit({
   open,
   onClose,
   onEdited,
   discountID,
-}: DiscountModifyProps) {
+}: DiscountEditProps) {
   const { discountDetail, isLoadingDetail } = useDiscounts(discountID);
+  const queryClient = useQueryClient();
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>Editar descuento</DialogTitle>
-      <DialogContent sx={{ margin: 0, color: 'GrayText' }}>
-        Los campos marcados con * son obligatorios
-      </DialogContent>
-      <DialogContent>
-        {open && (isLoadingDetail || !discountDetail) ? <CircularProgress /> : null}
-        {open && discountDetail ? (
-          <ModifyDiscountContent
-            key={discountID}
-            discount={discountDetail}
-            onClose={onClose}
-            onEdited={onEdited}
-          />
-        ) : null}
-      </DialogContent>
-    </Dialog>
+    <DiscountDialog open={open} title="Editar descuento" onClose={onClose}>
+      {open && (isLoadingDetail || !discountDetail) ? <CircularProgress /> : null}
+      {open && discountDetail ? (
+        <DiscountFormContainer
+          key={discountID}
+          initialValues={toFormValues(discountDetail)}
+          submitAction={(values) =>
+            editDiscount(discountDetail.ID_DISCOUNT, values, values.TYPE)
+          }
+          submitLabel="Guardar"
+          successMessage="Descuento editado correctamente."
+          errorMessage="No se pudo editar el descuento."
+          onSuccess={() => {
+            void queryClient.invalidateQueries({ queryKey: ['discount'] });
+            onEdited?.();
+          }}
+          onClose={onClose}
+        />
+      ) : null}
+    </DiscountDialog>
   );
-}
-
-function ModifyDiscountContent({
-  discount,
-  onClose,
-  onEdited,
-}: Readonly<{ discount: Discount; onClose: () => void; onEdited?: () => void }>) {
-  const notifications = useNotifications();
-
-  const [formState, setFormState] = React.useState<DiscountFormState>(() => ({
-    values: toFormValues(discount),
-    errors: {},
-  }));
-  const formValues = formState.values;
-
-  const setFormValues = React.useCallback(
-    (newFormValues: Partial<DiscountFormState['values']>) => {
-      setFormState((previousState) => ({
-        ...previousState,
-        values: newFormValues,
-      }));
-    },
-    [],
-  );
-
-  const setFormErrors = React.useCallback(
-    (newFormErrors: Partial<DiscountFormState['errors']>) => {
-      setFormState((previousState) => ({
-        ...previousState,
-        errors: newFormErrors,
-      }));
-    },
-    [],
-  );
-
-  const handleFormFieldChange = React.useCallback(
-    (name: keyof DiscountFormState['values'], value: FormFieldValue) => {
-      const newFormValues = { ...formValues, [name]: value };
-      setFormValues(newFormValues);
-
-      const { issues } = validateDiscount(newFormValues);
-      const message = issues.find((issue) => issue.path[0] === name)?.message;
-
-      setFormState((previousState) => ({
-        ...previousState,
-        errors: { ...previousState.errors, [name]: message },
-      }));
-    },
-    [formValues, setFormValues],
-  );
-
-  const handleFormSubmit = React.useCallback(async () => {
-    const { issues } = validateDiscount(formValues);
-    if (issues.length > 0) {
-      setFormErrors(
-        Object.fromEntries(issues.map((issue) => [issue.path[0], issue.message])),
-      );
-      return;
-    }
-    setFormErrors({});
-
-    try {
-      await editDiscount(discount.ID_DISCOUNT,formValues, formValues.TYPE);
-      notifications.show('Descuento editado correctamente.', {
-        severity: 'success',
-        autoHideDuration: 3000,
-      });
-      onEdited?.();
-      onClose();
-    } catch (createError) {
-      notifications.show(
-        `No se pudo editar el descuento. Motivo: ${(createError as Error).message}`,
-        {
-          severity: 'error',
-          autoHideDuration: 3000,
-        },
-      );
-    }
-  }, [formValues, notifications, onClose, onEdited, setFormErrors]);
-
-  return (
-    <DiscountForm
-      formState={formState}
-      onFieldChange={handleFormFieldChange}
-      onSubmit={handleFormSubmit}
-      onCancel={onClose}
-      submitButtonLabel="Guardar"
-    />
-  );
-}
+};

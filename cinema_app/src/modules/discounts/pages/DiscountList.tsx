@@ -18,7 +18,7 @@ import type { Discount } from '../types/discounts';
 import DiscountShow from '../components/DiscountShow';
 import DiscountCreate from '../components/DiscountCreate';
 import {deleteDiscount} from '../services/discountService'
-import DiscountModify from '../components/DiscountEdit'
+import DiscountEdit from '../components/DiscountEdit'
 
 export default function DiscountList() {
   const navigate = useNavigate();
@@ -63,8 +63,8 @@ export default function DiscountList() {
     [dialogs, notifications, refetchDiscounts],
   );
 
-  const [modifyOpen, setModifyOpen] = React.useState(false);
- const [idDiscountToModiy, setIdDiscountToModify] = React.useState<number | null>(null);
+  const [EditOpen, setModifyOpen] = React.useState(false);
+ const [idDiscountToEdit, setIdDiscountToModify] = React.useState<number | null>(null);
 
   function openModify(row:Discount)
   {
@@ -72,7 +72,7 @@ export default function DiscountList() {
     setModifyOpen(true);
   }
 
-  function closeModify()
+  function closeEdit()
   {
     setIdDiscountToModify(null);
     setModifyOpen(false);
@@ -180,11 +180,11 @@ export default function DiscountList() {
           onClose={() => setCreateOpen(false)}
           onCreated={refetchDiscounts}
         />
-        <DiscountModify
-          open={modifyOpen}
-          onClose={() => closeModify()}
+        <DiscountEdit
+          open={EditOpen}
+          onClose={() => closeEdit()}
           onEdited={refetchDiscounts}
-          discountID = {idDiscountToModiy}
+          discountID = {idDiscountToEdit}
         />
       </Box>
     </PageContainer>
