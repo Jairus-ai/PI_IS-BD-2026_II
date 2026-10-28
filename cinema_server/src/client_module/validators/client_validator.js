@@ -1,11 +1,6 @@
-import { ZxcvbnFactory } from '@zxcvbn-ts/core';
-import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
-import * as zxcvbnSpanishPackage from '@zxcvbn-ts/language-es-es';
-
+import { validatePasswordStrength } from '../../shared/validators/password_validator.js';
 const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
 const MINIMUM_AGE = 18;
-const MINIMUM_PASSWORD_SCORE = 3;
-const MAX_PASSWORD_BYTES = 72;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_NAME_LENGTH = 50;
 
@@ -34,19 +29,6 @@ const REQUIRED_FIELDS = [
   'phoneNumber'
 ];
 
-const passwordStrengthChecker = new ZxcvbnFactory({
-  dictionary: {
-    ...zxcvbnCommonPackage.dictionary,
-    ...zxcvbnSpanishPackage.dictionary
-  },
-  graphs: zxcvbnCommonPackage.adjacencyGraphs,
-  translations: zxcvbnSpanishPackage.translations
-});
-
-function cleanText(value) {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
 function isRealCalendarDate(dateText) {
   const [year, month, day] = dateText.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -63,6 +45,10 @@ export function isAdult(birthdateText, today = new Date()) {
 }
 
 const NAME_FIELDS = ['firstName', 'middleName', 'firstSurname', 'lastSurname'];
+
+function cleanText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 function normalizeClient(body) {
   return {
@@ -137,18 +123,14 @@ function validatePassword(errors, password, client) {
   if (!password) {
     return [];
   }
-  if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) {
-    errors.password = `La contraseña no puede superar ${MAX_PASSWORD_BYTES} caracteres`;
-    return [];
+  const userInputs = [client.email, client.firstName, client.firstSurname, client.lastSurname];
+  const { error, suggestions } = validatePasswordStrength(
+    password, userInputs
+  );
+  if (error) {
+    errors.password = error;
   }
-  const userInputs = [client.email, client.firstName, client.firstSurname, client.lastSurname]
-    .filter(Boolean);
-  const strength = passwordStrengthChecker.check(password, userInputs);
-  if (strength.score >= MINIMUM_PASSWORD_SCORE) {
-    return [];
-  }
-  errors.password = 'La contraseña es débil';
-  return [strength.feedback.warning, ...strength.feedback.suggestions].filter(Boolean);
+  return suggestions;
 }
 
 export function validateClientRegistration(body = {}) {
