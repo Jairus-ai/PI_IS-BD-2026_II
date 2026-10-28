@@ -19,6 +19,7 @@ import { useLocations } from '../hooks/useLocations.js';
 import { deactivateWorker } from '../services/userService.js';
 import { useDialogs } from '../../../hooks/useDialogs.tsx';
 import useNotifications from '../../../hooks/useNotifications.tsx';
+import useSession from '../../../hooks/useSession';
 
 function formatRole(role) {
   const roles = {
@@ -68,6 +69,24 @@ export default function UserList() {
 
   const dialogs = useDialogs();
   const notifications = useNotifications();
+  const { user } = useSession();
+
+  const availableRoles = {
+    SUPERUSER: [
+      ['CLIENT', 'Cliente'],
+      ['ADMINISTRATOR', 'Administrador'],
+      ['EMPLOYEE', 'Empleado'],
+    ],
+    ADMINISTRATOR: [
+      ['CLIENT', 'Cliente'],
+      ['EMPLOYEE', 'Empleado'],
+    ],
+    EMPLOYEE: [
+      ['CLIENT', 'Cliente'],
+    ],
+};
+
+const roleOptions = availableRoles[user?.role] || [];
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -164,6 +183,8 @@ export default function UserList() {
         type: 'actions',
         headerName: 'Acciones',
         width: 230,
+        headerAlign: 'left',
+        align: 'left',
         getActions: ({ row }) => {
           const actions = [
             <GridActionsCellItem
@@ -173,11 +194,12 @@ export default function UserList() {
                 <Box
                   component="span"
                   sx={{
+                    fontSize: '1rem',
                     fontWeight: 500,
                     color: 'primary.main',
                     border: '1px solid',
                     borderColor: 'primary.main',
-                    borderRadius: 1,
+                    borderRadius: '8px',
                     px: 1.5,
                     py: 0.5,
                     '&:hover': {
@@ -195,27 +217,28 @@ export default function UserList() {
           ];
 
           if (
-            row.ROLE !== 'CLIENT' &&
             row.STATUS === 'ACTIVE'
           ) {
             actions.push(
               <GridActionsCellItem
                 key="deactivate"
                 label="Desactivar"
+                disabled={row.ROLE === 'CLIENT'}
                 icon={
                   <Box
                     component="span"
                     sx={{
+                      fontSize: '1rem',
                       fontWeight: 500,
-                      color: 'error.main',
+                      color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.main',
                       border: '1px solid',
-                      borderColor: 'error.main',
-                      borderRadius: 1,
+                      borderColor: row.ROLE === 'CLIENT' ? 'grey.400' : 'primary.main',
+                      borderRadius: '8px',
                       px: 1.5,
                       py: 0.5,
                       '&:hover': {
-                        bgcolor: 'error.main',
-                        color: 'error.contrastText',
+                        bgcolor: row.ROLE === 'CLIENT' ? 'transparent' : 'primary.main',
+                        color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.contrastText',
                       },
                     }}
                   >
@@ -262,10 +285,13 @@ export default function UserList() {
               onChange={handleChange}
             >
               <MenuItem value="">Todos los roles</MenuItem>
-              <MenuItem value="CLIENT">Cliente</MenuItem>
-              <MenuItem value="SUPERUSER">Superusuario</MenuItem>
-              <MenuItem value="ADMINISTRATOR">Administrador</MenuItem>
-              <MenuItem value="EMPLOYEE">Empleado</MenuItem>
+              
+              {roleOptions.map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                {label}
+                </MenuItem>
+              ))}
+              
             </Select>
           </FormControl>
 
@@ -345,7 +371,6 @@ export default function UserList() {
             getRowId={(row) => row.USER_KEY}
             loading={loading}
             disableRowSelectionOnClick
-            pageSizeOptions={[5, 10, 25]}
             initialState={{
               pagination: {
                 paginationModel: {
