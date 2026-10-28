@@ -8,6 +8,12 @@ import {
   GridColDef,
   gridClasses,
 } from '@mui/x-data-grid';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
+import MenuItem from '@mui/material/MenuItem';
 import { useMovies } from '../hooks/useMovies';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
@@ -16,12 +22,37 @@ import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
 import MovieFormDialog from '../components/MovieFormDialog';
 
-export default function MovieList() {
-  const dialogs = useDialogs();
-  const notifications = useNotifications();
+const emptyFilters = {
+    name: '',
+    genreId: '',
+    languageCode: '',
+    ratingId: '',
+    audiovisualFormatId: '',
+};
 
+export default function MovieList() {
   const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
   const serverPage = paginationModel.page + 1;
+
+  const [filters, setFilters] = React.useState(emptyFilters);
+
+  function handleChange(event: any) {
+    const { name, value } = event.target;
+
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      [name]: value,
+    }));
+    setPaginationModel((currentFilters) => ({ ...currentFilters, page: 0 }));
+  }
+
+  function clearFilters() {
+    setFilters(emptyFilters);
+    setPaginationModel((currentFilters) => ({ ...currentFilters, page: 0 }));
+  }
+
+  const dialogs = useDialogs();
+  const notifications = useNotifications();
 
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [formMovieId, setFormMovieId] = React.useState<number | null>(null);
@@ -32,6 +63,18 @@ export default function MovieList() {
     setFormOpen(true);
   };
 
+  const {
+    movies,
+    totalMovies,
+    isLoadingMovies,
+    moviesError,
+    deleteMovie,
+    genres,
+    languages,
+    ratings,
+    formats,
+  } = useMovies(serverPage, null, filters);
+
   const openEdit = (id: number) => {
     setFormMovieId(id);
     setFormOpen(true);
@@ -41,9 +84,6 @@ export default function MovieList() {
     setFormOpen(false);
     setFormMovieId(null);
   };
-
-  // TODO(Jesus): Uncomment delete and refetch once implemented.
-  const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies(serverPage);
 
   const handleRowDelete = React.useCallback(
     (movie: Movie) => async () => {
@@ -59,7 +99,7 @@ export default function MovieList() {
 
       if (confirmed) {
         try {
-          // await deleteMovie(movie.ID_MOVIE);
+          await deleteMovie({ id: movie.ID_MOVIE });
           notifications.show('Película eliminada correctamente.', {
             severity: 'success',
             autoHideDuration: 3000,
@@ -75,7 +115,7 @@ export default function MovieList() {
         }
       }
     },
-    [dialogs, /* deleteMovie, */ notifications],
+    [dialogs, deleteMovie, notifications],
   );
 
   const columns = React.useMemo<GridColDef[]>(
@@ -109,21 +149,21 @@ export default function MovieList() {
         getActions: ({ row }: { row: Movie }) => [
           <GridActionsCellItem
             key="show"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
             label="Mostrar"
             onClick={() => setSelectedId(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="edit"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
             label="Editar"
             onClick={() => openEdit(row.ID_MOVIE)}
             showInMenu={false}
           />,
           <GridActionsCellItem
             key="delete"
-            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
+            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
             label="Eliminar"
             onClick={handleRowDelete(row)}
             showInMenu={false}
@@ -146,39 +186,163 @@ export default function MovieList() {
         </Button>
       }
     >
-      <Box sx={{ flex: 1, width: '100%' }}>
-        {moviesError ? (
-          <Box sx={{ flexGrow: 1 }}>
-            <Alert severity="error">{(moviesError as Error).message}</Alert>
-          </Box>
-        ) : (
-          <DataGrid
-            rows={movies}
-            rowCount={totalMovies}
-            getRowId={(row: Movie) => row.ID_MOVIE}
-            columns={columns}
-            loading={isLoadingMovies}
-            paginationMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[10]}
-            disableRowSelectionOnClick
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
-              [`& .${gridClasses.columnHeader}`]: {
-                bgcolor: 'background.default',
-              },
-              [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
-                outline: 'transparent',
-              },
-            }}
+      <Stack spacing={2}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={2}
+          sx={{ alignItems: { md: 'center' } }}
+        >
+          {/* Filters */}
+          <TextField
+            label="Buscar por nombre"
+            name="name"
+            value={filters.name}
+            onChange={handleChange}
+            size="small"
           />
-        )}
-        <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
-        <MovieFormDialog movieId={formMovieId} open={formOpen} onClose={closeForm} />
-      </Box>
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Género</InputLabel>
+
+            <Select
+              label="Género"
+              name="genreId"
+              value={filters.genreId}
+              onChange={handleChange}
+            >
+              <MenuItem value="">
+                Todos los géneros
+              </MenuItem>
+
+              {genres.map((genre: any) => (
+                <MenuItem
+                  key={genre.ID_GENRE}
+                  value={genre.ID_GENRE}
+                >
+                  {genre.GENRE_NAME}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Idioma</InputLabel>
+
+            <Select
+              label="Idioma"
+              name="languageCode"
+              value={filters.languageCode}
+              onChange={handleChange}
+            >
+              <MenuItem value="">
+                Todos los idiomas
+              </MenuItem>
+
+              {languages.map((language: any) => (
+                <MenuItem
+                  key={language.ISO_CODE}
+                  value={language.ISO_CODE}
+                >
+                  {language.LANGUAGE_NAME}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Formato audiovisual</InputLabel>
+
+            <Select
+              label="Formato audiovisual"
+              name="audiovisualFormatId"
+              value={filters.audiovisualFormatId}
+              onChange={handleChange}
+            >
+              <MenuItem value="">
+                Todos los formatos audiovisuales
+              </MenuItem>
+
+              {formats.map((format: any) => (
+                <MenuItem
+                  key={format.ID_AUDIOVISUAL_FORMAT}
+                  value={format.ID_AUDIOVISUAL_FORMAT}
+                >
+                  {format.VIDEO_FORMAT_NAME} {format.AUDIO_FORMAT_NAME}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Clasificación</InputLabel>
+
+            <Select
+              label="Clasificación"
+              name="ratingId"
+              value={filters.ratingId}
+              onChange={handleChange}
+            >
+              <MenuItem value="">
+                Todos las clasificaciones
+              </MenuItem>
+
+              {ratings.map((rating: any) => (
+                <MenuItem
+                  key={rating.ID_RATING}
+                  value={rating.ID_RATING}
+                >
+                  {rating.RATING_NAME}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="outlined"
+            onClick={clearFilters}
+            sx={{ whiteSpace: 'nowrap', minWidth: 'max-content'}}>
+              Limpiar filtros
+          </Button>
+        </Stack>
+
+        {moviesError ? (
+          <Box sx={{ my: 2 }}>
+            <Alert severity="error">
+              Error al cargar las películas: {(moviesError as Error).message}
+            </Alert>
+          </Box>
+        ) : null}
+
+        <Box sx={{ flex: 1, width: '100%' }}>
+          {!moviesError &&
+            <DataGrid
+              rows={movies}
+              rowCount={totalMovies}
+              getRowId={(row: Movie) => row.ID_MOVIE}
+              columns={columns}
+              loading={isLoadingMovies}
+              paginationMode="server"
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              pageSizeOptions={[10]}
+              disableRowSelectionOnClick
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
+                [`& .${gridClasses.columnHeader}`]: {
+                  bgcolor: 'background.default',
+                },
+                [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
+                  outline: 'transparent',
+                },
+              }}
+            />
+          }
+          <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
+          <MovieFormDialog movieId={formMovieId} open={formOpen} onClose={closeForm} />
+        </Box>
+      </Stack>
     </PageContainer>
   );
 }
