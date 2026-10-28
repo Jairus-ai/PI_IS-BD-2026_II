@@ -10,6 +10,39 @@ jest.unstable_mockModule('../../database/database.js', () => ({
   closeDatabaseConnection: mockCloseDatabaseConnection,
 }));
 
+const ROLES = {
+  CLIENT: 'CLIENT',
+  SUPERUSER: 'SUPERUSER',
+  ADMINISTRATOR: 'ADMINISTRATOR',
+  EMPLOYEE: 'EMPLOYEE',
+};
+
+let currentUserRole = ROLES.SUPERUSER;
+
+const mockRequireSession = jest.fn(
+  (allowedRoles = Object.values(ROLES)) =>
+    (req, res, next) => {
+      if (!allowedRoles.includes(currentUserRole)) {
+        return res.status(403).json({
+          message: 'No tiene permiso para realizar esta acción',
+        });
+      }
+
+      req.user = {
+        id: 1,
+        role: currentUserRole,
+        sessionVersion: 1,
+      };
+
+      next();
+    }
+);
+
+jest.unstable_mockModule('../../session/session.js', () => ({
+  ROLES,
+  requireSession: mockRequireSession,
+}));
+
 const { default: userRoutes } = await import('../routes/user_routes.js');
 
 const app = express();
@@ -30,6 +63,7 @@ app.use((error, req, res, next) => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  currentUserRole = ROLES.SUPERUSER;
 });
 
 describe('GET /management/users', () => {
@@ -132,6 +166,42 @@ test.each([
     expect(mockGetConnection).not.toHaveBeenCalled();
   }
 );
+
+test('excludes clients when filtering by status', async () => {
+  const mockConnection = {
+    execute: jest.fn().mockResolvedValue({ rows: [] }),
+  };
+
+  mockGetConnection.mockResolvedValue(mockConnection);
+  mockCloseDatabaseConnection.mockResolvedValue();
+
+  await request(app)
+    .get('/management/users?status=ACTIVE')
+    .expect(200);
+
+  const [sql] = mockConnection.execute.mock.calls[0];
+
+  expect(sql).toContain(`u.ROLE <> 'CLIENT'`);
+});
+
+test('excludes clients when filtering by location', async () => {
+  const mockConnection = {
+    execute: jest.fn().mockResolvedValue({ rows: [] }),
+  };
+
+  mockGetConnection.mockResolvedValue(mockConnection);
+  mockCloseDatabaseConnection.mockResolvedValue();
+
+  await request(app)
+    .get('/management/users?locationId=25')
+    .expect(200);
+
+  const [sql, binds] = mockConnection.execute.mock.calls[0];
+
+  expect(sql).toContain(`u.ROLE <> 'CLIENT'`);
+  expect(sql).toContain('PI_DEVELOPERS.WORKER_LOCATIONS');
+  expect(binds.locationId).toBe(25);
+});
 
 //Multiple filters
   test('supports multiple filters at the same time', async () => {
@@ -343,6 +413,140 @@ test.each([
     expect(updateBinds).toEqual({
       workerId: 25,
     });
+  });
+
+// Clients user list  
+  test('returns 403 when a client tries to list users', async () => {
+    currentUserRole = ROLES.CLIENT;
+
+    const response = await request(app)
+      .get('/management/users')
+      .expect(403);
+
+    expect(response.body).toEqual({
+      message: 'No tiene permiso para realizar esta acción',
+    });
+
+    expect(mockGetConnection).not.toHaveBeenCalled();
+  });
+
+//Client deactivate a worker  
+  test('returns 403 when a client tries to deactivate a worker', async () => {
+    currentUserRole = ROLES.CLIENT;
+
+    await request(app)
+      .patch('/management/users/11/deactivate')
+      .expect(403);
+
+    expect(mockGetConnection).not.toHaveBeenCalled();
+  });
+
+//Employee deactivate a worker  
+  test('returns 403 when an employee tries to deactivate a worker', async () => {
+    currentUserRole = ROLES.EMPLOYEE;
+
+    const response = await request(app)
+      .patch('/management/users/11/deactivate')
+      .expect(403);
+
+    expect(response.body).toEqual({
+      message: 'No tiene permiso para realizar esta acción',
+    });
+
+    expect(mockGetConnection).not.toHaveBeenCalled();
+  });
+
+//Administrator deactivate an administrador  
+  test('returns 403 when an administrator tries to deactivate another administrator', async () => {
+    currentUserRole = ROLES.ADMINISTRATOR;
+
+    const mockConnection = {
+      execute: jest.fn().mockResolvedValueOnce({
+        rows: [
+          {
+            ID_WORKER: 25,
+            FIRST_NAME: 'Ana',
+            FIRST_SURNAME: 'Mora',
+            ROLE: 'A',
+            IS_ACTIVE: 1,
+          },
+        ],
+      }),
+      commit: jest.fn(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    await request(app)
+      .patch('/management/users/25/deactivate')
+      .expect(403);
+
+    expect(mockConnection.commit).not.toHaveBeenCalled();
+  });
+
+//Tries to deactivate a superususer
+  test('returns 403 when trying to deactivate a superuser', async () => {
+    currentUserRole = ROLES.SUPERUSER;
+
+    const mockConnection = {
+      execute: jest.fn().mockResolvedValueOnce({
+        rows: [
+          {
+            ID_WORKER: 1,
+            FIRST_NAME: 'Super',
+            FIRST_SURNAME: 'User',
+            ROLE: 'S',
+            IS_ACTIVE: 1,
+          },
+        ],
+      }),
+      commit: jest.fn(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    await request(app)
+      .patch('/management/users/1/deactivate')
+      .expect(403);
+
+    expect(mockConnection.commit).not.toHaveBeenCalled();
+  });
+
+// Admin deactivate an employee
+  test('allows an administrator to deactivate an employee', async () => {
+    currentUserRole = ROLES.ADMINISTRATOR;
+
+    const mockConnection = {
+      execute: jest
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              ID_WORKER: 11,
+              FIRST_NAME: 'Daniel',
+              FIRST_SURNAME: 'Empleado',
+              ROLE: 'E',
+              IS_ACTIVE: 1,
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rowsAffected: 1,
+        }),
+
+      commit: jest.fn().mockResolvedValue(),
+    };
+
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
+
+    await request(app)
+      .patch('/management/users/11/deactivate')
+      .expect(200);
+
+    expect(mockConnection.commit).toHaveBeenCalledTimes(1);
   });
 
 //Oracle failure

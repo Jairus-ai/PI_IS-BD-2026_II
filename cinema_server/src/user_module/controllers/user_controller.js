@@ -1,9 +1,6 @@
 import oracledb from 'oracledb';
-
-import {
-  getConnection,
-  closeDatabaseConnection,
-} from '../../database/database.js';
+import {getConnection, closeDatabaseConnection,} from '../../database/database.js';
+import { ROLES } from '../../session/session.js';
 
 
 const VALID_ROLES = new Set([
@@ -18,13 +15,30 @@ const VALID_STATUSES = new Set([
   'INACTIVE',
 ]);
 
+const addRoleVisibilityFilter = (conditions, currentUserRole) => {
+  if (currentUserRole === ROLES.SUPERUSER) {
+    conditions.push(`u.ROLE IN ('CLIENT', 'ADMINISTRATOR', 'EMPLOYEE')`);
+    return;
+  }
 
-const buildUserFilters = (queryParams) => {
+  if (currentUserRole === ROLES.ADMINISTRATOR) {
+    conditions.push(`u.ROLE IN ('CLIENT', 'EMPLOYEE')`);
+    return;
+  }
+
+  if (currentUserRole === ROLES.EMPLOYEE) {
+    conditions.push(`u.ROLE = 'CLIENT'`);
+  }
+};
+
+const buildUserFilters = (queryParams, currentUserRole) => {
   const { role, locationId, status, name } = queryParams;
 
   const conditions = [];
   const workerConditions = [];
   const binds = {};
+
+  addRoleVisibilityFilter(conditions, currentUserRole);
 
   // Filter by role
   if (role) {
@@ -50,7 +64,10 @@ const buildUserFilters = (queryParams) => {
       throw error;
     }
 
-    conditions.push('u.STATUS = :status');
+    conditions.push(
+      'u.STATUS = :status',
+      `u.ROLE <> 'CLIENT'`
+    );
     binds.status = normalizedStatus;
   }
 
@@ -86,6 +103,7 @@ const buildUserFilters = (queryParams) => {
           AND wl_filter.ID_LOCATION = :locationId
       )
     `);
+    conditions.push(`u.ROLE <> 'CLIENT'`);
 
     binds.locationId = parsedLocationId;
   }
@@ -116,7 +134,7 @@ export const getUsersList = async (req, res, next) => {
       whereClause,
       workerWhereClause,
       binds,
-    } = buildUserFilters(req.query);
+    } = buildUserFilters(req.query, req.user.role);
 
     connection = await getConnection();
 
@@ -215,6 +233,13 @@ export const getUsersList = async (req, res, next) => {
       ${whereClause}
 
       ORDER BY
+        CASE u.ROLE
+          WHEN 'SUPERUSER' THEN 1
+          WHEN 'ADMINISTRATOR' THEN 2
+          WHEN 'EMPLOYEE' THEN 3
+          WHEN 'CLIENT' THEN 4
+          ELSE 5
+        END,
         u.FIRST_NAME ASC,
         u.FIRST_SURNAME ASC
     `;
@@ -275,6 +300,19 @@ export const deactivateWorker = async (req, res, next) => {
     }
 
     const worker = workerResult.rows[0];
+    const currentUserRole = req.user.role;
+
+    if(worker.ROLE === 'S') {
+      const error = new Error('No tiene permiso para desactivar este usuario.');
+      error.status = 403;
+      throw error;
+    }
+
+    if (currentUserRole === ROLES.ADMINISTRATOR && worker.ROLE !== 'E') {
+      const error = new Error('No tienes permiso para desactivar este usuario.');
+      error.status = 403;
+      throw error;
+    }
 
     if (worker.IS_ACTIVE === 0) {
       const error = new Error('La cuenta ya se encuentra inactiva.');
