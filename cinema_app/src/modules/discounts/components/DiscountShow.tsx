@@ -4,9 +4,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-import {
-  getDiscountsByID
-} from '../services/discountService';
+import { getDiscountsByID} from '../services/discountService';
 import type { Discount } from '../types/discounts';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -39,51 +37,6 @@ export default function DiscountShow({ discountId, onClose }: Props) {
   React.useEffect(() => {
     void loadData();
   }, [loadData]);
-
-  //It'll be use later, when the edit feature is implemented
-  /*const handleDiscountEdit = React.useCallback(() => {
-    navigate(`/employees/${discountId}/edit`);
-  }, [navigate, discountId]);*/
-
-  //It'll be use later, when the delete feature is implemented
-  /*const handleDiscountDelete = React.useCallback(async () => {
-    if (!discount) {
-      return;
-    }
-
-    const confirmed = await dialogs.confirm(
-      `Do you wish to delete ${discount.DISCOUNT_NAME}?`,
-      {
-        title: `Delete discount?`,
-        severity: 'error',
-        okText: 'Delete',
-        cancelText: 'Cancel',
-      },
-    );
-
-    if (confirmed) {
-      setIsLoading(true);
-      try {
-        await deleteEmployee(Number(discountId));
-
-        navigate('/employees');
-
-        notifications.show('Discount deleted successfully.', {
-          severity: 'success',
-          autoHideDuration: 3000,
-        });
-      } catch (deleteError) {
-        notifications.show(
-          `Failed to delete discount. Reason:' ${(deleteError as Error).message}`,
-          {
-            severity: 'error',
-            autoHideDuration: 3000,
-          },
-        );
-      }
-      setIsLoading(false);
-    }
-  }, [discount, dialogs, discountId, navigate, notifications]);*/
 
   const renderShow = React.useMemo(() => {
     if (isLoading) {
