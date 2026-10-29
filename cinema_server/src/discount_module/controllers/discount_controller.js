@@ -232,8 +232,8 @@ export const addDiscount = async (req, res, next) =>
 
     const result = await connection.execute(
       `SELECT MAX(ID_DISCOUNT) AS LAST_ID 
-      FROM PI_DEVELOPERS.DISCOUNTS 
-      WHERE IS_DELETED = 0`, [],
+      FROM PI_DEVELOPERS.DISCOUNTS`, 
+      [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
 
