@@ -5,9 +5,9 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { Link } from 'react-router';
-import LogOutButton from '../common/LogOutButton';
 import LogInButton from '../common/LogInButton';
 import SignUpButton from '../common/SignUpButton';
+import UserButton from '../common/UserButton';
 import useSession from '../../hooks/useSession'
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
@@ -33,7 +33,7 @@ export interface DashboardHeaderProps {
   logo?: React.ReactNode;
   title?: string;
   menuOpen?: React.ReactNode;
-  onToggleMenu?: React.ReactNode;
+  onToggleMenu?: (isExpanded: boolean) => void;
 }
 
 function HeaderMenu(){
@@ -42,7 +42,7 @@ function HeaderMenu(){
   if (isLoggedIn){
     return(
       <div id = "sessionButtons">
-        <LogOutButton />
+        <UserButton />
       </div>
     )
   }

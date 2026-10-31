@@ -1,4 +1,4 @@
-
+import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import { useNavigate } from 'react-router';
 import Button, { type ButtonProps } from '@mui/material/Button';
 
@@ -13,6 +13,7 @@ export default function SignUpButton(buttonProps: Readonly<Omit<ButtonProps, 'on
 
   return (
     <Button
+      startIcon = {<AppRegistrationIcon />}
       onClick={handleClick}
       {...buttonProps}
     >

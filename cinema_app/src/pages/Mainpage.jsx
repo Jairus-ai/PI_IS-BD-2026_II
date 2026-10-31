@@ -6,7 +6,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 function Mainpage() {
   return(
     <>
-    <DashboardLayout/>
+    <DashboardLayout />
       <div id = "mainPageBody">
         <Sugestions />
         <Billboard />
