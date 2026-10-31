@@ -22,7 +22,7 @@ export default function LogOutButton(buttonProps: Readonly<Omit<ButtonProps, 'on
       severity: 'success',
       autoHideDuration: NOTIFICATION_DURATION_MS
     });
-    navigate('/login', { replace: true });
+    void navigate('/login', { replace: true });
   };
 
   const handleClick = () => {
