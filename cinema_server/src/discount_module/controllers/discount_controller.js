@@ -232,8 +232,8 @@ export const addDiscount = async (req, res, next) =>
 
     const result = await connection.execute(
       `SELECT MAX(ID_DISCOUNT) AS LAST_ID 
-      FROM PI_DEVELOPERS.DISCOUNTS 
-      WHERE IS_DELETED = 0`, [],
+      FROM PI_DEVELOPERS.DISCOUNTS`, 
+      [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
 
@@ -341,7 +341,7 @@ export const modifyDiscount = async (req,res,next) =>
     const {DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE,  ID_FK_PRODUCT } = req.body;
 
     let request;
-    if(type == 'SNACK')
+    if(type == "SNACK")
     {
       request = 
         `UPDATE PI_DEVELOPERS.DISCOUNTS
@@ -349,10 +349,11 @@ export const modifyDiscount = async (req,res,next) =>
           DISCOUNT_NAME = :NAME, 
           DISCOUNT_PORCENTAGE = :PORCENTAGE,
           DISCOUNT_START_DATE = TO_DATE(:START_DATE, 'YYYY-MM-DD'), 
-          DISCOUNT_FINISH_DATE = TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), 
+          DISCOUNT_FINISH_DATE = TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'),
+          ID_MOVIE_IN_BILLBOARD = null, 
           ID_SNACKS = :PRODUCT
           WHERE ID_DISCOUNT= :id`
-    }else if(type == 'PELICULA')
+    }else if(type == "PELICULA")
     {
       request =
         `UPDATE PI_DEVELOPERS.DISCOUNTS
@@ -361,7 +362,8 @@ export const modifyDiscount = async (req,res,next) =>
           DISCOUNT_PORCENTAGE = :PORCENTAGE,
           DISCOUNT_START_DATE = TO_DATE(:START_DATE, 'YYYY-MM-DD'), 
           DISCOUNT_FINISH_DATE = TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), 
-          ID_MOVIE_IN_BILLBOARD = :PRODUCT
+          ID_MOVIE_IN_BILLBOARD = :PRODUCT,
+          ID_SNACKS = null
           WHERE ID_DISCOUNT= :id`
     }else
     {

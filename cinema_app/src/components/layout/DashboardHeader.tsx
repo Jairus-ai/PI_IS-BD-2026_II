@@ -5,7 +5,10 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import { Link } from 'react-router';
-import LogOutButton from '../common/LogOutButton';
+import LogInButton from '../common/LogInButton';
+import SignUpButton from '../common/SignUpButton';
+import UserButton from '../common/UserButton';
+import useSession from '../../hooks/useSession'
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -29,7 +32,29 @@ const LogoContainer = styled('div')({
 export interface DashboardHeaderProps {
   logo?: React.ReactNode;
   title?: string;
+  menuOpen?: React.ReactNode;
+  onToggleMenu?: (isExpanded: boolean) => void;
 }
+
+function HeaderMenu(){
+  const { isLoggedIn } = useSession();
+
+  if (isLoggedIn){
+    return(
+      <div id = "sessionButtons">
+        <UserButton />
+      </div>
+    )
+  }
+  else{
+    return(
+      <div id = "sessionButtons">
+      <LogInButton />
+      <SignUpButton />    
+      </div>
+    )
+  }
+};
 
 export default function DashboardHeader({
   logo,
@@ -38,6 +63,7 @@ export default function DashboardHeader({
   onToggleMenu,
 }: Readonly<DashboardHeaderProps>) {
   const theme = useTheme();
+
 
   return (
     <AppBar color="inherit" position="absolute" sx={{ displayPrint: 'none' }}>
@@ -77,7 +103,7 @@ export default function DashboardHeader({
             spacing={1}
             sx={{ alignItems: 'center', marginLeft: 'auto' }}
           >
-            <LogOutButton size="small" />
+          <HeaderMenu />
           </Stack>
         </Stack>
       </Toolbar>
