@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { isAxiosError } from 'axios';
+import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
 
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
@@ -10,12 +12,21 @@ import useNotifications from '../../../hooks/useNotifications';
 
 import { changePassword } from '../services/authService';
 import { validateRequiredField } from '../validators/authValidator';
+import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE } from '../../clients/validators/clientValidator';
 
 const INITIAL_VALUES = {
   currentPassword: '',
   newPassword: '',
   confirmPassword: '',
 };
+
+const PASSWORD_STRENGTH_LABELS = [
+  'Muy débil',
+  'Débil',
+  'Regular',
+  'Fuerte',
+  'Muy fuerte',
+];
 
 const GENERIC_ERROR_MESSAGE = 'No fue posible cambiar la contraseña.';
 
@@ -28,6 +39,10 @@ export default function ChangePassword() {
 
   const [isChangingPassword, setIsChangingPassword] =
     useState(false);
+
+  const passwordStrength = useMemo( () => checkPasswordStrength(values.newPassword, {}), [values.newPassword]);
+
+  const isPasswordWeak = Boolean(values.newPassword) && passwordStrength.score < MINIMUM_PASSWORD_SCORE;
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -148,7 +163,36 @@ export default function ChangePassword() {
           error={errors.newPassword}
           onChange={handleChange}
           onBlur={handleBlur}
-        />
+        >
+          {values.newPassword && (
+            <Box sx={{ mt: 1 }}>
+              <LinearProgress
+                variant="determinate"
+                value={(passwordStrength.score + 1) * 20}
+                color={isPasswordWeak ? 'error' : 'success'}
+              />
+
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Seguridad: {PASSWORD_STRENGTH_LABELS[passwordStrength.score]}
+              </Typography>
+            </Box>
+          )}
+
+          {isPasswordWeak && passwordStrength.suggestions.length > 0 && (
+            <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+              {passwordStrength.suggestions.map((suggestion) => (
+                <Typography
+                  component="li"
+                  variant="caption"
+                  key={suggestion}
+                >
+                  {suggestion}
+                </Typography>
+              ))}
+            </Box>
+          )}
+        </PasswordField>
+          
 
         <PasswordField
           label="Confirmar nueva contraseña"
