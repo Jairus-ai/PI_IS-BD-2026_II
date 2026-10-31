@@ -5,14 +5,13 @@ import LogOutButton from './common/LogOutButton'
 
 function NavBar()
 {
-    const { user, isLoggedIn } = useSession()
+    const { isLoggedIn } = useSession()
 
     return(
         <div id = "navigationBar">
             <img id = "logoImageNavBar" src={logo} alt="logo" />
             {isLoggedIn ? (
                 <div id = "sessionButtons">
-                    <p id = "welcomeMessage" className='detailTextBold'>Bienvenido, {user.firstName}</p>
                     <LogOutButton id = "logOutButton" color = "inherit" />
                 </div>
             ) : (
