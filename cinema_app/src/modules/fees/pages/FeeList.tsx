@@ -13,6 +13,7 @@ import PageContainer from '../../../components/common/PageContainer';
 import { useFees } from '../hooks/useFees';
 import FeeDetailDialog from '../components/FeeDetailDialog';
 import { FEE_TYPE_LABELS, formatFeeAmount, type Fee, type FeeType } from '../types/fees';
+import { Actions } from '../../../components/crud/Actions';
 
 const PAGE_SIZE = 10;
 const NO_FEES_MESSAGE = 'No hay tarifas registradas.';
@@ -95,24 +96,11 @@ export default function FeeList() {
       headerAlign: 'left',
       flex: 2,
       minWidth: 300,
-      getActions: ({ row }) => [
-        <GridActionsCellItem
-          key="show"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Mostrar</Box>}
-          label="Mostrar"
-          onClick={() => setSelectedFee(row)}
-        />,
-        <GridActionsCellItem
-          key="edit"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Editar</Box>}
-          label="Editar"
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Eliminar</Box>}
-          label="Eliminar"
-        />
-      ]
+      getActions: Actions({
+        onShow: (fee: any) => setSelectedFee(fee),
+        onEdit: (fee: any) => {/*openEdit(fee)*/},
+        onDelete: (fee: any) => {/*handleRowDelete(fee)*/},
+      }),
     }
   ];
 

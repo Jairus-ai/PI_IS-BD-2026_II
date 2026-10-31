@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import {
   DataGrid,
-  GridActionsCellItem,
   GridColDef,
   gridClasses,
 } from '@mui/x-data-grid';
@@ -21,6 +20,7 @@ import PageContainer from '../../../components/common/PageContainer';
 import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
 import MovieFormDialog from '../components/MovieFormDialog';
+import { Actions } from '../../../components/crud/Actions';
 
 const emptyFilters = {
     name: '',
@@ -146,29 +146,11 @@ export default function MovieList() {
         flex: 1,
         minWidth: 220,
         align: 'right',
-        getActions: ({ row }: { row: Movie }) => [
-          <GridActionsCellItem
-            key="show"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
-            label="Mostrar"
-            onClick={() => setSelectedId(row.ID_MOVIE)}
-            showInMenu={false}
-          />,
-          <GridActionsCellItem
-            key="edit"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
-            label="Editar"
-            onClick={() => openEdit(row.ID_MOVIE)}
-            showInMenu={false}
-          />,
-          <GridActionsCellItem
-            key="delete"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
-            label="Eliminar"
-            onClick={handleRowDelete(row)}
-            showInMenu={false}
-          />,
-        ],
+        getActions: Actions({
+          onShow: (movie: any) => setSelectedId(movie.ID_MOVIE),
+          onEdit: (movie: any) => openEdit(movie.ID_MOVIE),
+          onDelete: (movie: any) => handleRowDelete(movie),
+        }),
       },
     ],
     [handleRowDelete],

@@ -5,7 +5,6 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import {
   DataGrid,
-  GridActionsCellItem,
   GridColDef,
   gridClasses,
 } from '@mui/x-data-grid';
@@ -17,8 +16,9 @@ import PageContainer from '../../../components/common/PageContainer';
 import type { Discount } from '../types/discounts';
 import DiscountShow from '../components/DiscountShow';
 import DiscountCreate from '../components/DiscountCreate';
-import {deleteDiscount} from '../services/discountService'
-import DiscountEdit from '../components/DiscountEdit'
+import {deleteDiscount} from '../services/discountService';
+import DiscountEdit from '../components/DiscountEdit';
+import { Actions } from '../../../components/crud/Actions';
 
 export default function DiscountList() {
   const navigate = useNavigate();
@@ -108,29 +108,11 @@ export default function DiscountList() {
         align:'left',
         headerName: 'Acciones',
         flex: 1,
-        getActions: ({ row }: { row: Discount }) => [
-          <GridActionsCellItem
-            key="show"
-            icon={<Box  sx={{fontSize: '14px', color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '8px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
-            label="Mostrar"
-            onClick={() => setSelectedDiscountId(row.ID_DISCOUNT)}
-            showInMenu={false}
-          />,
-          <GridActionsCellItem
-            key="edit"
-            icon={<Box  sx={{fontSize: '14px', color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '8px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
-            label="Editar"
-            onClick={() => openModify(row)}
-            showInMenu={false}
-          />,
-          <GridActionsCellItem
-            key="delete"
-            icon={<Box  sx={{fontSize: '14px', color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '8px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
-            label="Eliminar"
-            onClick={handleRowDelete(row)}
-            showInMenu={false}
-          />,
-        ],
+        getActions: Actions({
+          onShow: (discount: any) => {setSelectedDiscountId(discount.ID_DISCOUNT)},
+          onEdit: (discount: any) => {openModify(discount)},
+          onDelete: (discount: any) => {handleRowDelete(discount)},
+        })
       },
     ],
     [navigate, handleRowDelete],
