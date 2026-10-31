@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import oracledb from 'oracledb';
 
 import { getConnection, closeDatabaseConnection } from '../../database/database.js';
-import { validateLogIn } from '../validators/auth_validator.js';
+import { validateLogIn, validateChangePassword } from '../validators/auth_validator.js';
 import {
   ROLES,
   WORKER_ROLES_BY_CODE,
@@ -16,6 +16,9 @@ import {
 const WRONG_CREDENTIALS_MESSAGE = 'Correo o contraseña incorrectos';
 const LOGGED_OUT_MESSAGE = 'Sesión cerrada correctamente';
 const USER_NOT_FOUND_MESSAGE = 'La sesión expiró. Inicia sesión de nuevo';
+const WRONG_CURRENT_PASSWORD_MESSAGE = 'La contraseña actual es incorrecta';
+const PASSWORD_CHANGED_MESSAGE = 'La contraseña ha sido cambiada correctamente';
+const HASH_SALT_ROUNDS = 10;
 
 // Compared when the email does not exist so the response takes the same time
 const TIMING_PROTECTION_HASH = bcrypt.hashSync('timing-protection', 10);
@@ -80,6 +83,10 @@ async function findAccountByCredentials(connection, email, password) {
   return null;
 }
 
+function getCredentialOwnerColumn(role) {
+  return role === ROLES.CLIENT ? 'ID_CLIENT' : 'ID_WORKER';
+}
+
 export const logIn = async (req, res, next) => {
   const { errors, email, password } = validateLogIn(req.body);
   if (Object.keys(errors).length > 0) {
@@ -140,6 +147,100 @@ export const getCurrentUser = async (req, res, next) => {
     }
 
     res.status(200).json({ data: toSessionUser(result.rows[0], req.user.role) });
+  } catch (error) {
+    next(error);
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  const {
+    errors,
+    passwordSuggestions,
+    currentPassword,
+    newPassword
+  } = validateChangePassword(req.body);
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      errors,
+      passwordSuggestions
+    });
+  }
+
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    const ownerColumn = getCredentialOwnerColumn(req.user.role);
+
+    const credentialResult = await connection.execute(
+      `
+        SELECT HASH, SESSION_VERSION
+        FROM PI_DEVELOPERS.CREDENTIALS
+        WHERE ${ownerColumn} = :id
+      `,
+      { id: req.user.id },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    const credential = credentialResult.rows[0];
+
+    if (!credential) {
+      return res.status(401).json({
+        message: USER_NOT_FOUND_MESSAGE
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      credential.HASH
+    );
+
+    if (!passwordMatches) {
+      return res.status(400).json({
+        errors: {
+          currentPassword: WRONG_CURRENT_PASSWORD_MESSAGE
+        }
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(
+      newPassword,
+      HASH_SALT_ROUNDS
+    );
+
+    const newSessionVersion = credential.SESSION_VERSION + 1;
+
+    await connection.execute(
+      `
+        UPDATE PI_DEVELOPERS.CREDENTIALS
+        SET HASH = :passwordHash,
+            SESSION_VERSION = :sessionVersion
+        WHERE ${ownerColumn} = :id
+      `,
+      {
+        passwordHash,
+        sessionVersion: newSessionVersion,
+        id: req.user.id
+      }
+    );
+
+    await connection.commit();
+
+    const sessionToken = createSessionToken({
+      id: req.user.id,
+      role: req.user.role,
+      sessionVersion: newSessionVersion
+    });
+
+    setSessionCookie(res, sessionToken);
+
+    return res.status(200).json({
+      message: PASSWORD_CHANGED_MESSAGE
+    });
   } catch (error) {
     next(error);
   } finally {
