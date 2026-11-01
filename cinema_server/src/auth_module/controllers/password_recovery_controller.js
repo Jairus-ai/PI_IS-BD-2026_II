@@ -4,8 +4,9 @@ import oracledb from 'oracledb';
 
 import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 
-import { ROLES, WORKER_ROLES_BY_CODE, createSessionToken, setSessionCookie,} from '../../session/session.js';
-import { validateRecoveryRequest, validateRecoveryCode, validatePasswordReset} from '../validators/password_recovery_validator.js';
+import { ROLES, WORKER_ROLES_BY_CODE, createSessionToken, setSessionCookie } from '../../session/session.js';
+import { validateRecoveryRequest, validateRecoveryCode, validatePasswordReset } from '../validators/password_recovery_validator.js';
+import { getCredential, updatePasswordAndSessionVersion, } from '../../shared/services/credential_service.js';
 
 const RECOVERY_CODE_MIN = 100000;
 const RECOVERY_CODE_MAX = 999999;
@@ -123,48 +124,6 @@ async function findRecoveryCode(connection, account) {
   );
 
   return result.rows[0];
-}
-
-async function updateAccountPassword(connection, account, passwordHash) {
-  const ownerColumn =
-    account.ROLE === ROLES.CLIENT
-      ? 'ID_CLIENT'
-      : 'ID_WORKER';
-
-  const result = await connection.execute(
-    `
-      SELECT SESSION_VERSION
-      FROM PI_DEVELOPERS.CREDENTIALS
-      WHERE ${ownerColumn} = :id
-    `,
-    { id: account.ID },
-    { outFormat: oracledb.OUT_FORMAT_OBJECT }
-  );
-
-  const credential = result.rows[0];
-
-  if (!credential) {
-    return null;
-  }
-
-  const newSessionVersion =
-    credential.SESSION_VERSION + 1;
-
-  await connection.execute(
-    `
-      UPDATE PI_DEVELOPERS.CREDENTIALS
-      SET HASH = :passwordHash,
-          SESSION_VERSION = :sessionVersion
-      WHERE ${ownerColumn} = :id
-    `,
-    {
-      passwordHash,
-      sessionVersion: newSessionVersion,
-      id: account.ID,
-    }
-  );
-
-  return newSessionVersion;
 }
 
 async function deleteRecoveryCode(
@@ -390,19 +349,27 @@ export const resetPassword = async (
       HASH_SALT_ROUNDS
     );
 
-    const newSessionVersion =
-      await updateAccountPassword(
-        connection,
-        account,
-        passwordHash
-      );
+    const credential = await getCredential(
+      connection,
+      account.ROLE,
+      account.ID
+    );
 
-    if (newSessionVersion === null) {
+    if (!credential) {
       return res.status(404).json({
         message:
           'No se encontraron credenciales para la cuenta',
       });
     }
+
+    const newSessionVersion =
+      await updatePasswordAndSessionVersion(
+        connection,
+        account.ROLE,
+        account.ID,
+        passwordHash,
+        credential.SESSION_VERSION
+      );
 
     await deleteRecoveryCode(
       connection,
