@@ -183,7 +183,6 @@ export const requestPasswordRecovery = async (req, res, next) => {
 
     await connection.commit();
 
-    console.log('Recovery code:', recoveryCode);
     await emailService.sendPasswordRecoveryEmail({
       email,
       recoveryCode,
@@ -384,6 +383,10 @@ export const resetPassword = async (
     );
 
     await connection.commit();
+
+    await emailService.sendPasswordChangedEmail({
+      email,
+    });
 
     const role =
       account.ROLE === ROLES.CLIENT
