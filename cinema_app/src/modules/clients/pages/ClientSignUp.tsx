@@ -25,12 +25,9 @@ import useNotifications from '../../../hooks/useNotifications';
 import useSession from '../../../hooks/useSession';
 import type { SessionUser } from '../../../context/SessionContext';
 import { useRegisterClient } from '../hooks/useRegisterClient';
-import {
-  checkPasswordStrength,
-  MINIMUM_PASSWORD_SCORE,
-  validateClientForm,
-  validateRequiredField
-} from '../validators/clientValidator';
+import { validateClientForm, validateRequiredField } from '../validators/clientValidator';
+
+import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE } from '../../../shared/validators/passwordValidator';
 
 type ClientFormValues = {
   email: string;

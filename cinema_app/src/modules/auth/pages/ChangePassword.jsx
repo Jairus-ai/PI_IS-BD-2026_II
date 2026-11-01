@@ -12,7 +12,7 @@ import useNotifications from '../../../hooks/useNotifications';
 
 import { changePassword } from '../services/authService';
 import { validateRequiredField } from '../validators/authValidator';
-import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE } from '../../clients/validators/clientValidator';
+import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE} from '../../../shared/validators/passwordValidator';
 
 const INITIAL_VALUES = {
   currentPassword: '',
