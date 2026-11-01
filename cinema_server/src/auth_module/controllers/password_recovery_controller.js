@@ -6,7 +6,7 @@ import { getConnection, closeDatabaseConnection } from '../../database/database.
 
 import { ROLES } from '../../session/session.js';
 
-import { validateRecoveryRequest } from '../validators/password_recovery_validator.js';
+import { validateRecoveryRequest, validateRecoveryCode,} from '../validators/password_recovery_validator.js';
 
 const RECOVERY_CODE_MIN = 100000;
 const RECOVERY_CODE_MAX = 999999;
@@ -67,7 +67,7 @@ async function saveRecoveryCode(connection, account, codeHash) {
       `
         UPDATE PI_DEVELOPERS.CODES
         SET HASH = :hash,
-            LAST_GENERATED_DATE = SYSTIMESTAMP
+            LAST_GENERATED_DATE = LOCALTIMESTAMP
         WHERE ${ownerColumn} = :id
       `,
       {
@@ -88,7 +88,7 @@ async function saveRecoveryCode(connection, account, codeHash) {
       )
       VALUES (
         :hash,
-        SYSTIMESTAMP,
+        LOCALTIMESTAMP,
         :id
       )
     `,
@@ -97,6 +97,33 @@ async function saveRecoveryCode(connection, account, codeHash) {
       id: account.ID,
     }
   );
+}
+
+async function findRecoveryCode(connection, account) {
+  const ownerColumn =
+    account.ROLE === ROLES.CLIENT
+      ? 'ID_CLIENT'
+      : 'ID_WORKER';
+
+  const result = await connection.execute(
+    `
+      SELECT
+        ID_CODE,
+        HASH,
+        LAST_GENERATED_DATE,
+        CASE
+          WHEN LAST_GENERATED_DATE < LOCALTIMESTAMP - INTERVAL '10' MINUTE
+          THEN 1
+          ELSE 0
+        END AS IS_EXPIRED
+      FROM PI_DEVELOPERS.CODES
+      WHERE ${ownerColumn} = :id
+    `,
+    { id: account.ID },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows[0];
 }
 
 export const requestPasswordRecovery = async (req, res, next) => {
@@ -141,6 +168,78 @@ export const requestPasswordRecovery = async (req, res, next) => {
     return res.status(200).json({
       message:
         `Código de verificación generado. Tiene una vigencia de ${RECOVERY_CODE_EXPIRATION_MINUTES} minutos.`,
+    });
+
+  } catch (error) {
+    next(error);
+
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const verifyPasswordRecoveryCode = async (req, res, next) => {
+  const {
+    errors,
+    email,
+    code,
+  } = validateRecoveryCode(req.body);
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    const account = await findAccountByEmail(connection, email);
+
+    if (!account) {
+      return res.status(404).json({
+        errors: {
+          email: 'No existe una cuenta registrada con este correo',
+        },
+      });
+    }
+
+    const recoveryCode = await findRecoveryCode(
+      connection,
+      account
+    );
+
+    if (!recoveryCode) {
+      return res.status(400).json({
+        errors: {
+          code: 'No existe un código de verificación activo',
+        },
+      });
+    }
+
+    if (recoveryCode.IS_EXPIRED === 1) {
+      return res.status(400).json({
+        errors: {
+          code: 'El código de verificación ha expirado',
+        },
+      });
+    }
+
+    const codeMatches = await bcrypt.compare(
+      code,
+      recoveryCode.HASH
+    );
+
+    if (!codeMatches) {
+      return res.status(400).json({
+        errors: {
+          code: 'El código de verificación es incorrecto',
+        },
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Código de verificación válido',
     });
 
   } catch (error) {
