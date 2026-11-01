@@ -9,10 +9,6 @@ import {
 } from '@mui/x-data-grid';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import MenuItem from '@mui/material/MenuItem';
 import { useMovies } from '../hooks/useMovies';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
@@ -21,6 +17,13 @@ import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
 import MovieFormDialog from '../components/MovieFormDialog';
 import { Actions } from '../../../components/crud/Actions';
+import { FilterField } from '../../../components/crud/FilterField';
+
+// TODO(JESUS): Delete these imports
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
 
 const emptyFilters = {
     name: '',
@@ -183,29 +186,15 @@ export default function MovieList() {
             size="small"
           />
 
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Género</InputLabel>
-
-            <Select
-              label="Género"
-              name="genreId"
-              value={filters.genreId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos los géneros
-              </MenuItem>
-
-              {genres.map((genre: any) => (
-                <MenuItem
-                  key={genre.ID_GENRE}
-                  value={genre.ID_GENRE}
-                >
-                  {genre.GENRE_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <FilterField
+            label="Género"
+            name="genreId"
+            value={filters.genreId}
+            onChange={handleChange}
+            itemList={genres}
+            getValue={(g: any) => g.ID_GENRE}
+            getLabel={(g: any) => g.GENRE_NAME}
+          />
 
           <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Idioma</InputLabel>
