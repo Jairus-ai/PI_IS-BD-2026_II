@@ -8,6 +8,8 @@ import { ROLES, WORKER_ROLES_BY_CODE, createSessionToken, setSessionCookie } fro
 import { validateRecoveryRequest, validateRecoveryCode, validatePasswordReset } from '../validators/password_recovery_validator.js';
 import { getCredential, updatePasswordAndSessionVersion, } from '../../shared/services/credential_service.js';
 
+import emailService from '../../email/email_service.js';
+
 const RECOVERY_CODE_MIN = 100000;
 const RECOVERY_CODE_MAX = 999999;
 const RECOVERY_CODE_EXPIRATION_MINUTES = 10;
@@ -182,6 +184,11 @@ export const requestPasswordRecovery = async (req, res, next) => {
     await connection.commit();
 
     console.log('Recovery code:', recoveryCode);
+    await emailService.sendPasswordRecoveryEmail({
+      email,
+      recoveryCode,
+      expirationMinutes: RECOVERY_CODE_EXPIRATION_MINUTES,
+    });
 
     return res.status(200).json({
       message:

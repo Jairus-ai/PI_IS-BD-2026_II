@@ -60,6 +60,28 @@ async function sendWelcomeEmail({ email, firstName }) {
   return info;
 }
 
-const emailService = { sendWelcomeEmail };
+async function sendPasswordRecoveryEmail({
+  email,
+  recoveryCode,
+  expirationMinutes,
+}) {
+  const transporter = await getTransporter();
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM ?? DEFAULT_SENDER,
+    to: email,
+    subject: 'Código de recuperación de contraseña - CinePI',
+    text: `Tu código de recuperación es ${recoveryCode}. Este código es válido durante ${expirationMinutes} minutos.`,
+    html: `
+      <p>Recibimos una solicitud para recuperar tu contraseña de CinePI.</p>
+      <p>Tu código de verificación es:</p>
+      <p><strong>${escapeHtml(recoveryCode)}</strong></p>
+      <p>Este código es válido durante ${expirationMinutes} minutos.</p>
+      <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+    `,
+  });
+}
+
+const emailService = { sendWelcomeEmail, sendPasswordRecoveryEmail };
 
 export default emailService;
