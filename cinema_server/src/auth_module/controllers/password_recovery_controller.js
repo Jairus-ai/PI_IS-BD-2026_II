@@ -4,9 +4,8 @@ import oracledb from 'oracledb';
 
 import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 
-import { ROLES } from '../../session/session.js';
-
-import { validateRecoveryRequest, validateRecoveryCode,} from '../validators/password_recovery_validator.js';
+import { ROLES, WORKER_ROLES_BY_CODE, createSessionToken, setSessionCookie,} from '../../session/session.js';
+import { validateRecoveryRequest, validateRecoveryCode, validatePasswordReset} from '../validators/password_recovery_validator.js';
 
 const RECOVERY_CODE_MIN = 100000;
 const RECOVERY_CODE_MAX = 999999;
@@ -126,6 +125,66 @@ async function findRecoveryCode(connection, account) {
   return result.rows[0];
 }
 
+async function updateAccountPassword(connection, account, passwordHash) {
+  const ownerColumn =
+    account.ROLE === ROLES.CLIENT
+      ? 'ID_CLIENT'
+      : 'ID_WORKER';
+
+  const result = await connection.execute(
+    `
+      SELECT SESSION_VERSION
+      FROM PI_DEVELOPERS.CREDENTIALS
+      WHERE ${ownerColumn} = :id
+    `,
+    { id: account.ID },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  const credential = result.rows[0];
+
+  if (!credential) {
+    return null;
+  }
+
+  const newSessionVersion =
+    credential.SESSION_VERSION + 1;
+
+  await connection.execute(
+    `
+      UPDATE PI_DEVELOPERS.CREDENTIALS
+      SET HASH = :passwordHash,
+          SESSION_VERSION = :sessionVersion
+      WHERE ${ownerColumn} = :id
+    `,
+    {
+      passwordHash,
+      sessionVersion: newSessionVersion,
+      id: account.ID,
+    }
+  );
+
+  return newSessionVersion;
+}
+
+async function deleteRecoveryCode(
+  connection,
+  account
+) {
+  const ownerColumn =
+    account.ROLE === ROLES.CLIENT
+      ? 'ID_CLIENT'
+      : 'ID_WORKER';
+
+  await connection.execute(
+    `
+      DELETE FROM PI_DEVELOPERS.CODES
+      WHERE ${ownerColumn} = :id
+    `,
+    { id: account.ID }
+  );
+}
+
 export const requestPasswordRecovery = async (req, res, next) => {
   const { errors, email } = validateRecoveryRequest(req.body);
 
@@ -240,6 +299,137 @@ export const verifyPasswordRecoveryCode = async (req, res, next) => {
 
     return res.status(200).json({
       message: 'Código de verificación válido',
+    });
+
+  } catch (error) {
+    next(error);
+
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const resetPassword = async (
+  req,
+  res,
+  next
+) => {
+  const {
+    errors,
+    passwordSuggestions,
+    email,
+    code,
+    newPassword,
+  } = validatePasswordReset(req.body);
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      errors,
+      passwordSuggestions,
+    });
+  }
+
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    const account = await findAccountByEmail(
+      connection,
+      email
+    );
+
+    if (!account) {
+      return res.status(404).json({
+        errors: {
+          email:
+            'No existe una cuenta registrada con este correo',
+        },
+      });
+    }
+
+    const recoveryCode = await findRecoveryCode(
+      connection,
+      account
+    );
+
+    if (!recoveryCode) {
+      return res.status(400).json({
+        errors: {
+          code:
+            'No existe un código de verificación activo',
+        },
+      });
+    }
+
+    if (recoveryCode.IS_EXPIRED === 1) {
+      return res.status(400).json({
+        errors: {
+          code:
+            'El código de verificación ha expirado',
+        },
+      });
+    }
+
+    const codeMatches = await bcrypt.compare(
+      code,
+      recoveryCode.HASH
+    );
+
+    if (!codeMatches) {
+      return res.status(400).json({
+        errors: {
+          code:
+            'El código de verificación es incorrecto',
+        },
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(
+      newPassword,
+      HASH_SALT_ROUNDS
+    );
+
+    const newSessionVersion =
+      await updateAccountPassword(
+        connection,
+        account,
+        passwordHash
+      );
+
+    if (newSessionVersion === null) {
+      return res.status(404).json({
+        message:
+          'No se encontraron credenciales para la cuenta',
+      });
+    }
+
+    await deleteRecoveryCode(
+      connection,
+      account
+    );
+
+    await connection.commit();
+
+    const role =
+      account.ROLE === ROLES.CLIENT
+        ? ROLES.CLIENT
+        : WORKER_ROLES_BY_CODE[account.ROLE];
+
+    const sessionToken = createSessionToken({
+      id: account.ID,
+      role,
+      sessionVersion: newSessionVersion,
+    });
+
+    setSessionCookie(
+      res,
+      sessionToken
+    );
+
+    return res.status(200).json({
+      message:
+        'La contraseña ha sido cambiada correctamente',
     });
 
   } catch (error) {
