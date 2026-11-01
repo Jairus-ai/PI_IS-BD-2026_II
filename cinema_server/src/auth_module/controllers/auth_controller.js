@@ -4,6 +4,7 @@ import emailService from '../../email/email_service.js';
 
 import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 import { validateLogIn, validateChangePassword } from '../validators/auth_validator.js';
+import { getCredential, updatePasswordAndSessionVersion } from '../../shared/services/credential_service.js';
 import {
   ROLES,
   WORKER_ROLES_BY_CODE,
@@ -199,19 +200,11 @@ export const changePassword = async (req, res, next) => {
   try {
     connection = await getConnection();
 
-    const ownerColumn = getCredentialOwnerColumn(req.user.role);
-
-    const credentialResult = await connection.execute(
-      `
-        SELECT HASH, SESSION_VERSION
-        FROM PI_DEVELOPERS.CREDENTIALS
-        WHERE ${ownerColumn} = :id
-      `,
-      { id: req.user.id },
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    const credential = await getCredential(
+      connection,
+      req.user.role,
+      req.user.id
     );
-
-    const credential = credentialResult.rows[0];
 
     if (!credential) {
       return res.status(401).json({
@@ -237,21 +230,14 @@ export const changePassword = async (req, res, next) => {
       HASH_SALT_ROUNDS
     );
 
-    const newSessionVersion = credential.SESSION_VERSION + 1;
-
-    await connection.execute(
-      `
-        UPDATE PI_DEVELOPERS.CREDENTIALS
-        SET HASH = :passwordHash,
-            SESSION_VERSION = :sessionVersion
-        WHERE ${ownerColumn} = :id
-      `,
-      {
+    const newSessionVersion =
+      await updatePasswordAndSessionVersion(
+        connection,
+        req.user.role,
+        req.user.id,
         passwordHash,
-        sessionVersion: newSessionVersion,
-        id: req.user.id
-      }
-    );
+        credential.SESSION_VERSION
+      );
 
     const email = await getAccountEmail(
       connection,
