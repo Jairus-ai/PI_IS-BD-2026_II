@@ -5,8 +5,19 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import oracledb from 'oracledb';
 
-import authRoutes from '../routes/auth_routes.js';
-import { ROLES, createSessionToken, SESSION_COOKIE_NAME } from '../../session/session.js';
+jest.unstable_mockModule('../../email/email_service.js', () => ({
+  default: {
+    sendWelcomeEmail: jest.fn().mockResolvedValue(),
+    sendPasswordRecoveryEmail: jest.fn().mockResolvedValue(),
+    sendPasswordChangedEmail: jest.fn().mockResolvedValue(),
+  },
+}));
+
+const { default: authRoutes } = await import('../routes/auth_routes.js');
+const { ROLES, createSessionToken, SESSION_COOKIE_NAME} = await import('../../session/session.js');
+
+//import authRoutes from '../routes/auth_routes.js';
+//import { ROLES, createSessionToken, SESSION_COOKIE_NAME } from '../../session/session.js';
 
 process.env.JWT_SECRET = 'test-secret';
 
