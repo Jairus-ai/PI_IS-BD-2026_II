@@ -13,6 +13,7 @@ import FeeList from '../modules/fees/pages/FeeList';
 import ChangePassword from '../modules/auth/pages/ChangePassword';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
+import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
 
 const router = createHashRouter([
   {
@@ -26,6 +27,10 @@ const router = createHashRouter([
   {
     path: '/login',
     Component: LogIn,
+  },
+  {
+  path: '/password-recovery',
+    Component: PasswordRecovery,
   },
   {
     element: (
