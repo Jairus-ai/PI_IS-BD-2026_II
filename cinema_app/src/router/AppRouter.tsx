@@ -14,6 +14,7 @@ import FeeList from '../modules/fees/pages/FeeList';
 import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
+import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
 
 const router = createHashRouter([
   {
@@ -31,6 +32,10 @@ const router = createHashRouter([
   {
     path:'/seats/:screeningId',
     Component: ShowSeats,
+  },
+  {
+  path: '/password-recovery',
+    Component: PasswordRecovery,
   },
   {
     element: (
