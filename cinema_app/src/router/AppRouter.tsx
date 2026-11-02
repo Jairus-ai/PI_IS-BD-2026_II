@@ -30,6 +30,10 @@ const router = createHashRouter([
     Component: LogIn,
   },
   {
+  path: '/password-recovery',
+    Component: PasswordRecovery,
+  },
+  {
     element: (
       <DashboardLayout />
     ),
