@@ -10,6 +10,7 @@ import RequireSession from '../components/common/RequireSession';
 import { MANAGER_ROLES, WORKER_ROLES } from '../context/SessionContext';
 import UserList from '../modules/users/pages/UserList.jsx';
 import FeeList from '../modules/fees/pages/FeeList';
+import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 
 const router = createHashRouter([
   {
@@ -23,6 +24,10 @@ const router = createHashRouter([
   {
     path: '/login',
     Component: LogIn,
+  },
+  {
+    path:'/seats/:screeningId',
+    Component: ShowSeats,
   },
   {
     element: (
