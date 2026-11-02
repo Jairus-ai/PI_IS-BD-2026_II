@@ -41,6 +41,10 @@ const router = createHashRouter([
     ],
   },
   {
+  path: '/password-recovery',
+    Component: PasswordRecovery,
+  },
+  {
     element: (
       <RequireSession>
         <ChangePassword />
