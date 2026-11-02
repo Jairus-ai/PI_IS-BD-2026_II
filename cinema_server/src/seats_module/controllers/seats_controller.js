@@ -10,7 +10,7 @@ export const getSeatsInfoFromScreening = async (req, res, next) => {
         
         const request = `SELECT SEAT_ROW, SEAT_NUMBER, ID_SEAT, SEAT_AVAILABLE
             FROM PI_DEVELOPERS.SEATS 
-            WHERE ID_SCREENING = :screeningId;`;
+            WHERE ID_SCREENING = :screeningId`;
             
         const result = await conection.execute(
             request,

@@ -14,6 +14,7 @@ import ChangePassword from '../modules/auth/pages/ChangePassword';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
+import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 
 const router = createHashRouter([
   {
@@ -39,6 +40,8 @@ const router = createHashRouter([
       </RequireSession>
     ),
     path: '/change-password',
+    path:'/seats/:screeningId',
+    Component: ShowSeats,
   },
   {
     element: (
