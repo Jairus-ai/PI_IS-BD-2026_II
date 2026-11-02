@@ -7,10 +7,11 @@ import DiscountList from '../modules/discounts/pages/DiscountList';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import RequireSession from '../components/common/RequireSession';
-import { WORKER_ROLES } from '../context/SessionContext';
+import { MANAGER_ROLES, WORKER_ROLES } from '../context/SessionContext';
 import UserList from '../modules/users/pages/UserList.jsx';
 import ChangePassword from '../modules/auth/pages/ChangePassword';
 import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
+import FeeList from '../modules/fees/pages/FeeList';
 
 const router = createHashRouter([
   {
@@ -55,6 +56,14 @@ const router = createHashRouter([
       {
         path: '/users',
         Component: UserList,
+      },
+      {
+        path: '/fees',
+        element: (
+          <RequireSession allowedRoles={MANAGER_ROLES}>
+            <FeeList />
+          </RequireSession>
+        ),
       },
     ],
   },

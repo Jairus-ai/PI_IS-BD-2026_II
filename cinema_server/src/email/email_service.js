@@ -99,6 +99,10 @@ async function sendPasswordChangedEmail({ email }) {
   });
 }
 
-const emailService = { sendWelcomeEmail, sendPasswordRecoveryEmail, sendPasswordChangedEmail };
+const emailService = {
+  sendWelcomeEmail,
+  sendPasswordRecoveryEmail,
+  sendPasswordChangedEmail,
+};
 
 export default emailService;

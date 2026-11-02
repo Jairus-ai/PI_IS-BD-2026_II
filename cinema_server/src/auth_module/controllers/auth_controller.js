@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import oracledb from 'oracledb';
+import emailService from '../../email/email_service.js';
 
 import { getConnection, closeDatabaseConnection } from '../../database/database.js';
 import { validateLogIn, validateChangePassword } from '../validators/auth_validator.js';
@@ -82,6 +83,30 @@ async function findAccountByCredentials(connection, email, password) {
     }
   }
   return null;
+}
+
+async function getAccountEmail(connection, role, id) {
+  const table =
+    role === ROLES.CLIENT
+      ? 'CLIENTS'
+      : 'WORKERS';
+
+  const idColumn =
+    role === ROLES.CLIENT
+      ? 'ID_CLIENT'
+      : 'ID_WORKER';
+
+  const result = await connection.execute(
+    `
+      SELECT EMAIL
+      FROM PI_DEVELOPERS.${table}
+      WHERE ${idColumn} = :id
+    `,
+    { id },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows[0]?.EMAIL;
 }
 
 export const logIn = async (req, res, next) => {
@@ -210,6 +235,12 @@ export const changePassword = async (req, res, next) => {
         credential.SESSION_VERSION
       );
 
+    const email = await getAccountEmail(
+      connection,
+      req.user.role,
+      req.user.id
+    );
+
     await connection.commit();
 
     const sessionToken = createSessionToken({
@@ -219,6 +250,12 @@ export const changePassword = async (req, res, next) => {
     });
 
     setSessionCookie(res, sessionToken);
+
+    if (email) {
+      await emailService.sendPasswordChangedEmail({
+        email
+      });
+    }
 
     return res.status(200).json({
       message: PASSWORD_CHANGED_MESSAGE

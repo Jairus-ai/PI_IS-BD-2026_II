@@ -18,6 +18,7 @@ import type { Discount } from '../types/discounts';
 import DiscountShow from '../components/DiscountShow';
 import DiscountCreate from '../components/DiscountCreate';
 import {deleteDiscount} from '../services/discountService'
+import DiscountEdit from '../components/DiscountEdit'
 
 export default function DiscountList() {
   const navigate = useNavigate();
@@ -26,7 +27,6 @@ export default function DiscountList() {
 
   const [selectedDiscountId, setSelectedDiscountId] = React.useState<number | null>(null);
 
-  // Uncomment delete and refetch once implemented.
   const { discounts, isLoadingDiscounts, discountsError, refetchDiscounts } = useDiscounts();
 
   const handleRowDelete = React.useCallback(
@@ -62,6 +62,21 @@ export default function DiscountList() {
     },
     [dialogs, notifications, refetchDiscounts],
   );
+
+  const [EditOpen, setModifyOpen] = React.useState(false);
+ const [idDiscountToEdit, setIdDiscountToModify] = React.useState<number | null>(null);
+
+  function openModify(row:Discount)
+  {
+    setIdDiscountToModify( Number(row.ID_DISCOUNT));
+    setModifyOpen(true);
+  }
+
+  function closeEdit()
+  {
+    setIdDiscountToModify(null);
+    setModifyOpen(false);
+  }
 
   const columns = React.useMemo<GridColDef[]>(
     () => [
@@ -105,7 +120,7 @@ export default function DiscountList() {
             key="edit"
             icon={<Box  sx={{fontSize: '14px', color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '8px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
             label="Editar"
-            onClick={() => navigate(`/discounts/${row.ID_DISCOUNT}/edit`)}
+            onClick={() => openModify(row)}
             showInMenu={false}
           />,
           <GridActionsCellItem
@@ -160,11 +175,17 @@ export default function DiscountList() {
           />
         )}
         <DiscountShow discountId={selectedDiscountId} onClose={() => setSelectedDiscountId(null)}/>
-          <DiscountCreate
-            open={createOpen}
-            onClose={() => setCreateOpen(false)}
-            onCreated={refetchDiscounts}
-          />
+        <DiscountCreate
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onCreated={refetchDiscounts}
+        />
+        <DiscountEdit
+          open={EditOpen}
+          onClose={() => closeEdit()}
+          onEdited={refetchDiscounts}
+          discountID = {idDiscountToEdit}
+        />
       </Box>
     </PageContainer>
   );
