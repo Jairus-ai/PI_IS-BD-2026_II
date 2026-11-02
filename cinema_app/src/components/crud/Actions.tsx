@@ -1,8 +1,17 @@
 import { ActionButton } from "./ActionButton";
 
-export function Actions({onShow, onEdit, onDelete}) {
+export function Actions({
+  onShow,
+  onEdit,
+  onDelete,
+} : {
+  readonly onShow: (row: any) => void,
+  readonly onEdit: (row: any) => void,
+  readonly onDelete: (row: any) => void,
 
-  return ({ row }) => [
+}) {
+
+  return ({ row } : { row: any }) => [
     <ActionButton
       key="show"
       label="Mostrar"
