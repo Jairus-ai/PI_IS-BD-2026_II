@@ -19,12 +19,6 @@ import MovieFormDialog from '../components/MovieFormDialog';
 import { Actions } from '../../../components/crud/Actions';
 import { FilterField } from '../../../components/crud/FilterField';
 
-// TODO(JESUS): Delete these imports
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
-
 const emptyFilters = {
     name: '',
     genreId: '',
@@ -192,81 +186,40 @@ export default function MovieList() {
             value={filters.genreId}
             onChange={handleChange}
             itemList={genres}
-            getValue={(g: any) => g.ID_GENRE}
-            getLabel={(g: any) => g.GENRE_NAME}
+            getValue={(genre: any) => genre.ID_GENRE}
+            getLabel={(genre: any) => genre.GENRE_NAME}
           />
 
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Idioma</InputLabel>
+          <FilterField
+            label="Idioma"
+            name="languageCode"
+            value={filters.languageCode}
+            onChange={handleChange}
+            itemList={languages}
+            getValue={(language: any) => language.ISO_CODE}
+            getLabel={(language: any) => language.LANGUAGE_NAME}
+          />
 
-            <Select
-              label="Idioma"
-              name="languageCode"
-              value={filters.languageCode}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos los idiomas
-              </MenuItem>
+          <FilterField
+            label="Formato audiovisual"
+            name="audiovisualFormatId"
+            value={filters.audiovisualFormatId}
+            onChange={handleChange}
+            itemList={formats}
+            getValue={(format: any) => format.ID_AUDIOVISUAL_FORMAT}
+            getLabel={(format: any) => `${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`}
+            minWidth={220}
+          />
 
-              {languages.map((language: any) => (
-                <MenuItem
-                  key={language.ISO_CODE}
-                  value={language.ISO_CODE}
-                >
-                  {language.LANGUAGE_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel>Formato audiovisual</InputLabel>
-
-            <Select
-              label="Formato audiovisual"
-              name="audiovisualFormatId"
-              value={filters.audiovisualFormatId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos los formatos audiovisuales
-              </MenuItem>
-
-              {formats.map((format: any) => (
-                <MenuItem
-                  key={format.ID_AUDIOVISUAL_FORMAT}
-                  value={format.ID_AUDIOVISUAL_FORMAT}
-                >
-                  {format.VIDEO_FORMAT_NAME} {format.AUDIO_FORMAT_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Clasificación</InputLabel>
-
-            <Select
-              label="Clasificación"
-              name="ratingId"
-              value={filters.ratingId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos las clasificaciones
-              </MenuItem>
-
-              {ratings.map((rating: any) => (
-                <MenuItem
-                  key={rating.ID_RATING}
-                  value={rating.ID_RATING}
-                >
-                  {rating.RATING_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <FilterField
+            label="Clasificación"
+            name="ratingId"
+            value={filters.ratingId}
+            onChange={handleChange}
+            itemList={ratings}
+            getValue={(rating: any) => rating.ID_RATING}
+            getLabel={(rating: any) => rating.RATING_NAME}
+          />
 
           <Button
             variant="outlined"
@@ -310,8 +263,16 @@ export default function MovieList() {
               }}
             />
           }
-          <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
-          <MovieFormDialog movieId={formMovieId} open={formOpen} onClose={closeForm} />
+          <MovieDetailDialog
+            movieId={selectedId}
+            open={selectedId !== null}
+            onClose={() => setSelectedId(null)}
+          />
+          <MovieFormDialog
+            movieId={formMovieId}
+            open={formOpen}
+            onClose={closeForm}
+            />
         </Box>
       </Stack>
     </PageContainer>

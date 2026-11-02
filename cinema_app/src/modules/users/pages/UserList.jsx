@@ -275,25 +275,17 @@ const roleOptions = availableRoles[user?.role] || [];
             size="small"
           />
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Rol</InputLabel>
 
-            <Select
-              label="Rol"
-              name="role"
-              value={filters.role}
-              onChange={handleChange}
-            >
-              <MenuItem value="">Todos los roles</MenuItem>
-              
-              {roleOptions.map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                {label}
-                </MenuItem>
-              ))}
-              
-            </Select>
-          </FormControl>
+          <FilterField
+            label="Rol"
+            name="role"
+            value={filters.role}
+            onChange={handleChange}
+            itemList={roleOptions}
+            getValue={(role) => role.value}
+            getLabel={(role) => role.label}
+            minWidth={170}
+          />
 
           <FormControl size="small" sx={{ minWidth: 170 }}>
             <InputLabel>Estado</InputLabel>
