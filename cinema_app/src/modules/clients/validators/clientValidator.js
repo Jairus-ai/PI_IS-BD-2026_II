@@ -1,9 +1,6 @@
-import { ZxcvbnFactory } from '@zxcvbn-ts/core';
-import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
-import * as zxcvbnSpanishPackage from '@zxcvbn-ts/language-es-es';
+import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE} from '../../../shared/validators/passwordValidator';
 
 export const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
-export const MINIMUM_PASSWORD_SCORE = 3;
 
 const MINIMUM_AGE = 18;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
@@ -20,27 +17,6 @@ const REQUIRED_FIELDS = [
   'phoneNumber'
 ];
 
-const passwordStrengthChecker = new ZxcvbnFactory({
-  dictionary: {
-    ...zxcvbnCommonPackage.dictionary,
-    ...zxcvbnSpanishPackage.dictionary
-  },
-  graphs: zxcvbnCommonPackage.adjacencyGraphs,
-  translations: zxcvbnSpanishPackage.translations
-});
-
-export function checkPasswordStrength(password, values = {}) {
-  if (!password) {
-    return { score: 0, suggestions: [] };
-  }
-  const userInputs = [values.email, values.firstName, values.firstSurname, values.lastSurname]
-    .filter(Boolean);
-  const result = passwordStrengthChecker.check(password, userInputs);
-  return {
-    score: result.score,
-    suggestions: [result.feedback.warning, ...result.feedback.suggestions].filter(Boolean)
-  };
-}
 
 export function validateRequiredField(fieldName, value) {
   if (REQUIRED_FIELDS.includes(fieldName) && !String(value ?? '').trim()) {
