@@ -10,6 +10,7 @@ import RequireSession from '../components/common/RequireSession';
 import { WORKER_ROLES } from '../context/SessionContext';
 import UserList from '../modules/users/pages/UserList.jsx';
 import ChangePassword from '../modules/auth/pages/ChangePassword';
+import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
 
 const router = createHashRouter([
   {
@@ -23,6 +24,10 @@ const router = createHashRouter([
   {
     path: '/login',
     Component: LogIn,
+  },
+  {
+  path: '/password-recovery',
+    Component: PasswordRecovery,
   },
   {
     element: (
