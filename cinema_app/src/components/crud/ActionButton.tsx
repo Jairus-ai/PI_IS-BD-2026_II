@@ -1,8 +1,15 @@
 import Box from "@mui/material/Box";
 import { GridActionsCellItem } from '@mui/x-data-grid';
 
-export function ActionButton({key, label, onClick}) {
-
+export function ActionButton({
+  key,
+  label,
+  onClick
+} : {
+  readonly key: string,
+  readonly label: string,
+  readonly onClick: (row: any) => void,
+}) {
   return (
     <GridActionsCellItem
       key={key}
