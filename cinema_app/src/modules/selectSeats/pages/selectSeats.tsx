@@ -9,10 +9,11 @@ import {
     markSeatAsAvailable
 } from '../services/seatsService';
 
+//temporal values while the functions for screenings are not implemented, these values should be obtained from the screening data
 const ROWS = 10;
 const COLS = 10;
-let SELECTED_SEATS: number[] = [];
 
+let SELECTED_SEATS: number[] = [];
 interface Seat {
   SEAT_ROW: string | number;
   SEAT_NUMBER: number;
