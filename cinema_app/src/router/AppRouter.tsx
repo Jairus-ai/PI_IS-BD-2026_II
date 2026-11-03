@@ -6,7 +6,7 @@ import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
-import RequireSession from '../components/common/RequireSession';
+import {RequireSession} from '../components/common/RequireSession';
 import { MANAGER_ROLES, WORKER_ROLES } from '../context/SessionContext';
 import UserList from '../modules/users/pages/UserList.jsx';
 import FeeList from '../modules/fees/pages/FeeList';
@@ -26,8 +26,15 @@ const router = createHashRouter([
     Component: LogIn,
   },
   {
-    path:'/seats/:screeningId',
-    Component: ShowSeats,
+    element: (
+      <DashboardLayout />
+    ),
+    children: [
+      {
+        path:'/seats/:screeningId',
+        Component: ShowSeats,
+      }
+    ]
   },
   {
     element: (
