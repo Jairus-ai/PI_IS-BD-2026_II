@@ -7,7 +7,8 @@ import { ROLES } from '../../session/session.js';
 import {createClientRecord, createWorkerRecord, createWorkerLocations} from '../../shared/services/user_creation_service.js';
 import {createTemporaryCredential} from '../../shared/services/credential_service.js';
 import {generateTemporaryPassword} from '../../shared/services/temporary_password.js';
-import {validateUniqueUserData} from '../services/user_validation_service.js';
+import {validateUniqueUserData} from '../../shared/validators/user_data_validator.js';
+import emailService from '../../email/email_service.js';
 
 const HASH_SALT_ROUNDS = 10;
 
@@ -447,6 +448,17 @@ export const createUser = async (req, res, next) => {
     }
 
     await connection.commit();
+
+    emailService.sendTemporaryPasswordEmail({
+      email: user.email,
+      firstName: user.firstName,
+      temporaryPassword,
+    }).catch((error) => {
+      console.error(
+        'Failed to send the temporary password email: ',
+        error
+      );
+    });
 
     return res.status(201).json({
       message: 'El usuario fue registrado correctamente.',

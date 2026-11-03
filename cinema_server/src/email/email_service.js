@@ -99,10 +99,38 @@ async function sendPasswordChangedEmail({ email }) {
   });
 }
 
+async function sendTemporaryPasswordEmail({
+  email,
+  firstName,
+  temporaryPassword,
+}) {
+  const transporter = await getTransporter();
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM ?? DEFAULT_SENDER,
+    to: email,
+    subject: 'Tu acceso temporal a CinePI',
+    text:
+      `Hola ${firstName}, tu cuenta en CinePI fue creada. ` +
+      `Tu contraseña temporal es ${temporaryPassword}. ` +
+      'Debes cambiarla al iniciar sesión por primera vez. ' +
+      'Esta contraseña temporal vence en 3 días.',
+    html: `
+      <p>Hola <strong>${escapeHtml(firstName)}</strong>,</p>
+      <p>Tu cuenta en CinePI fue creada correctamente.</p>
+      <p>Tu contraseña temporal es:</p>
+      <p><strong>${escapeHtml(temporaryPassword)}</strong></p>
+      <p>Debes cambiar esta contraseña al iniciar sesión por primera vez.</p>
+      <p>La contraseña temporal vence en 3 días.</p>
+    `,
+  });
+}
+
 const emailService = {
   sendWelcomeEmail,
   sendPasswordRecoveryEmail,
   sendPasswordChangedEmail,
+  sendTemporaryPasswordEmail
 };
 
 export default emailService;
