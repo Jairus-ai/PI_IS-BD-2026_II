@@ -9,6 +9,7 @@ import Alert from '@mui/material/Alert';
 
 import PageContainer from '../../../components/common/PageContainer';
 import { useLocations } from '../hooks/useLocations.js';
+import useSession from '../../../hooks/useSession';
 
 const INITIAL_VALUES = {
   role: 'CLIENT',
@@ -24,11 +25,20 @@ const INITIAL_VALUES = {
   locations: [],
 };
 
-const ROLES = [
-  { value: 'CLIENT', label: 'Cliente' },
-  { value: 'EMPLOYEE', label: 'Empleado' },
-  { value: 'ADMINISTRATOR', label: 'Administrador' },
-];
+const ROLE_OPTIONS = {
+    CLIENT: {
+        value: 'CLIENT',
+        label: 'Cliente',
+    },
+    EMPLOYEE: {
+        value: 'EMPLOYEE',
+        label: 'Empleado',
+    },
+    ADMINISTRATOR: {
+        value: 'ADMINISTRATOR',
+        label: 'Administrador',
+    },
+};
 
 const IDENTIFICATION_TYPES = [
   { value: 'C', label: 'Cédula' },
@@ -36,8 +46,31 @@ const IDENTIFICATION_TYPES = [
   { value: 'D', label: 'DIMEX' },
 ];
 
+function getAvailableRoles(userRole) {
+  if (userRole === 'SUPERUSER') {
+    return [
+      ROLE_OPTIONS.CLIENT,
+      ROLE_OPTIONS.EMPLOYEE,
+      ROLE_OPTIONS.ADMINISTRATOR,
+    ];
+  }
+
+  if (userRole === 'ADMINISTRATOR') {
+    return [
+      ROLE_OPTIONS.CLIENT,
+      ROLE_OPTIONS.EMPLOYEE,
+    ];
+  }
+
+  return [
+    ROLE_OPTIONS.CLIENT,
+  ];
+}
+
 export default function UserCreate() {
   const [values, setValues] = useState(INITIAL_VALUES);
+
+  const { user } = useSession();
 
   const {
     locations,
@@ -46,6 +79,8 @@ export default function UserCreate() {
   } = useLocations();
 
   const requiresLocations = values.role === 'EMPLOYEE' || values.role === 'ADMINISTRATOR';
+
+  const availableRoles = getAvailableRoles(user?.role);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -84,7 +119,7 @@ export default function UserCreate() {
           onChange={handleChange}
           required
         >
-          {ROLES.map((role) => (
+          {availableRoles.map((role) => (
             <MenuItem key={role.value} value={role.value}>
               {role.label}
             </MenuItem>
