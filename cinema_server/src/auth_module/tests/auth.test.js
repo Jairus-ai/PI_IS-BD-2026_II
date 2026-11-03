@@ -5,12 +5,17 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import oracledb from 'oracledb';
 
-jest.unstable_mockModule('../../email/email_service.js', () => ({
+const mockSendPasswordChangedEmail =jest.fn().mockResolvedValue();
+
+jest.unstable_mockModule('../../email/email_service.js',() => ({
   default: {
-    sendWelcomeEmail: jest.fn().mockResolvedValue(),
-    sendPasswordRecoveryEmail: jest.fn().mockResolvedValue(),
-    sendPasswordChangedEmail: jest.fn().mockResolvedValue(),
-  },
+    sendWelcomeEmail:
+      jest.fn().mockResolvedValue(),
+    sendPasswordRecoveryEmail:
+      jest.fn().mockResolvedValue(),
+    sendPasswordChangedEmail:
+      mockSendPasswordChangedEmail
+    }
 }));
 
 const { default: authRoutes } = await import('../routes/auth_routes.js');
@@ -574,5 +579,92 @@ describe('PATCH /auth/change-password', () => {
 
     expect(response.headers['set-cookie'].join(';'))
       .toMatch(/session_token=/);
+  });
+
+  test('Sends confirmation email after temporary password change', async () => {
+    const temporaryHash = await bcrypt.hash(
+      'TemporaryPassword123!',
+      10
+    );
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return {
+          rows: [[0]]
+        };
+      }
+
+      // getCredential()
+      if (
+        sql.includes('HASH') &&
+        sql.includes('SESSION_VERSION') &&
+        sql.includes('FROM PI_DEVELOPERS.CREDENTIALS')
+      ) {
+        return {
+          rows: [
+            {
+              HASH: temporaryHash,
+              SESSION_VERSION: 0,
+              IS_TEMPORARY_PASSWORD: 1,
+              TEMPORARY_PASSWORD_EXPIRATION:
+                new Date(Date.now() + 24 * 60 * 60 * 1000)
+            }
+          ]
+        };
+      }
+
+      // updatePasswordAndSessionVersion()
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return {
+          rowsAffected: 1
+        };
+      }
+
+      // getAccountEmail()
+      if (sql.includes('SELECT EMAIL')) {
+        return {
+          rows: [
+            {
+              EMAIL: 'adrian.prueba@ucr.ac.cr'
+            }
+          ]
+        };
+      }
+
+      return {
+        rows: []
+      };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const temporaryToken = createSessionToken({
+      id: 7,
+      role: ROLES.CLIENT,
+      sessionVersion: 0,
+      requiresPasswordChange: true
+    });
+
+    await request(app)
+      .patch('/auth/change-password')
+      .set(
+        'Cookie',
+        sessionCookie(temporaryToken)
+      )
+      .send({
+        currentPassword: 'TemporaryPassword123!',
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!'
+      })
+      .expect(200);
+
+    expect(mockSendPasswordChangedEmail)
+      .toHaveBeenCalledTimes(1);
+
+    expect(mockSendPasswordChangedEmail)
+      .toHaveBeenCalledWith({
+        email: 'adrian.prueba@ucr.ac.cr'
+      });
   });
 });
