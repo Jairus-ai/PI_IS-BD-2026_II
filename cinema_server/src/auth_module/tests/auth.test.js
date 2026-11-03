@@ -263,6 +263,33 @@ describe('GET /auth/me', () => {
 
     expect(response.body.message).toBe('La sesión expiró. Inicia sesión de nuevo');
   });
+
+  test('Returns 403 when password change is required', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [[0]]
+    }));
+
+    const temporaryToken = createSessionToken({
+      id: 7,
+      role: ROLES.CLIENT,
+      sessionVersion: 0,
+      requiresPasswordChange: true
+    });
+
+    const response = await request(app)
+      .get('/auth/me')
+      .set(
+        'Cookie',
+        sessionCookie(temporaryToken)
+      )
+      .expect(403);
+
+    expect(response.body).toEqual({
+      message:
+        'Debes cambiar tu contraseña antes de continuar.',
+      code: 'PASSWORD_CHANGE_REQUIRED'
+    });
+  });
 });
 
 describe('PATCH /auth/change-password', () => {
@@ -454,5 +481,98 @@ describe('PATCH /auth/change-password', () => {
         confirmPassword: 'NewPassword123!'
       })
       .expect(401);
+  });
+
+  test('Changes temporary password successfully', async () => {
+    const temporaryHash = await bcrypt.hash(
+      'TemporaryPassword123!',
+      10
+    );
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return {
+          rows: [[0]]
+        };
+      }
+
+      // getCredential()
+      if (
+        sql.includes('HASH') &&
+        sql.includes('SESSION_VERSION') &&
+        sql.includes('FROM PI_DEVELOPERS.CREDENTIALS')
+      ) {
+        return {
+          rows: [
+            {
+              HASH: temporaryHash,
+              SESSION_VERSION: 0,
+              IS_TEMPORARY_PASSWORD: 1,
+              TEMPORARY_PASSWORD_EXPIRATION:
+                new Date(Date.now() + 24 * 60 * 60 * 1000)
+            }
+          ]
+        };
+      }
+
+      // updatePasswordAndSessionVersion()
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return {
+          rowsAffected: 1
+        };
+      }
+
+      return {
+        rows: []
+      };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const temporaryToken = createSessionToken({
+      id: 7,
+      role: ROLES.CLIENT,
+      sessionVersion: 0,
+      requiresPasswordChange: true
+    });
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set(
+        'Cookie',
+        sessionCookie(temporaryToken)
+      )
+      .send({
+        currentPassword: 'TemporaryPassword123!',
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!'
+      })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      message:
+        'La contraseña ha sido cambiada correctamente'
+    });
+
+    const updateCall =
+      connection.execute.mock.calls.find(
+        ([sql]) =>
+          sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')
+      );
+
+    expect(updateCall).toBeDefined();
+
+    expect(updateCall[0])
+      .toMatch(/IS_TEMPORARY_PASSWORD\s*=\s*0/);
+
+    expect(updateCall[0])
+      .toMatch(/TEMPORARY_PASSWORD_EXPIRATION\s*=\s*NULL/);
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+
+    expect(response.headers['set-cookie'].join(';'))
+      .toMatch(/session_token=/);
   });
 });

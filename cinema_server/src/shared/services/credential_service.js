@@ -7,11 +7,7 @@ export function getCredentialOwnerColumn(role) {
     : 'ID_WORKER';
 }
 
-export async function getCredential(
-  connection,
-  role,
-  id
-) {
+export async function getCredential(connection, role, id) {
   const ownerColumn = getCredentialOwnerColumn(role);
 
   const result = await connection.execute(
@@ -30,12 +26,7 @@ export async function getCredential(
 }
 
 export async function updatePasswordAndSessionVersion(
-  connection,
-  role,
-  id,
-  passwordHash,
-  currentSessionVersion
-) {
+  connection, role, id, passwordHash, currentSessionVersion) {
   const ownerColumn = getCredentialOwnerColumn(role);
 
   const newSessionVersion =
@@ -46,6 +37,8 @@ export async function updatePasswordAndSessionVersion(
       UPDATE PI_DEVELOPERS.CREDENTIALS
       SET HASH = :passwordHash,
           SESSION_VERSION = :sessionVersion
+          IS_TEMPORARY_PASSWORD = 0,
+          TEMPORARY_PASSWORD_EXPIRATION = NULL
       WHERE ${ownerColumn} = :id
     `,
     {
@@ -58,12 +51,7 @@ export async function updatePasswordAndSessionVersion(
   return newSessionVersion;
 }
 
-export async function createTemporaryCredential(
-  connection,
-  role,
-  id,
-  passwordHash
-) {
+export async function createTemporaryCredential(connection, role, id, passwordHash) {
   const ownerColumn = getCredentialOwnerColumn(role);
 
   await connection.execute(
