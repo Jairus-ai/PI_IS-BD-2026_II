@@ -42,6 +42,15 @@ const router = createHashRouter([
     path: '/change-password',
     path:'/seats/:screeningId',
     Component: ShowSeats,
+    element: (
+      <DashboardLayout />
+    ),
+    children: [
+      {
+        path:'/seats/:screeningId',
+        Component: ShowSeats,
+      }
+    ]
   },
   {
     element: (
