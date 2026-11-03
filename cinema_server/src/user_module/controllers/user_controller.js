@@ -1,8 +1,20 @@
 import oracledb from 'oracledb';
+import bcrypt from 'bcryptjs';
+
 import {getConnection, closeDatabaseConnection,} from '../../database/database.js';
 import { validateUserRegistration } from '../validators/user_validator.js';
 import { ROLES } from '../../session/session.js';
+import {createClientRecord, createWorkerRecord, createWorkerLocations} from '../../shared/services/user_creation_service.js';
+import {createTemporaryCredential} from '../../shared/services/credential_service.js';
+import {generateTemporaryPassword} from '../../shared/services/temporary_password.js';
+import {validateUniqueUserData} from '../services/user_validation_service.js';
 
+const HASH_SALT_ROUNDS = 10;
+
+const WORKER_ROLE_CODES = {
+  [ROLES.ADMINISTRATOR]: 'A',
+  [ROLES.EMPLOYEE]: 'E'
+};
 
 const VALID_ROLES = new Set([
   'CLIENT',
@@ -15,6 +27,8 @@ const VALID_STATUSES = new Set([
   'ACTIVE',
   'INACTIVE',
 ]);
+
+const UNIQUE_CONSTRAINT_ERROR = 1;
 
 const addRoleVisibilityFilter = (conditions, currentUserRole) => {
   if (currentUserRole === ROLES.SUPERUSER) {
@@ -126,6 +140,20 @@ const buildUserFilters = (queryParams, currentUserRole) => {
   };
 };
 
+async function rollbackTransaction(connection) {
+  if (!connection) {
+    return;
+  }
+
+  try {
+    await connection.rollback();
+  } catch (error) {
+    console.error(
+      'Failed to rollback the transaction: ',
+      error
+    );
+  }
+}
 
 export const getUsersList = async (req, res, next) => {
   let connection;
@@ -347,31 +375,100 @@ export const deactivateWorker = async (req, res, next) => {
 };
 
 export const createUser = async (req, res, next) => {
-  try {
-    const {
-      errors,
-      user,
-      role,
-      locations,
-    } = validateUserRegistration(
-      req.body,
-      req.user.role
-    );
+  const {errors, user, role, locations} = validateUserRegistration(
+    req.body,
+    req.user.role
+  );
 
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({
-        errors,
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      errors,
+    });
+  }
+
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    const duplicateErrors =
+      await validateUniqueUserData(connection, user);
+
+    if (Object.keys(duplicateErrors).length > 0) {
+      return res.status(409).json({
+        errors: duplicateErrors
       });
     }
 
-    return res.status(200).json({
-      data: {
-        ...user,
+    const temporaryPassword =
+      generateTemporaryPassword();
+
+    const passwordHash = await bcrypt.hash(
+      temporaryPassword,
+      HASH_SALT_ROUNDS
+    );
+
+
+    let userId;
+
+    if (role === ROLES.CLIENT) {
+      userId = await createClientRecord(
+        connection,
+        user
+      );
+
+      await createTemporaryCredential(
+        connection,
+        ROLES.CLIENT,
+        userId,
+        passwordHash
+      );
+    } else {
+      const roleCode = WORKER_ROLE_CODES[role];
+
+      userId = await createWorkerRecord(
+        connection,
+        user,
+        roleCode
+      );
+
+      await createWorkerLocations(
+        connection,
+        userId,
+        locations
+      );
+
+      await createTemporaryCredential(
+        connection,
         role,
-        locations,
-      },
+        userId,
+        passwordHash
+      );
+    }
+
+    await connection.commit();
+
+    return res.status(201).json({
+      message: 'El usuario fue registrado correctamente.',
+      data: {
+        id: userId,
+        role,
+        email: user.email,
+        firstName: user.firstName,
+        firstSurname: user.firstSurname
+      }
     });
   } catch (error) {
+    await rollbackTransaction(connection);
+    
+    if (error?.errorNum === UNIQUE_CONSTRAINT_ERROR) {
+      return res.status(409).json({
+        message: 'Ya existe un usuario con esos datos'
+      });
+    }
+
     next(error);
+  } finally {
+    await closeDatabaseConnection(connection);
   }
 };

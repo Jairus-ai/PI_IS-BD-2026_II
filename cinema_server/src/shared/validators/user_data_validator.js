@@ -1,3 +1,5 @@
+import oracledb from 'oracledb';
+
 const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
 const MINIMUM_AGE = 18;
 const MAX_EMAIL_LENGTH = 254;
@@ -36,8 +38,74 @@ const REQUIRED_USER_FIELDS = [
   'phoneNumber'
 ];
 
+const CHECK_DUPLICATE_USER_DATA_SQL = `
+  SELECT
+    CASE
+      WHEN EXISTS (
+        SELECT 1
+        FROM PI_DEVELOPERS.CLIENTS
+        WHERE LOWER(EMAIL) = :email
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM PI_DEVELOPERS.WORKERS
+        WHERE LOWER(EMAIL) = :email
+      )
+      THEN 1
+      ELSE 0
+    END AS EMAIL_EXISTS,
+
+    CASE
+      WHEN EXISTS (
+        SELECT 1
+        FROM PI_DEVELOPERS.CLIENTS
+        WHERE IDENTIFICATION_NUMBER = :identificationNumber
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM PI_DEVELOPERS.WORKERS
+        WHERE IDENTIFICATION_NUMBER = :identificationNumber
+      )
+      THEN 1
+      ELSE 0
+    END AS IDENTIFICATION_EXISTS
+
+  FROM DUAL
+`;
+
 function cleanText(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+export async function validateUniqueUserData(
+  connection,
+  user
+) {
+  const result = await connection.execute(
+    CHECK_DUPLICATE_USER_DATA_SQL,
+    {
+      email: user.email,
+      identificationNumber: user.identificationNumber
+    },
+    {
+      outFormat: oracledb.OUT_FORMAT_OBJECT
+    }
+  );
+
+  const row = result.rows[0];
+  const errors = {};
+
+  if (row.EMAIL_EXISTS === 1) {
+    errors.email =
+      'Ya existe un usuario con ese correo';
+  }
+
+  if (row.IDENTIFICATION_EXISTS === 1) {
+    errors.identificationNumber =
+      'Ya existe un usuario con esa identificación';
+  }
+
+  return errors;
 }
 
 export function normalizeUserData(body = {}) {
