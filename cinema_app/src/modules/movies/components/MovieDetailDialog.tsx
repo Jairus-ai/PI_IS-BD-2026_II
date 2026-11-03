@@ -1,25 +1,14 @@
-import * as React from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 import { useMovies } from '../hooks/useMovies';
 import { API_BASE_URL } from '../../../services/api';
 import type { MovieDetail } from '../types/movies';
-
-function splitList(s: string | null): string[] {
-  if (!s) return [];
-  return s.split(',').map(x => x.trim()).filter(Boolean);
-}
+import { DetailField } from '../../../components/crud/DetailField';
+import { CrudDialog } from '../../../components/crud/CrudDialog';
 
 function formatDuration(totalMinutes: number | null | undefined): string {
   if (totalMinutes == null) return '00:00';
@@ -37,74 +26,111 @@ function posterSrc(poster: string | null): string | undefined {
   return `${API_BASE_URL}${poster}`;
 }
 
-export default function MovieDetailDialog({ movieId, open, onClose }: {
-  movieId: number | null; open: boolean; onClose: () => void;
+export default function MovieDetailDialog({
+  movieId,
+  open,
+  onClose
+}: {
+  readonly movieId: number | null;
+  readonly open: boolean;
+  readonly onClose: () => void;
 }) {
   const { movieDetail, isLoadingDetail } = useMovies(1, movieId as any);
   const movie = movieDetail as MovieDetail | null;
+  const title = isLoadingDetail ? 'Cargando…' : 'Película';
 
   return (
-    <Dialog
+    <CrudDialog
       open={open}
+      title={title}
       onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}
+      loading={isLoadingDetail}
+      actions={
+        <>
+          <Button onClick={onClose}>
+            Cerrar
+          </Button>
+        </>
+      }
     >
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700, pr: 6 }}>
-        {movie?.MOVIE_TITLE ?? (isLoadingDetail ? 'Cargando…' : 'Película')}
-        <IconButton
-          aria-label="Cerrar"
-          onClick={onClose}
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
-        {isLoadingDetail ? <Box sx={{display:'flex',justifyContent:'center',p:4}}><CircularProgress color="primary" /></Box>
-        : !movie ? (movieId != null ? <Alert severity="warning">Sin datos.</Alert> : null)
-        : (
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Box sx={{ width: { sm: 240 }, flexShrink: 0 }}>
-              {posterSrc(movie.POSTER)
-                ? <Box component="img" src={posterSrc(movie.POSTER)} alt={movie.MOVIE_TITLE}
-                       sx={{ width: '100%', borderRadius: 1, objectFit: 'cover' }} />
-                : <Box sx={{ width:'100%', height: 320, bgcolor:'background.default', borderRadius:1,
-                             display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <Typography color="text.secondary">Sin póster</Typography>
-                  </Box>}
-            </Box>
-            <Stack spacing={1.5} sx={{ flex: 1 }}>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Clasificación</Typography>
-                <Typography variant="body1">{movie.RATING_CODE ? `${movie.RATING_CODE} — ${movie.RATING_NAME}` : (movie.RATING_NAME ?? '—')}</Typography></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Año de publicación</Typography>
-                <Typography variant="body1">{movie.PUBLISHING_YEAR}</Typography></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Duración</Typography>
-                <Typography variant="body1">{formatDuration(movie.MOVIE_DURATION)}</Typography></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Sinopsis</Typography>
-                <Typography variant="body1">{movie.SYNOPSIS}</Typography></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Géneros</Typography>
-                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.GENRES).map(g => <Chip key={g} label={g} color="primary" variant="outlined" />)}
-                </Stack></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Directores</Typography>
-                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.DIRECTORS).map(d => <Chip key={d} label={d} color="primary" variant="outlined" />)}
-                </Stack></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Formatos</Typography>
-                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.FORMATS).map(f => <Chip key={f} label={f} color="primary" variant="outlined" />)}
-                </Stack></Box>
-              <Box><Typography variant="overline" sx={{ color: 'primary.dark' }}>Idiomas</Typography>
-                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                  {splitList(movie.LANGUAGES).map(l => <Chip key={l} label={l} color="primary" variant="outlined" />)}
-                </Stack></Box>
-            </Stack>
+      {isLoadingDetail ?
+        <Box
+          sx={{
+            display:'flex',
+            justifyContent:'center'
+            ,p:4
+        }}>
+          <CircularProgress color="primary" />
+        </Box>
+      : !movie ? (movieId != null ?
+        <Alert severity="warning">
+          Sin datos.
+        </Alert> : null)
+      : (
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Box sx={{ width: { sm: 240 }, flexShrink: 0 }}>
+            {posterSrc(movie.POSTER)
+              ? <Box
+                  component="img"
+                  src={posterSrc(movie.POSTER)}
+                  alt={movie.MOVIE_TITLE}
+                  sx={{
+                    width: '100%',
+                    borderRadius: 1,
+                    objectFit: 'cover' }}
+                  />
+              : <Box
+                  sx={{
+                    width:'100%',
+                    height: 320,
+                    bgcolor:'background.default',
+                    borderRadius:1,
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center'
+                  }}>
+                  <Typography color="text.secondary">
+                    Sin póster
+                  </Typography>
+                </Box>}
+          </Box>
+          <Stack spacing={1.5} sx={{ flex: 1 }}>
+            <DetailField
+              label="Clasificación"
+              value={movie.RATING_CODE}
+            />
+            <DetailField
+              label="Duración"
+              value={formatDuration(movie.MOVIE_DURATION)}
+            />
+            <DetailField
+              label="Sinopsis"
+              value={movie.SYNOPSIS}
+            />
+
+            <DetailField
+              label="Géneros"
+              list={movie.GENRES}
+            />
+            <DetailField
+              label="Géneros"
+              list={movie.GENRES}
+            />
+            <DetailField
+              label="Directores"
+              list={movie.DIRECTORS}
+            />
+            <DetailField
+              label="Formatos"
+              list={movie.FORMATS}
+            />
+            <DetailField
+              label="Idiomas"
+              list={movie.LANGUAGES}
+            />
           </Stack>
-        )}
-      </DialogContent>
-      <DialogActions><Button onClick={onClose}>Cerrar</Button></DialogActions>
-    </Dialog>
+        </Stack>
+      )}
+    </CrudDialog>
   );
 }
