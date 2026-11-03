@@ -20,6 +20,7 @@ import { deactivateWorker } from '../services/userService.js';
 import { useDialogs } from '../../../hooks/useDialogs.tsx';
 import useNotifications from '../../../hooks/useNotifications.tsx';
 import useSession from '../../../hooks/useSession';
+import { FilterField } from '../../../components/crud/FilterField.jsx';
 
 function formatRole(role) {
   const roles = {
