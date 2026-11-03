@@ -30,8 +30,15 @@ const router = createHashRouter([
     Component: LogIn,
   },
   {
-    path:'/seats/:screeningId',
-    Component: ShowSeats,
+    element: (
+      <DashboardLayout />
+    ),
+    children: [
+      {
+        path:'/seats/:screeningId',
+        Component: ShowSeats,
+      }
+    ]
   },
   {
   path: '/password-recovery',

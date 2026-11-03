@@ -7,6 +7,9 @@ import { Outlet } from 'react-router';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
 import logo from '../../assets/logo.png';
+import {CheckUserSession} from '../common/RequireSession';
+import { WORKER_ROLES } from '../../context/SessionContext';
+
 
 export default function DashboardLayout() {
   const theme = useTheme();
@@ -46,6 +49,8 @@ export default function DashboardLayout() {
 
   const layoutRef = React.useRef<HTMLDivElement>(null);
 
+  const hideSidebar = CheckUserSession( WORKER_ROLES );
+
   return (
     <Box
       ref={layoutRef}
@@ -63,11 +68,13 @@ export default function DashboardLayout() {
         menuOpen={isNavigationExpanded}
         onToggleMenu={handleToggleHeaderMenu}
       />
-      <DashboardSidebar
-        expanded={isNavigationExpanded}
-        setExpanded={setIsNavigationExpanded}
-        container={layoutRef?.current ?? undefined}
-      />
+      {hideSidebar ?(
+        <DashboardSidebar
+          expanded={isNavigationExpanded}
+          setExpanded={setIsNavigationExpanded}
+          container={layoutRef?.current ?? undefined}
+        />
+      ):null}
       <Box
         sx={{
           display: 'flex',
