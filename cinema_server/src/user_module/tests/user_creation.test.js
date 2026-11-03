@@ -511,4 +511,43 @@ describe('POST /management/users', () => {
     expect(mockCloseDatabaseConnection)
       .toHaveBeenCalledTimes(1);
   });
+
+  test('Create user 409 when Oracle reports duplicate data', async () => {
+    const connection = createMockConnection();
+
+    const duplicateError = new Error(
+      'ORA-00001: unique constraint violated'
+    );
+
+    duplicateError.errorNum = 1;
+
+    connection.execute
+      .mockResolvedValueOnce(noDuplicates())
+      .mockRejectedValueOnce(duplicateError);
+
+    mockGetConnection.mockResolvedValue(
+      connection
+    );
+
+    const response = await request(app)
+      .post('/management/users')
+      .send(validUser())
+      .expect(409);
+
+    expect(response.body).toEqual({
+      message: 'Ya existe un usuario con esos datos',
+    });
+
+    expect(connection.rollback)
+      .toHaveBeenCalledTimes(1);
+
+    expect(connection.commit)
+      .not.toHaveBeenCalled();
+
+    expect(mockSendTemporaryPasswordEmail)
+      .not.toHaveBeenCalled();
+
+    expect(mockCloseDatabaseConnection)
+      .toHaveBeenCalledTimes(1);
+  });
 });

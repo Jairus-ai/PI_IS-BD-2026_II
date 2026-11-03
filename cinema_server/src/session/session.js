@@ -43,8 +43,8 @@ function getCredentialOwnerColumn(role) {
   return role === ROLES.CLIENT ? 'ID_CLIENT' : 'ID_WORKER';
 }
 
-export function createSessionToken({ id, role, sessionVersion }) {
-  return jwt.sign({ role, sessionVersion }, getJwtSecret(), {
+export function createSessionToken({ id, role, sessionVersion, requiresPasswordChange = false }) {
+  return jwt.sign({ role, sessionVersion, requiresPasswordChange }, getJwtSecret(), {
     subject: String(id),
     expiresIn: `${SESSION_DURATION_MINUTES}m`
   });
@@ -62,7 +62,9 @@ export function readSessionToken(req) {
     return {
       id: Number(payload.sub),
       role: payload.role,
-      sessionVersion: payload.sessionVersion
+      sessionVersion: payload.sessionVersion,
+      requiresPasswordChange:
+        payload.requiresPasswordChange === true
     };
   } catch {
     return null;
@@ -108,7 +110,9 @@ export async function invalidateSessions({ id, role }) {
   }
 }
 
-export function requireSession(allowedRoles = Object.values(ROLES)) {
+export function requireSession(allowedRoles = Object.values(ROLES),
+  { allowPasswordChangeRequired = false } = {}
+) {
   return async (req, res, next) => {
     const session = readSessionToken(req);
     if (!session) {
@@ -124,6 +128,14 @@ export function requireSession(allowedRoles = Object.values(ROLES)) {
       }
     } catch (error) {
       return next(error);
+    }
+
+    if (session.requiresPasswordChange && !allowPasswordChangeRequired) {
+      return res.status(403).json({
+        message:
+          'Debes cambiar tu contraseña antes de continuar.',
+        code: 'PASSWORD_CHANGE_REQUIRED'
+      });
     }
 
     if (!allowedRoles.includes(session.role)) {

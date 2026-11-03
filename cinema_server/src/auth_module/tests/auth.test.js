@@ -35,6 +35,8 @@ function accountRow(overrides = {}) {
     FIRST_SURNAME: 'Arias',
     HASH: PASSWORD_HASH,
     SESSION_VERSION: 0,
+    IS_TEMPORARY_PASSWORD:0,
+    TEMPORARY_PASSWORD_EXPIRATION: null,
     ...overrides
   };
 }
@@ -135,6 +137,68 @@ describe('POST /auth/login', () => {
       .expect(401);
 
     expect(response.body.errors.password).toBe('Correo o contraseña incorrectos');
+  });
+
+  test('Log in with temporary password requires password change', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [
+        accountRow({
+          IS_TEMPORARY_PASSWORD: 1,
+          TEMPORARY_PASSWORD_EXPIRATION:
+            new Date(Date.now() + 24 * 60 * 60 * 1000)
+        })
+      ]
+    }));
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({
+        email: 'adrian.prueba@ucr.ac.cr',
+        password: PASSWORD
+      })
+      .expect(200);
+
+    expect(response.body.requiresPasswordChange)
+      .toBe(true);
+
+    expect(response.body.data).toEqual({
+      id: 7,
+      role: ROLES.CLIENT,
+      email: 'adrian.prueba@ucr.ac.cr',
+      firstName: 'Adrián',
+      firstSurname: 'Arias'
+    });
+
+    expect(response.headers['set-cookie'].join(';')).toMatch(/session_token=.*HttpOnly/);
+  });
+
+  test('Log in 401 when temporary password is expired', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [
+        accountRow({
+          IS_TEMPORARY_PASSWORD: 1,
+          TEMPORARY_PASSWORD_EXPIRATION:
+            new Date(Date.now() - 24 * 60 * 60 * 1000)
+        })
+      ]
+    }));
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({
+        email: 'adrian.prueba@ucr.ac.cr',
+        password: PASSWORD
+      })
+      .expect(401);
+
+    expect(response.body).toEqual({
+      message:
+        'La contraseña temporal ha expirado. Debes recuperar tu contraseña.',
+      code: 'TEMPORARY_PASSWORD_EXPIRED'
+    });
+
+    expect(response.headers['set-cookie'])
+      .toBeUndefined();
   });
 });
 
