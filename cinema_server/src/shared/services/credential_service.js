@@ -16,7 +16,9 @@ export async function getCredential(
 
   const result = await connection.execute(
     `
-      SELECT HASH, SESSION_VERSION
+      SELECT HASH, SESSION_VERSION,
+      IS_TEMPORARY_PASSWORD,
+      TEMPORARY_PASSWORD_EXPIRATION,
       FROM PI_DEVELOPERS.CREDENTIALS
       WHERE ${ownerColumn} = :id
     `,
@@ -54,4 +56,38 @@ export async function updatePasswordAndSessionVersion(
   );
 
   return newSessionVersion;
+}
+
+export async function createTemporaryCredential(
+  connection,
+  role,
+  id,
+  passwordHash
+) {
+  const ownerColumn = getCredentialOwnerColumn(role);
+
+  await connection.execute(
+    `
+      INSERT INTO PI_DEVELOPERS.CREDENTIALS (
+        HASH,
+        LAST_CHANGED_DATE,
+        ${ownerColumn},
+        SESSION_VERSION,
+        IS_TEMPORARY_PASSWORD,
+        TEMPORARY_PASSWORD_EXPIRATION
+      )
+      VALUES (
+        :passwordHash,
+        SYSDATE,
+        :id,
+        0,
+        1,
+        LOCALTIMESTAMP + INTERVAL '3' DAY
+      )
+    `,
+    {
+      passwordHash,
+      id
+    }
+  );
 }
