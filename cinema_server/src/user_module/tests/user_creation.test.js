@@ -140,238 +140,375 @@ beforeEach(() => {
 });
 
 describe('POST /management/users', () => {
-  test('creates a client with a temporary credential', async () => {
-      const connection = useConnection([
-        noDuplicates(),
-        {
-          outBinds: {
-            idClient: [20],
-          },
+  test('Create client 201 Created', async () => {
+    const connection = useConnection([
+      noDuplicates(),
+      {
+        outBinds: {
+          idClient: [20],
         },
-        {
-          rowsAffected: 1,
-        },
-      ]);
+      },
+      {
+        rowsAffected: 1,
+      },
+    ]);
 
-      const response = await request(app)
-        .post('/management/users')
-        .send(validUser())
-        .expect(201);
+    const response = await request(app)
+      .post('/management/users')
+      .send(validUser())
+      .expect(201);
 
-      expect(response.body).toEqual({
-        message:
-          'El usuario fue registrado correctamente.',
-        data: {
-          id: 20,
-          role: 'CLIENT',
-          email: 'nuevo@cinepi.com',
-          firstName: 'Juan',
-          firstSurname: 'Mora',
-        },
+    expect(response.body).toEqual({
+      message:
+        'El usuario fue registrado correctamente.',
+      data: {
+        id: 20,
+        role: 'CLIENT',
+        email: 'nuevo@cinepi.com',
+        firstName: 'Juan',
+        firstSurname: 'Mora',
+      },
+    });
+
+    expect(connection.execute)
+      .toHaveBeenCalledTimes(3);
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+
+    expect(connection.rollback)
+      .not.toHaveBeenCalled();
+
+    expect(mockSendTemporaryPasswordEmail)
+      .toHaveBeenCalledWith({
+        email: 'nuevo@cinepi.com',
+        firstName: 'Juan',
+        temporaryPassword: expect.any(String),
       });
 
-      expect(connection.execute)
-        .toHaveBeenCalledTimes(3);
+    expect(mockCloseDatabaseConnection)
+      .toHaveBeenCalledTimes(1);
+  });
 
-      expect(connection.commit)
-        .toHaveBeenCalledTimes(1);
-
-      expect(connection.rollback)
-        .not.toHaveBeenCalled();
-
-      expect(mockSendTemporaryPasswordEmail)
-        .toHaveBeenCalledWith({
-          email: 'nuevo@cinepi.com',
-          firstName: 'Juan',
-          temporaryPassword: expect.any(String),
-        });
-
-      expect(mockCloseDatabaseConnection)
-        .toHaveBeenCalledTimes(1);
-    }
-  );
-
-  test('creates an employee with locations and temporary credential', async () => {
-      const connection = useConnection([
-        noDuplicates(),
-        {
-          outBinds: {
-            idWorker: [30],
-          },
+  test('Create employee 201 Created', async () => {
+    const connection = useConnection([
+      noDuplicates(),
+      {
+        outBinds: {
+          idWorker: [30],
         },
-        {
-          rowsAffected: 1,
-        },
-        {
-          rowsAffected: 1,
-        },
-        {
-          rowsAffected: 1,
-        },
-      ]);
+      },
+      {
+        rowsAffected: 1,
+      },
+      {
+        rowsAffected: 1,
+      },
+      {
+        rowsAffected: 1,
+      },
+    ]);
 
-      const response = await request(app)
-        .post('/management/users')
-        .send(
-          validUser({
-            email: 'empleado@cinepi.com',
-            firstName: 'Ana',
-            identificationNumber: '987654321',
-            role: 'EMPLOYEE',
-            locations: [1, 2],
-          })
-        )
-        .expect(201);
-
-      expect(response.body).toEqual({
-        message:
-          'El usuario fue registrado correctamente.',
-        data: {
-          id: 30,
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'empleado@cinepi.com',
+          firstName: 'Ana',
+          identificationNumber: '987654321',
           role: 'EMPLOYEE',
-          email: 'empleado@cinepi.com',
-          firstName: 'Ana',
-          firstSurname: 'Mora',
-        },
+          locations: [1, 2],
+        })
+      )
+      .expect(201);
+
+    expect(response.body).toEqual({
+      message:
+        'El usuario fue registrado correctamente.',
+      data: {
+        id: 30,
+        role: 'EMPLOYEE',
+        email: 'empleado@cinepi.com',
+        firstName: 'Ana',
+        firstSurname: 'Mora',
+      },
+    });
+
+    expect(connection.execute)
+      .toHaveBeenCalledTimes(5);
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+
+    expect(connection.rollback)
+      .not.toHaveBeenCalled();
+
+    expect(mockSendTemporaryPasswordEmail)
+      .toHaveBeenCalledWith({
+        email: 'empleado@cinepi.com',
+        firstName: 'Ana',
+        temporaryPassword: expect.any(String),
       });
+  });
 
-      expect(connection.execute)
-        .toHaveBeenCalledTimes(5);
+  test('Create user 409 when email already exists', async () => {
+    const connection = useConnection([
+      duplicateResult({
+        emailExists: 1,
+      }),
+    ]);
 
-      expect(connection.commit)
-        .toHaveBeenCalledTimes(1);
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'existente@cinepi.com',
+          identificationNumber: '111222333',
+        })
+      )
+      .expect(409);
 
-      expect(connection.rollback)
-        .not.toHaveBeenCalled();
+    expect(response.body).toEqual({
+      errors: {
+        email:
+          'Ya existe un usuario con ese correo',
+      },
+    });
 
-      expect(mockSendTemporaryPasswordEmail)
-        .toHaveBeenCalledWith({
-          email: 'empleado@cinepi.com',
-          firstName: 'Ana',
-          temporaryPassword: expect.any(String),
-        });
-    }
-  );
+    expect(connection.execute)
+      .toHaveBeenCalledTimes(1);
 
-  test('returns 409 when the email already exists', async () => {
-      const connection = useConnection([
-        duplicateResult({
-          emailExists: 1,
-        }),
-      ]);
+    expect(connection.commit)
+      .not.toHaveBeenCalled();
 
-      const response = await request(app)
-        .post('/management/users')
-        .send(
-          validUser({
-            email: 'existente@cinepi.com',
-            identificationNumber: '111222333',
-          })
-        )
-        .expect(409);
+    expect(mockSendTemporaryPasswordEmail)
+      .not.toHaveBeenCalled();
+  });
 
-      expect(response.body).toEqual({
-        errors: {
-          email:
-            'Ya existe un usuario con ese correo',
+  test('Create user 409 when identification already exists', async () => {
+    const connection = useConnection([
+      duplicateResult({
+        identificationExists: 1,
+      }),
+    ]);
+
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'nuevo2@cinepi.com',
+        })
+      )
+      .expect(409);
+
+    expect(response.body).toEqual({
+      errors: {
+        identificationNumber:
+          'Ya existe un usuario con esa identificación',
+      },
+    });
+
+    expect(connection.execute)
+      .toHaveBeenCalledTimes(1);
+
+    expect(connection.commit)
+      .not.toHaveBeenCalled();
+
+    expect(mockSendTemporaryPasswordEmail)
+      .not.toHaveBeenCalled();
+  });
+
+  test('Create employee 400 when creator is employee', async () => {
+    currentUserRole = 'EMPLOYEE';
+
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'otro@cinepi.com',
+          identificationNumber: '555666777',
+          role: 'EMPLOYEE',
+          locations: [1],
+        })
+      )
+      .expect(400);
+
+    expect(response.body.errors.role)
+      .toBe(
+        'No tienes permisos para registrar usuarios con este rol'
+      );
+
+    expect(mockGetConnection)
+      .not.toHaveBeenCalled();
+
+    expect(mockSendTemporaryPasswordEmail)
+      .not.toHaveBeenCalled();
+  });
+
+  test('Create employee 400 without locations', async () => {
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'empleado2@cinepi.com',
+          identificationNumber: '444555666',
+          role: 'EMPLOYEE',
+        })
+      )
+      .expect(400);
+
+    expect(response.body.errors.locations)
+      .toBe(
+        'Debes seleccionar al menos una sucursal'
+      );
+
+    expect(mockGetConnection)
+      .not.toHaveBeenCalled();
+
+    expect(mockSendTemporaryPasswordEmail)
+      .not.toHaveBeenCalled();
+  });
+
+  test('Create administrator 201 Created', async () => {
+    const connection = useConnection([
+      noDuplicates(),
+      {
+        outBinds: {
+          idWorker: [40],
         },
+      },
+      {
+        rowsAffected: 1,
+      },
+      {
+        rowsAffected: 1,
+      },
+    ]);
+
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'admin@cinepi.com',
+          firstName: 'Laura',
+          identificationNumber: '222333444',
+          role: 'ADMINISTRATOR',
+          locations: [1],
+        })
+      )
+      .expect(201);
+
+    expect(response.body.data).toEqual({
+      id: 40,
+      role: 'ADMINISTRATOR',
+      email: 'admin@cinepi.com',
+      firstName: 'Laura',
+      firstSurname: 'Mora',
+    });
+
+    expect(connection.execute)
+      .toHaveBeenCalledTimes(4);
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+
+    expect(mockSendTemporaryPasswordEmail)
+      .toHaveBeenCalledWith({
+        email: 'admin@cinepi.com',
+        firstName: 'Laura',
+        temporaryPassword: expect.any(String),
       });
+  });
 
-      expect(connection.execute)
-        .toHaveBeenCalledTimes(1);
+  test('Create administrator 400 when creator is administrator', async () => {
+    currentUserRole = 'ADMINISTRATOR';
 
-      expect(connection.commit)
-        .not.toHaveBeenCalled();
+    const response = await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          role: 'ADMINISTRATOR',
+          locations: [1],
+        })
+      )
+      .expect(400);
 
-      expect(mockSendTemporaryPasswordEmail)
-        .not.toHaveBeenCalled();
-    }
-  );
+    expect(response.body.errors.role)
+      .toBe(
+        'No tienes permisos para registrar usuarios con este rol'
+      );
 
-  test('returns 409 when the identification already exists', async () => {
-      const connection = useConnection([
-        duplicateResult({
-          identificationExists: 1,
-        }),
-      ]);
+    expect(mockGetConnection)
+      .not.toHaveBeenCalled();
+  });
 
-      const response = await request(app)
-        .post('/management/users')
-        .send(
-          validUser({
-            email: 'nuevo2@cinepi.com',
-          })
-        )
-        .expect(409);
+  test('Create employee 201 when creator is administrator', async () => {
+    currentUserRole = 'ADMINISTRATOR';
 
-      expect(response.body).toEqual({
-        errors: {
-          identificationNumber:
-            'Ya existe un usuario con esa identificación',
+    const connection = useConnection([
+      noDuplicates(),
+      {
+        outBinds: {
+          idWorker: [50],
         },
-      });
+      },
+      {
+        rowsAffected: 1,
+      },
+      {
+        rowsAffected: 1,
+      },
+    ]);
 
-      expect(connection.execute)
-        .toHaveBeenCalledTimes(1);
+    await request(app)
+      .post('/management/users')
+      .send(
+        validUser({
+          email: 'empleado-admin@cinepi.com',
+          identificationNumber: '333444555',
+          role: 'EMPLOYEE',
+          locations: [2],
+        })
+      )
+      .expect(201);
 
-      expect(connection.commit)
-        .not.toHaveBeenCalled();
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+  });
 
-      expect(mockSendTemporaryPasswordEmail)
-        .not.toHaveBeenCalled();
-    }
-  );
+  test('Create user 500 when database fails', async () => {
+    const connection = createMockConnection();
 
-  test('does not allow an employee to create another employee', async () => {
-      currentUserRole = 'EMPLOYEE';
+    connection.execute
+      .mockResolvedValueOnce(noDuplicates())
+      .mockRejectedValueOnce(
+        new Error('Oracle insert error')
+      );
 
-      const response = await request(app)
-        .post('/management/users')
-        .send(
-          validUser({
-            email: 'otro@cinepi.com',
-            identificationNumber: '555666777',
-            role: 'EMPLOYEE',
-            locations: [1],
-          })
-        )
-        .expect(400);
+    mockGetConnection.mockResolvedValue(
+      connection
+    );
 
-      expect(response.body.errors.role)
-        .toBe(
-          'No tienes permisos para registrar usuarios con este rol'
-        );
+    const response = await request(app)
+      .post('/management/users')
+      .send(validUser())
+      .expect(500);
 
-      expect(mockGetConnection)
-        .not.toHaveBeenCalled();
+    expect(response.body).toEqual({
+      message:
+        'No fue posible completar la operación.',
+    });
 
-      expect(mockSendTemporaryPasswordEmail)
-        .not.toHaveBeenCalled();
-    }
-  );
+    expect(connection.rollback)
+      .toHaveBeenCalledTimes(1);
 
-  test('requires at least one location for an employee', async () => {
-      const response = await request(app)
-        .post('/management/users')
-        .send(
-          validUser({
-            email: 'empleado2@cinepi.com',
-            identificationNumber: '444555666',
-            role: 'EMPLOYEE',
-          })
-        )
-        .expect(400);
+    expect(connection.commit)
+      .not.toHaveBeenCalled();
 
-      expect(response.body.errors.locations)
-        .toBe(
-          'Debes seleccionar al menos una sucursal'
-        );
+    expect(mockSendTemporaryPasswordEmail)
+      .not.toHaveBeenCalled();
 
-      expect(mockGetConnection)
-        .not.toHaveBeenCalled();
-
-      expect(mockSendTemporaryPasswordEmail)
-        .not.toHaveBeenCalled();
-    }
-  );
+    expect(mockCloseDatabaseConnection)
+      .toHaveBeenCalledTimes(1);
+  });
 });
