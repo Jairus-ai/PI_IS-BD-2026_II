@@ -7,10 +7,12 @@ import DiscountList from '../modules/discounts/pages/DiscountList';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import RequireSession from '../components/common/RequireSession';
-import { MANAGER_ROLES, WORKER_ROLES } from '../context/SessionContext';
+import { CLIENT_ROLES, MANAGER_ROLES, WORKER_ROLES } from '../context/SessionContext';
 import UserList from '../modules/users/pages/UserList.jsx';
 import FeeList from '../modules/fees/pages/FeeList';
 import ChangePassword from '../modules/auth/pages/ChangePassword';
+import ClientLayout from '../components/layout/ClientLayout';
+import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 
 const router = createHashRouter([
   {
@@ -59,6 +61,19 @@ const router = createHashRouter([
             <FeeList />
           </RequireSession>
         ),
+      },
+    ],
+  },
+  {
+    element: (
+      <RequireSession allowedRoles={CLIENT_ROLES}>
+        <ClientLayout />
+      </RequireSession>
+    ),
+    children: [
+      {
+        path: '/purchase-history',
+        Component: PurchaseHistory,
       },
     ],
   },
