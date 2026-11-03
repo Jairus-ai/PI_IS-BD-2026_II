@@ -78,67 +78,96 @@ export function isAdult(birthdateText, today = new Date()) {
   return adulthoodDate <= todayWithoutTime;
 }
 
-export function validateUserData(user) {
-  const errors = {};
-
+function validateRequiredFields(errors, user) {
   for (const fieldName of REQUIRED_USER_FIELDS) {
     if (!user[fieldName]) {
       errors[fieldName] = REQUIRED_FIELD_MESSAGE;
     }
   }
+}
+
+function validateEmail(errors, email) {
+  if (!email || errors.email) {
+    return;
+  }
 
   if (
-    user.email
-    && (
-      user.email.length > MAX_EMAIL_LENGTH
-      || !EMAIL_PATTERN.test(user.email)
-    )
+    email.length > MAX_EMAIL_LENGTH
+    || !EMAIL_PATTERN.test(email)
   ) {
-    errors.email = 'El correo electrónico no tiene un formato válido';
+    errors.email =
+      'El correo electrónico no tiene un formato válido';
+  }
+}
+
+function validateIdentification(
+  errors,
+  { identificationType, identificationNumber }
+) {
+  if (!identificationType) {
+    return;
   }
 
-  if (user.identificationType) {
-    const pattern = IDENTIFICATION_PATTERNS[user.identificationType];
+  const pattern =
+    IDENTIFICATION_PATTERNS[identificationType];
 
-    if (!pattern) {
-      errors.identificationType =
-        'El tipo de identificación debe ser C, P o D';
-    } else if (
-      user.identificationNumber
-      && !pattern.test(user.identificationNumber)
-    ) {
-      errors.identificationNumber =
-        IDENTIFICATION_MESSAGES[user.identificationType];
-    }
+  if (!pattern) {
+    errors.identificationType =
+      'El tipo de identificación debe ser C, P o D';
+  } else if (
+    identificationNumber
+    && !pattern.test(identificationNumber)
+  ) {
+    errors.identificationNumber =
+      IDENTIFICATION_MESSAGES[identificationType];
   }
+}
 
+function validatePhoneNumber(errors, phoneNumber) {
   if (
-    user.phoneNumber
-    && !PHONE_PATTERN.test(user.phoneNumber)
+    phoneNumber
+    && !PHONE_PATTERN.test(phoneNumber)
   ) {
     errors.phoneNumber =
       'El celular debe tener entre 8 y 15 dígitos';
   }
+}
 
+function validateNameLengths(errors, user) {
   for (const fieldName of NAME_FIELDS) {
     if (user[fieldName].length > MAX_NAME_LENGTH) {
       errors[fieldName] =
         `Máximo ${MAX_NAME_LENGTH} caracteres`;
     }
   }
+}
 
-  if (user.birthdate) {
-    if (
-      !BIRTHDATE_PATTERN.test(user.birthdate)
-      || !isRealCalendarDate(user.birthdate)
-    ) {
-      errors.birthdate =
-        'La fecha de nacimiento no es válida';
-    } else if (!isAdult(user.birthdate)) {
-      errors.birthdate =
-        'Debes ser mayor de edad para registrarte';
-    }
+function validateBirthdate(errors, birthdate) {
+  if (!birthdate) {
+    return;
   }
+
+  if (
+    !BIRTHDATE_PATTERN.test(birthdate)
+    || !isRealCalendarDate(birthdate)
+  ) {
+    errors.birthdate =
+      'La fecha de nacimiento no es válida';
+  } else if (!isAdult(birthdate)) {
+    errors.birthdate =
+      'Debes ser mayor de edad para registrarte';
+  }
+}
+
+export function validateUserData(user) {
+  const errors = {};
+
+  validateRequiredFields(errors, user);
+  validateEmail(errors, user.email);
+  validateIdentification(errors, user);
+  validatePhoneNumber(errors, user.phoneNumber);
+  validateNameLengths(errors, user);
+  validateBirthdate(errors, user.birthdate);
 
   return errors;
 }

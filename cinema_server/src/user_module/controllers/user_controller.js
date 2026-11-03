@@ -1,5 +1,6 @@
 import oracledb from 'oracledb';
 import {getConnection, closeDatabaseConnection,} from '../../database/database.js';
+import { validateUserRegistration } from '../validators/user_validator.js';
 import { ROLES } from '../../session/session.js';
 
 
@@ -342,5 +343,35 @@ export const deactivateWorker = async (req, res, next) => {
     next(error);
   } finally {
     await closeDatabaseConnection(connection);
+  }
+};
+
+export const createUser = async (req, res, next) => {
+  try {
+    const {
+      errors,
+      user,
+      role,
+      locations,
+    } = validateUserRegistration(
+      req.body,
+      req.user.role
+    );
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        errors,
+      });
+    }
+
+    return res.status(200).json({
+      data: {
+        ...user,
+        role,
+        locations,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };

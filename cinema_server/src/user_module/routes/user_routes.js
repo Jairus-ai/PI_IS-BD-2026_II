@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsersList, deactivateWorker } from '../controllers/user_controller.js';
+import { getUsersList, deactivateWorker, createUser } from '../controllers/user_controller.js';
 import { requireSession, ROLES } from '../../session/session.js';
 
 const router = Router();
@@ -21,6 +21,16 @@ router.patch(
         ROLES.ADMINISTRATOR,
     ]),
     deactivateWorker
+);
+
+router.post(
+  '/',
+  requireSession([
+    ROLES.SUPERUSER,
+    ROLES.ADMINISTRATOR,
+    ROLES.EMPLOYEE,
+  ]),
+  createUser
 );
 
 export default router;
