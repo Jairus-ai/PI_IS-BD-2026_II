@@ -16,3 +16,8 @@ export const getCurrentUser = async () => {
   const { data } = await api.get('/auth/me', WITH_SESSION_COOKIE);
   return data;
 };
+
+export const changePassword = async (passwords) => {
+  const { data } = await api.patch('/auth/change-password', passwords, WITH_SESSION_COOKIE);
+  return data;
+};

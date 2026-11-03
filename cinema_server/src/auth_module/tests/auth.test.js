@@ -192,3 +192,195 @@ describe('GET /auth/me', () => {
     expect(response.body.message).toBe('La sesión expiró. Inicia sesión de nuevo');
   });
 });
+
+describe('PATCH /auth/change-password', () => {
+  function clientSessionToken() {
+    return createSessionToken({
+      id: 7,
+      role: ROLES.CLIENT,
+      sessionVersion: 0
+    });
+  }
+
+  test('Changes password successfully', async () => {
+    const currentHash = await bcrypt.hash('OldPassword123!', 10);
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return { rows: [[0]] };
+      }
+
+      // changePassword() - buscar credenciales actuales
+      if (sql.includes('SELECT HASH, SESSION_VERSION')) {
+        return {
+          rows: [
+            {
+              HASH: currentHash,
+              SESSION_VERSION: 0
+            }
+          ]
+        };
+      }
+
+      // changePassword() - actualizar contraseña
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return { rowsAffected: 1 };
+      }
+
+      return { rows: [] };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const token = clientSessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send({
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!'
+      })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      message: 'La contraseña ha sido cambiada correctamente'
+    });
+
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+
+    const updateCall = connection.execute.mock.calls.find(
+      ([sql]) => sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')
+    );
+
+    expect(updateCall).toBeDefined();
+    expect(updateCall[1].sessionVersion).toBe(1);
+
+    expect(response.headers['set-cookie'].join(';'))
+      .toMatch(/session_token=/);
+  });
+
+  test('Returns 400 when current password is incorrect', async () => {
+    const currentHash = await bcrypt.hash('OldPassword123!', 10);
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return { rows: [[0]] };
+      }
+
+      if (sql.includes('SELECT HASH, SESSION_VERSION')) {
+        return {
+          rows: [
+            {
+              HASH: currentHash,
+              SESSION_VERSION: 0
+            }
+          ]
+        };
+      }
+
+      return { rows: [] };
+    });
+
+    connection.commit = jest.fn();
+
+    const token = clientSessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send({
+        currentPassword: 'WrongPassword123!',
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!'
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      errors: {
+        currentPassword: 'La contraseña actual es incorrecta'
+      }
+    });
+
+    expect(connection.commit).not.toHaveBeenCalled();
+  });
+
+  test('Returns 400 when change password fields are empty', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [[0]]
+    }));
+
+    const token = clientSessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      .expect(400);
+
+    expect(response.body.errors).toEqual({
+      currentPassword: 'Campo obligatorio',
+      newPassword: 'Campo obligatorio',
+      confirmPassword: 'Campo obligatorio'
+    });
+  });
+
+  test('Returns 400 when new passwords do not match', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [[0]]
+    }));
+
+    const token = clientSessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send({
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'DifferentPassword123!'
+      })
+      .expect(400);
+
+    expect(response.body.errors.confirmPassword)
+      .toBe('Las contraseñas no coinciden');
+  });
+
+  test('Returns 400 when new password is weak', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [[0]]
+    }));
+
+    const token = clientSessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send({
+        currentPassword: 'OldPassword123!',
+        newPassword: '123456',
+        confirmPassword: '123456'
+      })
+      .expect(400);
+
+    expect(response.body.errors.newPassword)
+      .toBe('La contraseña es débil');
+  });
+
+  test('Returns 401 when changing password without session', async () => {
+    await request(app)
+      .patch('/auth/change-password')
+      .send({
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!'
+      })
+      .expect(401);
+  });
+});

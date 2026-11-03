@@ -9,6 +9,7 @@ import LogIn from '../modules/auth/pages/LogIn';
 import {RequireSession} from '../components/common/RequireSession';
 import { MANAGER_ROLES, WORKER_ROLES } from '../context/SessionContext';
 import UserList from '../modules/users/pages/UserList.jsx';
+import ChangePassword from '../modules/auth/pages/ChangePassword';
 import FeeList from '../modules/fees/pages/FeeList';
 import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 
@@ -35,6 +36,11 @@ const router = createHashRouter([
         Component: ShowSeats,
       }
     ]
+      <RequireSession>
+        <ChangePassword />
+      </RequireSession>
+    ),
+    path: '/change-password',
   },
   {
     element: (
