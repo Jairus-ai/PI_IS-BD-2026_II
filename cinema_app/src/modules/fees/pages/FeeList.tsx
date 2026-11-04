@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { type SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import { DataGrid, GridActionsCellItem, gridClasses, type GridColDef } from '@mui/x-data-grid';
+import { DataGrid, gridClasses, type GridColDef } from '@mui/x-data-grid';
 import { esES } from '@mui/x-data-grid/locales';
 import PageContainer from '../../../components/common/PageContainer';
 import { useFees } from '../hooks/useFees';
 import FeeDetailDialog from '../components/FeeDetailDialog';
 import { FEE_TYPE_LABELS, formatFeeAmount, type Fee, type FeeType } from '../types/fees';
+import { Actions } from '../../../components/crud/Actions';
 
 const PAGE_SIZE = 10;
 const NO_FEES_MESSAGE = 'No hay tarifas registradas.';
@@ -95,24 +95,11 @@ export default function FeeList() {
       headerAlign: 'left',
       flex: 2,
       minWidth: 300,
-      getActions: ({ row }) => [
-        <GridActionsCellItem
-          key="show"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Mostrar</Box>}
-          label="Mostrar"
-          onClick={() => setSelectedFee(row)}
-        />,
-        <GridActionsCellItem
-          key="edit"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Editar</Box>}
-          label="Editar"
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Eliminar</Box>}
-          label="Eliminar"
-        />
-      ]
+      getActions: Actions({
+        onShow: (fee: any) => setSelectedFee(fee),
+        onEdit: (fee: any) => {/*openEdit(fee)*/},
+        onDelete: (fee: any) => {/*handleRowDelete(fee)*/},
+      }),
     }
   ];
 
