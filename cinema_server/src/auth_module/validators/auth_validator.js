@@ -23,7 +23,7 @@ export function validateLogIn(body = {}) {
   return { errors, email, password };
 }
 
-export function validateChangePassword(body = {}) {
+export function validateChangePassword( body = {}, { requireCurrentPassword = true } = {}) {
   const errors = {};
 
   const currentPassword =
@@ -35,7 +35,7 @@ export function validateChangePassword(body = {}) {
   const confirmPassword =
     typeof body.confirmPassword === 'string' ? body.confirmPassword: '';
 
-  if (!currentPassword) {
+  if (requireCurrentPassword && !currentPassword) {
     errors.currentPassword = REQUIRED_FIELD_MESSAGE;
   }
 

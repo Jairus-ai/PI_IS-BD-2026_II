@@ -27,6 +27,8 @@ type LogInFormErrors = Partial<Record<keyof LogInFormValues, string>>;
 
 type LogInResponse = {
   data: SessionUser;
+  requiresPasswordChange?: boolean;
+  message?: string;
 };
 
 type LogInErrorResponse = {
@@ -53,6 +55,17 @@ export default function LogIn() {
   const [errors, setErrors] = useState<LogInFormErrors>({});
 
   if (user) {
+    
+    if (user.requiresPasswordChange) {
+      return (
+        <Navigate
+          to="/password-recovery"
+          state={{ establishPassword: true }}
+          replace
+        />
+      );
+    }
+    
     const requestedPath = (location.state as { from?: string } | null)?.from;
     return <Navigate to={requestedPath ?? getHomePath(user)} replace />;
   }
@@ -72,7 +85,25 @@ export default function LogIn() {
   };
 
   const handleLogInSuccess = (response: LogInResponse) => {
-    startSession(response.data);
+    const sessionUser = {
+      ...response.data,
+      requiresPasswordChange:
+        response.requiresPasswordChange ?? false,
+    };
+
+    startSession(sessionUser);
+
+    if (response.requiresPasswordChange) {
+      notifications.show(
+        'Debes establecer una nueva contraseña antes de continuar.',
+        {
+          severity: 'info',
+          autoHideDuration: 5000,
+        }
+      );
+
+      return;
+    }
     notifications.show(`¡Bienvenido, ${response.data.firstName}!`, {
       severity: 'success',
       autoHideDuration: 3000

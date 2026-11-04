@@ -222,12 +222,16 @@ export const getCurrentUser = async (req, res, next) => {
 };
 
 export const changePassword = async (req, res, next) => {
+  const requiresPasswordChange = req.user.requiresPasswordChange === true;
+
   const {
     errors,
     passwordSuggestions,
     currentPassword,
     newPassword
-  } = validateChangePassword(req.body);
+  } = validateChangePassword(req.body, {
+    requireCurrentPassword: !requiresPasswordChange
+  });
 
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({
@@ -253,17 +257,19 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    const passwordMatches = await bcrypt.compare(
-      currentPassword,
-      credential.HASH
-    );
+    if (!requiresPasswordChange) {
+      const passwordMatches = await bcrypt.compare(
+        currentPassword,
+        credential.HASH
+      );
 
-    if (!passwordMatches) {
-      return res.status(400).json({
-        errors: {
-          currentPassword: WRONG_CURRENT_PASSWORD_MESSAGE
-        }
-      });
+      if (!passwordMatches) {
+        return res.status(400).json({
+          errors: {
+            currentPassword: WRONG_CURRENT_PASSWORD_MESSAGE
+          }
+        });
+      }
     }
 
     const passwordHash = await bcrypt.hash(

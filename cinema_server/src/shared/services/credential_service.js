@@ -14,7 +14,7 @@ export async function getCredential(connection, role, id) {
     `
       SELECT HASH, SESSION_VERSION,
       IS_TEMPORARY_PASSWORD,
-      TEMPORARY_PASSWORD_EXPIRATION,
+      TEMPORARY_PASSWORD_EXPIRATION
       FROM PI_DEVELOPERS.CREDENTIALS
       WHERE ${ownerColumn} = :id
     `,
@@ -36,7 +36,7 @@ export async function updatePasswordAndSessionVersion(
     `
       UPDATE PI_DEVELOPERS.CREDENTIALS
       SET HASH = :passwordHash,
-          SESSION_VERSION = :sessionVersion
+          SESSION_VERSION = :sessionVersion,
           IS_TEMPORARY_PASSWORD = 0,
           TEMPORARY_PASSWORD_EXPIRATION = NULL
       WHERE ${ownerColumn} = :id
