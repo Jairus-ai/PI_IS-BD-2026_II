@@ -5,25 +5,15 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { isAxiosError } from 'axios';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useNotifications from '../../../hooks/useNotifications';
 import useSession from '../../../hooks/useSession';
-
-import {
-  requestPasswordRecovery,
-  verifyPasswordRecoveryCode,
-  resetPassword,
-  getCurrentUser,
-} from '../services/authService';
-
-import {
-  checkPasswordStrength,
-  MINIMUM_PASSWORD_SCORE,
-} from '../../../shared/validators/passwordValidator';
+import { establishPassword, requestPasswordRecovery, verifyPasswordRecoveryCode, resetPassword, getCurrentUser} from '../services/authService';
+import {checkPasswordStrength, MINIMUM_PASSWORD_SCORE,} from '../../../shared/validators/passwordValidator';
 
 const PASSWORD_STRENGTH_LABELS = [
   'Muy débil',
@@ -37,8 +27,15 @@ export default function PasswordRecovery() {
   const notifications = useNotifications();
   const navigate = useNavigate();
   const { startSession } = useSession();
+  
+  const location = useLocation();
 
-  const [step, setStep] = useState(1);
+  const isEstablishingTemporaryPassword =
+    location.state?.establishPassword === true;
+
+  const [step, setStep] = useState(
+    isEstablishingTemporaryPassword ? 3 : 1
+  );
 
   const [values, setValues] = useState({
     email: '',
@@ -174,22 +171,31 @@ export default function PasswordRecovery() {
     try {
       setLoading(true);
 
-      const response = await resetPassword({
-        email: values.email,
-        code: values.code,
-        newPassword: values.newPassword,
-        confirmPassword: values.confirmPassword,
-      });
+      let response;
+
+      if (isEstablishingTemporaryPassword) {
+        response = await establishPassword({
+          newPassword: values.newPassword,
+          confirmPassword: values.confirmPassword,
+        });
+      } else {
+        response = await resetPassword({
+          email: values.email,
+          code: values.code,
+          newPassword: values.newPassword,
+          confirmPassword: values.confirmPassword,
+        });
+      }
 
       const currentUser = await getCurrentUser();
 
-      startSession(currentUser);
+      startSession(currentUser.data);
 
       notifications.show(response.message, {
         severity: 'success',
       });
 
-      navigate('/');
+       await navigate('/');
     } catch (error) {
       if (isAxiosError(error) && error.response?.data?.errors) {
         setErrors(error.response.data.errors);
@@ -206,7 +212,7 @@ export default function PasswordRecovery() {
   };
 
   return (
-    <AuthLayout title="Recuperar contraseña">
+    <AuthLayout title="Establecer contraseña">
       {step === 1 && (
         <Box
           component="form"
@@ -361,7 +367,7 @@ export default function PasswordRecovery() {
           >
             {loading
               ? 'Guardando…'
-              : 'Cambiar contraseña'}
+              : 'Establecer contraseña'}
           </Button>
         </Box>
       )}

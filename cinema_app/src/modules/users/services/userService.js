@@ -61,3 +61,29 @@ export async function deactivateWorker(workerId) {
 
   return data;
 }
+
+export async function createUser(userData) {
+  const response = await fetch(`${API_URL}/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(
+      data.message || 'No fue posible crear el usuario.'
+    );
+
+    error.status = response.status;
+    error.errors = data.errors;
+
+    throw error;
+  }
+
+  return data;
+}

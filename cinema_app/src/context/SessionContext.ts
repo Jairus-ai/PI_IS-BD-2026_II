@@ -21,6 +21,7 @@ export interface SessionUser {
   email: string;
   firstName: string;
   firstSurname: string;
+  requiresPasswordChange?: boolean;
 }
 
 export interface SessionContextValue {

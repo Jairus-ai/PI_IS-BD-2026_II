@@ -27,13 +27,19 @@ const TIMING_PROTECTION_HASH = bcrypt.hashSync('timing-protection', 10);
 
 const FIND_ACCOUNTS_BY_EMAIL_SQL = `
   SELECT c.ID_CLIENT AS ID, 'CLIENT' AS ROLE_CODE, c.EMAIL, c.FIRST_NAME, c.FIRST_SURNAME,
-         cr.HASH, cr.SESSION_VERSION
+         cr.HASH, 
+         cr.SESSION_VERSION,
+         cr.IS_TEMPORARY_PASSWORD,
+         cr.TEMPORARY_PASSWORD_EXPIRATION
   FROM PI_DEVELOPERS.CLIENTS c
   JOIN PI_DEVELOPERS.CREDENTIALS cr ON cr.ID_CLIENT = c.ID_CLIENT
   WHERE c.EMAIL = :email
   UNION ALL
   SELECT w.ID_WORKER AS ID, w.ROLE AS ROLE_CODE, w.EMAIL, w.FIRST_NAME, w.FIRST_SURNAME,
-         cr.HASH, cr.SESSION_VERSION
+         cr.HASH,
+         cr.SESSION_VERSION,
+         cr.IS_TEMPORARY_PASSWORD,
+         cr.TEMPORARY_PASSWORD_EXPIRATION
   FROM PI_DEVELOPERS.WORKERS w
   JOIN PI_DEVELOPERS.CREDENTIALS cr ON cr.ID_WORKER = w.ID_WORKER
   WHERE w.EMAIL = :email AND w.IS_ACTIVE = 1
@@ -124,6 +130,45 @@ export const logIn = async (req, res, next) => {
     }
 
     const role = toRole(account.ROLE_CODE);
+
+    if (account.IS_TEMPORARY_PASSWORD === 1) {
+      const expiration = new Date(account.TEMPORARY_PASSWORD_EXPIRATION);
+
+      if (expiration <= new Date()) {
+        return res.status(401).json({
+          message:
+            'La contraseña temporal ha expirado. Debes recuperar tu contraseña.',
+          code: 'TEMPORARY_PASSWORD_EXPIRED'
+        });
+      }
+
+      const temporarySessionToken =
+        createSessionToken({
+          id: account.ID,
+          role,
+          sessionVersion: account.SESSION_VERSION,
+          requiresPasswordChange: true
+        });
+
+      setSessionCookie(
+        res,
+        temporarySessionToken
+      );
+
+      return res.status(200).json({
+        message:
+          'Debes cambiar tu contraseña antes de continuar.',
+        requiresPasswordChange: true,
+        data: {
+          id: account.ID,
+          role,
+          email: account.EMAIL,
+          firstName: account.FIRST_NAME,
+          firstSurname: account.FIRST_SURNAME
+        }
+      });
+    }
+
     const sessionToken = createSessionToken({
       id: account.ID,
       role,
@@ -177,12 +222,16 @@ export const getCurrentUser = async (req, res, next) => {
 };
 
 export const changePassword = async (req, res, next) => {
+  const requiresPasswordChange = req.user.requiresPasswordChange === true;
+
   const {
     errors,
     passwordSuggestions,
     currentPassword,
     newPassword
-  } = validateChangePassword(req.body);
+  } = validateChangePassword(req.body, {
+    requireCurrentPassword: !requiresPasswordChange
+  });
 
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({
@@ -208,18 +257,35 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
-    const passwordMatches = await bcrypt.compare(
-      currentPassword,
-      credential.HASH
-    );
+    if (!requiresPasswordChange) {
+      const passwordMatches = await bcrypt.compare(
+        currentPassword,
+        credential.HASH
+      );
 
-    if (!passwordMatches) {
-      return res.status(400).json({
-        errors: {
-          currentPassword: WRONG_CURRENT_PASSWORD_MESSAGE
-        }
-      });
+      if (!passwordMatches) {
+        return res.status(400).json({
+          errors: {
+            currentPassword: WRONG_CURRENT_PASSWORD_MESSAGE
+          }
+        });
+      }
     }
+
+    const isSamePassword = await bcrypt.compare(
+        newPassword,
+        credential.HASH
+      );
+
+      if (isSamePassword) {
+        return res.status(400).json({
+          errors: {
+            newPassword:
+              'La nueva contraseña debe ser diferente a la contraseña actual'
+          }
+        });
+      }
+    
 
     const passwordHash = await bcrypt.hash(
       newPassword,

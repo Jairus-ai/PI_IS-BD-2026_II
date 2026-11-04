@@ -5,12 +5,17 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import oracledb from 'oracledb';
 
-jest.unstable_mockModule('../../email/email_service.js', () => ({
+const mockSendPasswordChangedEmail =jest.fn().mockResolvedValue();
+
+jest.unstable_mockModule('../../email/email_service.js',() => ({
   default: {
-    sendWelcomeEmail: jest.fn().mockResolvedValue(),
-    sendPasswordRecoveryEmail: jest.fn().mockResolvedValue(),
-    sendPasswordChangedEmail: jest.fn().mockResolvedValue(),
-  },
+    sendWelcomeEmail:
+      jest.fn().mockResolvedValue(),
+    sendPasswordRecoveryEmail:
+      jest.fn().mockResolvedValue(),
+    sendPasswordChangedEmail:
+      mockSendPasswordChangedEmail
+    }
 }));
 
 const { default: authRoutes } = await import('../routes/auth_routes.js');
@@ -35,6 +40,8 @@ function accountRow(overrides = {}) {
     FIRST_SURNAME: 'Arias',
     HASH: PASSWORD_HASH,
     SESSION_VERSION: 0,
+    IS_TEMPORARY_PASSWORD:0,
+    TEMPORARY_PASSWORD_EXPIRATION: null,
     ...overrides
   };
 }
@@ -50,6 +57,43 @@ function mockDatabaseConnection(executeImplementation) {
 
 function sessionCookie(token) {
   return `${SESSION_COOKIE_NAME}=${token}`;
+}
+
+function temporaryCredentialRow(
+  hash,
+  expiration = new Date(
+    Date.now() + 24 * 60 * 60 * 1000
+  )
+) {
+  return {
+    HASH: hash,
+    SESSION_VERSION: 0,
+    IS_TEMPORARY_PASSWORD: 1,
+    TEMPORARY_PASSWORD_EXPIRATION: expiration,
+  };
+}
+
+function temporarySessionToken() {
+  return createSessionToken({
+    id: 7,
+    role: ROLES.CLIENT,
+    sessionVersion: 0,
+    requiresPasswordChange: true,
+  });
+}
+
+function temporaryPasswordChangeBody() {
+  return {
+    newPassword: 'NewPassword123!',
+    confirmPassword: 'NewPassword123!',
+  };
+}
+
+function temporaryAccountRow(expiration) {
+  return accountRow({
+    IS_TEMPORARY_PASSWORD: 1,
+    TEMPORARY_PASSWORD_EXPIRATION: expiration,
+  });
 }
 
 afterEach(() => {
@@ -136,6 +180,68 @@ describe('POST /auth/login', () => {
 
     expect(response.body.errors.password).toBe('Correo o contraseña incorrectos');
   });
+
+  test('Log in with temporary password requires password change', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [
+        temporaryAccountRow(
+          new Date(
+            Date.now() + 24 * 60 * 60 * 1000
+          )
+        )
+      ]
+    }));
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({
+        email: 'adrian.prueba@ucr.ac.cr',
+        password: PASSWORD
+      })
+      .expect(200);
+
+    expect(response.body.requiresPasswordChange)
+      .toBe(true);
+
+    expect(response.body.data).toEqual({
+      id: 7,
+      role: ROLES.CLIENT,
+      email: 'adrian.prueba@ucr.ac.cr',
+      firstName: 'Adrián',
+      firstSurname: 'Arias'
+    });
+
+    expect(response.headers['set-cookie'].join(';')).toMatch(/session_token=.*HttpOnly/);
+  });
+
+  test('Log in 401 when temporary password is expired', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [
+        temporaryAccountRow(
+          new Date(
+            Date.now() - 24 * 60 * 60 * 1000
+          )
+        )
+      ]
+    }));
+
+    const response = await request(app)
+      .post('/auth/login')
+      .send({
+        email: 'adrian.prueba@ucr.ac.cr',
+        password: PASSWORD
+      })
+      .expect(401);
+
+    expect(response.body).toEqual({
+      message:
+        'La contraseña temporal ha expirado. Debes recuperar tu contraseña.',
+      code: 'TEMPORARY_PASSWORD_EXPIRED'
+    });
+
+    expect(response.headers['set-cookie'])
+      .toBeUndefined();
+  });
 });
 
 describe('POST /auth/logout', () => {
@@ -198,6 +304,28 @@ describe('GET /auth/me', () => {
       .expect(401);
 
     expect(response.body.message).toBe('La sesión expiró. Inicia sesión de nuevo');
+  });
+
+  test('Returns 403 when password change is required', async () => {
+    mockDatabaseConnection(async () => ({
+      rows: [[0]]
+    }));
+
+    const temporaryToken = temporarySessionToken();
+
+    const response = await request(app)
+      .get('/auth/me')
+      .set(
+        'Cookie',
+        sessionCookie(temporaryToken)
+      )
+      .expect(403);
+
+    expect(response.body).toEqual({
+      message:
+        'Debes cambiar tu contraseña antes de continuar.',
+      code: 'PASSWORD_CHANGE_REQUIRED'
+    });
   });
 });
 
@@ -390,5 +518,223 @@ describe('PATCH /auth/change-password', () => {
         confirmPassword: 'NewPassword123!'
       })
       .expect(401);
+  });
+
+  test('Changes temporary password successfully', async () => {
+    const temporaryHash = await bcrypt.hash(
+      'TemporaryPassword123!',
+      10
+    );
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return {
+          rows: [[0]]
+        };
+      }
+
+      // getCredential()
+      if (
+        sql.includes('HASH') &&
+        sql.includes('SESSION_VERSION') &&
+        sql.includes('FROM PI_DEVELOPERS.CREDENTIALS')
+      ) {
+        return {
+          rows: [
+            temporaryCredentialRow(
+              temporaryHash
+            )
+          ]
+        };
+      }
+
+      // updatePasswordAndSessionVersion()
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return {
+          rowsAffected: 1
+        };
+      }
+
+      return {
+        rows: []
+      };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const temporaryToken = temporarySessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set(
+        'Cookie',
+        sessionCookie(temporaryToken)
+      )
+      .send(temporaryPasswordChangeBody())
+      .expect(200);
+
+    expect(response.body).toEqual({
+      message:
+        'La contraseña ha sido cambiada correctamente'
+    });
+
+    const updateCall =
+      connection.execute.mock.calls.find(
+        ([sql]) =>
+          sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')
+      );
+
+    expect(updateCall).toBeDefined();
+
+    expect(updateCall[0])
+      .toMatch(/IS_TEMPORARY_PASSWORD\s*=\s*0/);
+
+    expect(updateCall[0])
+      .toMatch(/TEMPORARY_PASSWORD_EXPIRATION\s*=\s*NULL/);
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+
+    expect(response.headers['set-cookie'].join(';'))
+      .toMatch(/session_token=/);
+  });
+
+  test('Sends confirmation email after temporary password change', async () => {
+    const temporaryHash = await bcrypt.hash(
+      'TemporaryPassword123!',
+      10
+    );
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return {
+          rows: [[0]]
+        };
+      }
+
+      // getCredential()
+      if (
+        sql.includes('HASH') &&
+        sql.includes('SESSION_VERSION') &&
+        sql.includes('FROM PI_DEVELOPERS.CREDENTIALS')
+      ) {
+        return {
+          rows: [
+            temporaryCredentialRow(
+              temporaryHash
+            )
+          ]
+        };
+      }
+
+      // updatePasswordAndSessionVersion()
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return {
+          rowsAffected: 1
+        };
+      }
+
+      // getAccountEmail()
+      if (sql.includes('SELECT EMAIL')) {
+        return {
+          rows: [
+            {
+              EMAIL: 'adrian.prueba@ucr.ac.cr'
+            }
+          ]
+        };
+      }
+
+      return {
+        rows: []
+      };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const temporaryToken = temporarySessionToken();
+
+    await request(app)
+      .patch('/auth/change-password')
+      .set(
+        'Cookie',
+        sessionCookie(temporaryToken)
+      )
+      .send(temporaryPasswordChangeBody())
+      .expect(200);
+
+    expect(mockSendPasswordChangedEmail)
+      .toHaveBeenCalledTimes(1);
+
+    expect(mockSendPasswordChangedEmail)
+      .toHaveBeenCalledWith({
+        email: 'adrian.prueba@ucr.ac.cr'
+      });
+  });
+
+  test('Allows temporary session to establish password without current password', async () => {
+    
+    const temporaryHash = await bcrypt.hash('TemporaryPassword123!', 10);
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return { rows: [[0]] };
+      }
+
+      // getCredential()
+      if (sql.includes('SELECT HASH, SESSION_VERSION')) {
+        return {
+          rows: [
+            temporaryCredentialRow(
+              temporaryHash
+            )
+          ]
+        };
+      }
+
+      // updatePasswordAndSessionVersion()
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return { rowsAffected: 1 };
+      }
+
+      return { rows: [] };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const token = temporarySessionToken();
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send(temporaryPasswordChangeBody())
+      .expect(200);
+
+    expect(response.body).toEqual({
+      message: 'La contraseña ha sido cambiada correctamente',
+    });
+
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+
+    const updateCall = connection.execute.mock.calls.find(
+      ([sql]) =>
+        sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')
+    );
+
+    expect(updateCall).toBeDefined();
+
+    expect(updateCall[0]).toMatch(
+      /IS_TEMPORARY_PASSWORD = 0/
+    );
+
+    expect(updateCall[0]).toMatch(
+      /TEMPORARY_PASSWORD_EXPIRATION = NULL/
+    );
+
+    expect(response.headers['set-cookie'].join(';')).toMatch(
+      /session_token=/
+    );
   });
 });

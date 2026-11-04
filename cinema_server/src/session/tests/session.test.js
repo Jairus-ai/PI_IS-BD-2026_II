@@ -47,7 +47,7 @@ describe('requireSession', () => {
       .set('Cookie', sessionCookie(token))
       .expect(200);
 
-    expect(response.body.user).toEqual({ id: 7, role: ROLES.CLIENT, sessionVersion: 0 });
+    expect(response.body.user).toEqual({ id: 7, role: ROLES.CLIENT, sessionVersion: 0, requiresPasswordChange: false });
     expect(response.headers['set-cookie'].join(';')).toMatch(/session_token=/);
   });
 

@@ -40,3 +40,19 @@ export const resetPassword = async ({email, code, newPassword, confirmPassword})
   );
   return data;
 };
+
+export const establishPassword = async ({
+  newPassword,
+  confirmPassword,
+}) => {
+  const { data } = await api.patch(
+    '/auth/change-password',
+    {
+      newPassword,
+      confirmPassword,
+    },
+    WITH_SESSION_COOKIE
+  );
+
+  return data;
+};

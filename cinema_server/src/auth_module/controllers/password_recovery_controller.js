@@ -14,6 +14,7 @@ const RECOVERY_CODE_MIN = 100000;
 const RECOVERY_CODE_MAX = 999999;
 const RECOVERY_CODE_EXPIRATION_MINUTES = 10;
 const HASH_SALT_ROUNDS = 10;
+const MAX_RECOVERY_CODE_ATTEMPTS = 5;
 
 function generateRecoveryCode() {
   return crypto.randomInt(
@@ -69,7 +70,8 @@ async function saveRecoveryCode(connection, account, codeHash) {
       `
         UPDATE PI_DEVELOPERS.CODES
         SET HASH = :hash,
-            LAST_GENERATED_DATE = LOCALTIMESTAMP
+            LAST_GENERATED_DATE = LOCALTIMESTAMP,
+            ATTEMPTS = 0
         WHERE ${ownerColumn} = :id
       `,
       {
@@ -101,6 +103,22 @@ async function saveRecoveryCode(connection, account, codeHash) {
   );
 }
 
+async function incrementRecoveryCodeAttempts(
+  connection,
+  recoveryCode
+) {
+  await connection.execute(
+    `
+      UPDATE PI_DEVELOPERS.CODES
+      SET ATTEMPTS = ATTEMPTS + 1
+      WHERE ID_CODE = :idCode
+    `,
+    {
+      idCode: recoveryCode.ID_CODE,
+    }
+  );
+}
+
 async function findRecoveryCode(connection, account) {
   const ownerColumn =
     account.ROLE === ROLES.CLIENT
@@ -113,8 +131,10 @@ async function findRecoveryCode(connection, account) {
         ID_CODE,
         HASH,
         LAST_GENERATED_DATE,
+        ATTEMPTS,
         CASE
-          WHEN LAST_GENERATED_DATE < LOCALTIMESTAMP - INTERVAL '10' MINUTE
+          WHEN LAST_GENERATED_DATE <
+               LOCALTIMESTAMP - INTERVAL '${RECOVERY_CODE_EXPIRATION_MINUTES}' MINUTE
           THEN 1
           ELSE 0
         END AS IS_EXPIRED
@@ -126,6 +146,70 @@ async function findRecoveryCode(connection, account) {
   );
 
   return result.rows[0];
+}
+
+async function validateStoredRecoveryCode(
+  connection,
+  recoveryCode,
+  code
+) {
+  if (!recoveryCode) {
+    return {
+      error:
+        'No existe un código de verificación activo',
+    };
+  }
+
+  if (recoveryCode.IS_EXPIRED === 1) {
+    return {
+      error:
+        'El código de verificación ha expirado',
+    };
+  }
+
+  if (
+    recoveryCode.ATTEMPTS >=
+    MAX_RECOVERY_CODE_ATTEMPTS
+  ) {
+    return {
+      error:
+        'Se alcanzó el límite de intentos. Solicita un nuevo código.',
+    };
+  }
+
+  const codeMatches = await bcrypt.compare(
+    code,
+    recoveryCode.HASH
+  );
+
+  if (codeMatches) {
+    return {};
+  }
+
+  await incrementRecoveryCodeAttempts(
+    connection,
+    recoveryCode
+  );
+
+  await connection.commit();
+
+  const attempts =
+    recoveryCode.ATTEMPTS + 1;
+
+  if (
+    attempts >=
+    MAX_RECOVERY_CODE_ATTEMPTS
+  ) {
+    return {
+      error:
+        'Se alcanzó el límite de intentos. Solicita un nuevo código.',
+    };
+  }
+
+  return {
+    error:
+      'El código de verificación es incorrecto',
+  };
 }
 
 async function deleteRecoveryCode(
@@ -233,31 +317,17 @@ export const verifyPasswordRecoveryCode = async (req, res, next) => {
       account
     );
 
-    if (!recoveryCode) {
+    const { error } =
+      await validateStoredRecoveryCode(
+        connection,
+        recoveryCode,
+        code
+      );
+
+    if (error) {
       return res.status(400).json({
         errors: {
-          code: 'No existe un código de verificación activo',
-        },
-      });
-    }
-
-    if (recoveryCode.IS_EXPIRED === 1) {
-      return res.status(400).json({
-        errors: {
-          code: 'El código de verificación ha expirado',
-        },
-      });
-    }
-
-    const codeMatches = await bcrypt.compare(
-      code,
-      recoveryCode.HASH
-    );
-
-    if (!codeMatches) {
-      return res.status(400).json({
-        errors: {
-          code: 'El código de verificación es incorrecto',
+          code: error,
         },
       });
     }
@@ -318,34 +388,17 @@ export const resetPassword = async (
       account
     );
 
-    if (!recoveryCode) {
+    const { error } =
+      await validateStoredRecoveryCode(
+        connection,
+        recoveryCode,
+        code
+      );
+
+    if (error) {
       return res.status(400).json({
         errors: {
-          code:
-            'No existe un código de verificación activo',
-        },
-      });
-    }
-
-    if (recoveryCode.IS_EXPIRED === 1) {
-      return res.status(400).json({
-        errors: {
-          code:
-            'El código de verificación ha expirado',
-        },
-      });
-    }
-
-    const codeMatches = await bcrypt.compare(
-      code,
-      recoveryCode.HASH
-    );
-
-    if (!codeMatches) {
-      return res.status(400).json({
-        errors: {
-          code:
-            'El código de verificación es incorrecto',
+          code: error,
         },
       });
     }

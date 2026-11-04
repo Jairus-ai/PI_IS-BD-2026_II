@@ -9,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import { useNavigate } from 'react-router';
 
 import {DataGrid, GridActionsCellItem,} from '@mui/x-data-grid';
 
@@ -88,6 +89,8 @@ export default function UserList() {
 };
 
 const roleOptions = availableRoles[user?.role] || [];
+
+const navigate = useNavigate();
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -260,7 +263,14 @@ const roleOptions = availableRoles[user?.role] || [];
   return (
     <PageContainer
       title="Usuarios"
-      breadcrumbs={[]}
+      actions={
+        <Button
+          variant="contained"
+          onClick={() => navigate('/users/create')}
+        >
+          Crear Usuario
+        </Button>
+      }
     >
       <Stack spacing={2}>
         <Stack
