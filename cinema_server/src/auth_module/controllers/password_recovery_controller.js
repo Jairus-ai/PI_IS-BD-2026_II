@@ -148,6 +148,70 @@ async function findRecoveryCode(connection, account) {
   return result.rows[0];
 }
 
+async function validateStoredRecoveryCode(
+  connection,
+  recoveryCode,
+  code
+) {
+  if (!recoveryCode) {
+    return {
+      error:
+        'No existe un código de verificación activo',
+    };
+  }
+
+  if (recoveryCode.IS_EXPIRED === 1) {
+    return {
+      error:
+        'El código de verificación ha expirado',
+    };
+  }
+
+  if (
+    recoveryCode.ATTEMPTS >=
+    MAX_RECOVERY_CODE_ATTEMPTS
+  ) {
+    return {
+      error:
+        'Se alcanzó el límite de intentos. Solicita un nuevo código.',
+    };
+  }
+
+  const codeMatches = await bcrypt.compare(
+    code,
+    recoveryCode.HASH
+  );
+
+  if (codeMatches) {
+    return {};
+  }
+
+  await incrementRecoveryCodeAttempts(
+    connection,
+    recoveryCode
+  );
+
+  await connection.commit();
+
+  const attempts =
+    recoveryCode.ATTEMPTS + 1;
+
+  if (
+    attempts >=
+    MAX_RECOVERY_CODE_ATTEMPTS
+  ) {
+    return {
+      error:
+        'Se alcanzó el límite de intentos. Solicita un nuevo código.',
+    };
+  }
+
+  return {
+    error:
+      'El código de verificación es incorrecto',
+  };
+}
+
 async function deleteRecoveryCode(
   connection,
   account
@@ -253,64 +317,17 @@ export const verifyPasswordRecoveryCode = async (req, res, next) => {
       account
     );
 
-    if (!recoveryCode) {
-      return res.status(400).json({
-        errors: {
-          code: 'No existe un código de verificación activo',
-        },
-      });
-    }
-
-    if (recoveryCode.IS_EXPIRED === 1) {
-      return res.status(400).json({
-        errors: {
-          code: 'El código de verificación ha expirado',
-        },
-      });
-    }
-
-    if (
-      recoveryCode.ATTEMPTS >=
-      MAX_RECOVERY_CODE_ATTEMPTS
-    ) {
-      return res.status(400).json({
-        errors: {
-          code:
-            'Se alcanzó el límite de intentos. Solicita un nuevo código.',
-        },
-      });
-    }
-
-    const codeMatches = await bcrypt.compare(
-      code,
-      recoveryCode.HASH
-    );
-
-    if (!codeMatches) {
-      await incrementRecoveryCodeAttempts(
+    const { error } =
+      await validateStoredRecoveryCode(
         connection,
-        recoveryCode
+        recoveryCode,
+        code
       );
 
-      await connection.commit();
-
-      const attempts =
-        recoveryCode.ATTEMPTS + 1;
-
-      if (
-        attempts >=
-        MAX_RECOVERY_CODE_ATTEMPTS
-      ) {
-        return res.status(400).json({
-          errors: {
-            code:
-              'Se alcanzó el límite de intentos. Solicita un nuevo código.',
-          },
-        });
-      }
-          return res.status(400).json({
+    if (error) {
+      return res.status(400).json({
         errors: {
-          code: 'El código de verificación es incorrecto',
+          code: error,
         },
       });
     }
@@ -371,67 +388,17 @@ export const resetPassword = async (
       account
     );
 
-    if (!recoveryCode) {
-      return res.status(400).json({
-        errors: {
-          code:
-            'No existe un código de verificación activo',
-        },
-      });
-    }
-
-    if (recoveryCode.IS_EXPIRED === 1) {
-      return res.status(400).json({
-        errors: {
-          code:
-            'El código de verificación ha expirado',
-        },
-      });
-    }
-
-    if (
-      recoveryCode.ATTEMPTS >=
-      MAX_RECOVERY_CODE_ATTEMPTS
-    ) {
-      return res.status(400).json({
-        errors: {
-          code:
-            'Se alcanzó el límite de intentos. Solicita un nuevo código.',
-        },
-      });
-    }
-
-    const codeMatches = await bcrypt.compare(
-      code,
-      recoveryCode.HASH
-    );
-
-    if (!codeMatches) {
-      await incrementRecoveryCodeAttempts(
+    const { error } =
+      await validateStoredRecoveryCode(
         connection,
-        recoveryCode
+        recoveryCode,
+        code
       );
 
-      await connection.commit();
-
-      const attempts =
-        recoveryCode.ATTEMPTS + 1;
-
-      if (
-        attempts >=
-        MAX_RECOVERY_CODE_ATTEMPTS
-      ) {
-        return res.status(400).json({
-          errors: {
-            code:
-              'Se alcanzó el límite de intentos. Solicita un nuevo código.',
-          },
-        });
-      }
+    if (error) {
       return res.status(400).json({
         errors: {
-          code:
-            'El código de verificación es incorrecto',
+          code: error,
         },
       });
     }
