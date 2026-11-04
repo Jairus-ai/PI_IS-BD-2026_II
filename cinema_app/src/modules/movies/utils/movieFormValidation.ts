@@ -12,12 +12,16 @@ export interface MovieFormValues {
   directorIds: Director[];
   formatIds: AudiovisualFormat[];
   originalLangs: Language[];
+  dubLangs: Language[];
+  subLangs: Language[];
   posterFile: File | null;
   existingPoster: string | null;
-  isCreate: boolean;
 }
 
-export function validateAll(values: MovieFormValues): ServerErrors {
+export function validateAll(
+  values: MovieFormValues,
+  isCreate: Boolean
+): ServerErrors {
   const errors: ServerErrors = {};
   if (!values.title.trim()) errors.MOVIE_TITLE = 'Campo obligatorio';
   if (!values.yearDate?.isValid()) errors.PUBLISHING_YEAR = 'Seleccione el año';
@@ -28,7 +32,7 @@ export function validateAll(values: MovieFormValues): ServerErrors {
   if (values.directorIds.length === 0) errors.DIRECTOR_IDS = 'Seleccione al menos un director';
   if (values.formatIds.length === 0) errors.FORMAT_IDS = 'Seleccione al menos un formato';
   if (values.originalLangs.length === 0) errors.LANGUAGES_ORIGINAL = 'Seleccione al menos un idioma original';
-  if (values.isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
-  if (!values.isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
+  if (isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
+  if (!isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
   return errors;
 }

@@ -1,11 +1,37 @@
 import * as React from 'react';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 import { useMovies } from './useMovies';
 import useNotifications from '../../../hooks/useNotifications';
-import type { AudiovisualFormat, Director, Genre, Language, MovieDetail, Rating } from '../types/movies';
-import { classifyLanguageEntries, posterUrl, readServerErrors, splitNames } from '../utils/movieFormUtils';
+import type {
+  AudiovisualFormat,
+  Director,
+  Genre,
+  Language,
+  MovieDetail,
+  Rating
+} from '../types/movies';
+import { posterUrl, readServerErrors } from '../utils/movieFormUtils';
 import { validateAll } from '../utils/movieFormValidation';
 import type { ServerErrors } from '../utils/movieFormUtils';
+import { MovieFormValues } from '../utils/movieFormValidation';
+import { mapDetailToFormValues } from '../utils/movieFormHydration';
+import { buildMoviePayload } from '../utils/moviePayloadBuilder';
+
+const initialFormValues: MovieFormValues = {
+  title: '',
+  synopsis: '',
+  yearDate: null,
+  durationTime: null,
+  ratingId: '',
+  genreIds: [],
+  directorIds: [],
+  formatIds: [],
+  originalLangs: [],
+  dubLangs: [],
+  subLangs: [],
+  posterFile: null,
+  existingPoster: null,
+};
 
 export interface UseMovieFormArgs {
   movieId: number | null;
@@ -16,7 +42,9 @@ export interface UseMovieFormArgs {
 
 export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormArgs) {
   const isCreate = movieId == null;
+
   const notifications = useNotifications();
+
   const {
     movieDetail,
     isLoadingDetail,
@@ -33,38 +61,25 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     isUpdatingMovie,
   } = useMovies(1, open && !isCreate ? movieId : null);
 
-  const [title, setTitle] = React.useState('');
-  const [synopsis, setSynopsis] = React.useState('');
-  const [yearDate, setYearDate] = React.useState<Dayjs | null>(null);
-  const [durationTime, setDurationTime] = React.useState<Dayjs | null>(null);
-  const [ratingId, setRatingId] = React.useState<number | ''>('');
-  const [genreIds, setGenreIds] = React.useState<Genre[]>([]);
-  const [directorIds, setDirectorIds] = React.useState<Director[]>([]);
-  const [formatIds, setFormatIds] = React.useState<AudiovisualFormat[]>([]);
-  const [originalLangs, setOriginalLangs] = React.useState<Language[]>([]);
-  const [dubLangs, setDubLangs] = React.useState<Language[]>([]);
-  const [subLangs, setSubLangs] = React.useState<Language[]>([]);
-  const [existingPoster, setExistingPoster] = React.useState<string | null>(null);
-  const [posterFile, setPosterFile] = React.useState<File | null>(null);
+  const [values, setValues] = React.useState(initialFormValues);
+
   const [posterPreview, setPosterPreview] = React.useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = React.useState<ServerErrors>({});
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
-  const touchedRef = React.useRef<Record<string, boolean>>({});
   const [uploading, setUploading] = React.useState(false);
+
+  const touchedRef = React.useRef<Record<string, boolean>>({});
 
   const detail = movieDetail as MovieDetail | null;
   const catalogs = { genres, ratings, languages, formats, directors };
   const saving = uploading || isCreatingMovie || isUpdatingMovie;
   const loading = !isCreate && (isLoadingDetail || isLoadingCatalogs);
 
-  const snapshot = {
-    title, synopsis, yearDate, durationTime, ratingId,
-    genreIds, directorIds, formatIds, originalLangs,
-    posterFile, existingPoster, isCreate,
-  };
-
-  const validateAndSet = (merged: typeof snapshot, touchedMap: Record<string, boolean>) => {
-    const all = validateAll(merged);
+  const validateAndSet = (
+    merged: MovieFormValues,
+    touchedMap: Record<string, boolean>,
+  ) => {
+    const all = validateAll(merged, isCreate);
     const next: ServerErrors = {};
     for (const key of Object.keys(all)) {
       if (touchedMap[key]) next[key] = all[key];
@@ -72,227 +87,212 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     setFieldErrors(next);
   };
 
-  const touchAndValidate = (name: string, overrides: Partial<typeof snapshot> = {}) => {
-    const nt = { ...touchedRef.current, [name]: true };
-    touchedRef.current = nt;
-    setTouched(nt);
-    validateAndSet({ ...snapshot, ...overrides }, nt);
+  const touchAndValidate = (
+    name: string,
+    currentValues: MovieFormValues = values
+  ) => {
+    const nextTouched = { ...touchedRef.current, [name]: true };
+    touchedRef.current = nextTouched;
+    setTouched(nextTouched);
+    validateAndSet(currentValues, nextTouched);
   };
 
-  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setTitle(value);
-    touchAndValidate('MOVIE_TITLE', { title: value });
-  };
-
-  const handleSynopsisChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSynopsis(value);
-    touchAndValidate('SYNOPSIS', { synopsis: value });
+  const setFieldValue = <K extends keyof MovieFormValues>(
+    field: K,
+    value: MovieFormValues[K],
+  ) => {
+    setValues((prev) => {
+      const updated = { ...prev, [field]: value };
+      touchAndValidate(field as string, updated);
+      return updated;
+    });
   };
 
   const handleBlur = (name: string) => () => {
     touchAndValidate(name);
   };
 
-  const handleYearChange = (value: Dayjs | null) => {
-    setYearDate(value);
-    touchAndValidate('PUBLISHING_YEAR', { yearDate: value });
+  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFieldValue('title', event.target.value);
   };
 
-  const handleDurationChange = (value: Dayjs | null) => {
-    setDurationTime(value);
-    touchAndValidate('MOVIE_DURATION', { durationTime: value });
+  const handleSynopsisChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFieldValue('synopsis', event.target.value);
   };
 
-  const handleRatingChange = (value: number) => {
-    setRatingId(value);
-    touchAndValidate('ID_RATING');
+  const handleYearChange = (year: Dayjs | null) => {
+    setFieldValue('yearDate', year);
   };
 
-  const handleGenresChange = (value: Genre[]) => {
-    setGenreIds(value);
-    touchAndValidate('GENRE_IDS', { genreIds: value });
+  const handleDurationChange = (duration: Dayjs | null) => {
+    setFieldValue('durationTime', duration);
   };
 
-  const handleDirectorsChange = (value: Director[]) => {
-    setDirectorIds(value);
-    touchAndValidate('DIRECTOR_IDS', { directorIds: value });
+  const handleRatingChange = (rating: number) => {
+    setFieldValue('ratingId', rating);
   };
 
-  const handleFormatsChange = (value: AudiovisualFormat[]) => {
-    setFormatIds(value);
-    touchAndValidate('FORMAT_IDS', { formatIds: value });
+  const handleGenresChange = (genres: Genre[]) => {
+    setFieldValue('genreIds', genres);
   };
 
-  const handleOriginalLangsChange = (value: Language[]) => {
-    setOriginalLangs(value);
-    touchAndValidate('LANGUAGES_ORIGINAL', { originalLangs: value });
+  const handleDirectorsChange = (directors: Director[]) => {
+    setFieldValue('directorIds', directors);
+  };
+
+  const handleFormatsChange = (formats: AudiovisualFormat[]) => {
+    setFieldValue('formatIds', formats);
+  };
+
+  const handleOriginalLangsChange = (languages: Language[]) => {
+    setFieldValue('originalLangs', languages);
   };
 
   const handlePosterChange = (file: File | null) => {
-    setPosterFile(file);
-    touchAndValidate('POSTER', { posterFile: file });
-  };
-
-  const resetTouched = () => {
-    touchedRef.current = {};
-    setTouched({});
+    setFieldValue('posterFile', file);
   };
 
   React.useEffect(() => {
     if (!open) return;
-    resetTouched();
+
+    touchedRef.current = {};
+    setTouched({});
     setFieldErrors({});
-    setPosterFile(null);
-    if (isCreate || !detail || isLoadingCatalogs) {
-      if (isCreate) {
-        setTitle('');
-        setSynopsis('');
-        setYearDate(null);
-        setDurationTime(null);
-        setRatingId('');
-        setGenreIds([]);
-        setDirectorIds([]);
-        setFormatIds([]);
-        setOriginalLangs([]);
-        setDubLangs([]);
-        setSubLangs([]);
-        setExistingPoster(null);
-      }
+
+    if (isCreate) {
+      setValues(initialFormValues);
       return;
     }
 
-    setTitle(detail.MOVIE_TITLE ?? '');
-    setSynopsis(detail.SYNOPSIS ?? '');
-    setYearDate(detail.PUBLISHING_YEAR ? dayjs(`${detail.PUBLISHING_YEAR}-01-01`) : null);
-    if (detail.MOVIE_DURATION != null) {
-      const h = Math.floor(detail.MOVIE_DURATION / 60);
-      const mnt = detail.MOVIE_DURATION % 60;
-      setDurationTime(dayjs().startOf('day').hour(h).minute(mnt));
-    } else {
-      setDurationTime(null);
+    if (detail && !isLoadingCatalogs) {
+      const hydratedValues = mapDetailToFormValues(detail, {
+        genres: genres as Genre[],
+        ratings: ratings as Rating[],
+        languages: languages as Language[],
+        formats: formats as AudiovisualFormat[],
+        directors: directors as Director[],
+      });
+      setValues(hydratedValues);
     }
-
-    const ratingList = ratings as Rating[];
-    const matchedRating = ratingList.find((rating) => rating.RATING_CODE === detail.RATING_CODE);
-    setRatingId(matchedRating ? matchedRating.ID_RATING : '');
-
-    const genreList = genres as Genre[];
-    const genreNames = splitNames(detail.GENRES);
-    setGenreIds(genreList.filter((genre) => genreNames.includes(genre.GENRE_NAME)));
-
-    const directorList = directors as Director[];
-    const directorNames = splitNames(detail.DIRECTORS);
-    setDirectorIds(
-      directorList.filter((director) => directorNames.includes(`${director.DIRECTOR_FIRST_NAME} ${director.DIRECTOR_LAST_NAME}`))
-    );
-
-    const formatList = formats as AudiovisualFormat[];
-    const formatNames = splitNames(detail.FORMATS);
-    setFormatIds(
-      formatList.filter((format) => formatNames.includes(`${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`))
-    );
-
-    // Languages processing
-    const langList = languages as Language[];
-    const langEntries = detail.LANGUAGES ? detail.LANGUAGES.split(',').map((value: string) => value.trim()).filter(Boolean) : [];
-    const { originalLangs, dubLangs, subLangs } = classifyLanguageEntries(langEntries, langList);
-    setOriginalLangs(originalLangs);
-    setDubLangs(dubLangs);
-    setSubLangs(subLangs);
-
-    setExistingPoster(detail.POSTER ?? null);
-  }, [open, detail, isLoadingCatalogs, genres, ratings, languages, formats, directors, isCreate]);
+  }, [
+    open,
+    detail,
+    isLoadingCatalogs,
+    isCreate,
+    genres,
+    ratings,
+    languages,
+    formats,
+    directors
+  ]);
 
   React.useEffect(() => {
-    if (!posterFile) {
+    if (!values.posterFile) {
       setPosterPreview(null);
       return;
     }
-    const url = URL.createObjectURL(posterFile);
+    const url = URL.createObjectURL(values.posterFile);
     setPosterPreview(url);
     return () => URL.revokeObjectURL(url);
-  }, [posterFile]);
+  }, [values.posterFile]);
 
-  const previewSrc = posterPreview ?? (!isCreate ? posterUrl(existingPoster) : undefined);
+  const previewSrc = posterPreview ??
+    (!isCreate
+      ? posterUrl(values.existingPoster)
+      : undefined);
 
   const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const allTouched: Record<string, boolean> = {
-      MOVIE_TITLE: true, SYNOPSIS: true, PUBLISHING_YEAR: true, MOVIE_DURATION: true,
-      ID_RATING: true, GENRE_IDS: true, DIRECTOR_IDS: true, FORMAT_IDS: true,
-      LANGUAGES_ORIGINAL: true, POSTER: true,
+      MOVIE_TITLE: true,
+      SYNOPSIS: true,
+      PUBLISHING_YEAR: true,
+      MOVIE_DURATION: true,
+      ID_RATING: true,
+      GENRE_IDS: true,
+      DIRECTOR_IDS: true,
+      FORMAT_IDS: true,
+      LANGUAGES_ORIGINAL: true,
+      POSTER: true,
     };
+
     touchedRef.current = allTouched;
     setTouched(allTouched);
-    const all = validateAll(snapshot);
+
+    const all = validateAll(values, isCreate);
     setFieldErrors(all);
     if (Object.keys(all).length > 0) return;
 
     try {
       setUploading(true);
-      let posterPath = isCreate ? '' : (existingPoster ?? '');
-      if (posterFile) {
-        const uploadResult = await uploadPoster(posterFile);
+      let posterPath = isCreate ? '' : (values.existingPoster ?? '');
+
+      if (values.posterFile) {
+        const uploadResult = await uploadPoster(values.posterFile);
         posterPath = uploadResult?.data?.poster as string;
       }
       setUploading(false);
 
-      const payload = {
-        MOVIE_TITLE: title.trim(),
-        PUBLISHING_YEAR: (yearDate as Dayjs).year(),
-        SYNOPSIS: synopsis.trim(),
-        MOVIE_DURATION: (durationTime as Dayjs).hour() * 60 + (durationTime as Dayjs).minute(),
-        POSTER: posterPath,
-        ID_RATING: ratingId as number,
-        GENRE_IDS: genreIds.map((g) => g.ID_GENRE),
-        DIRECTOR_IDS: directorIds.map((d) => d.ID_DIRECTOR),
-        FORMAT_IDS: formatIds.map((f) => f.ID_AUDIOVISUAL_FORMAT),
-        LANGUAGES: [
-          ...originalLangs.map((l) => ({ ISO_CODE: l.ISO_CODE, LANGUAGE_TYPE: 'OG' })),
-          ...dubLangs.map((l) => ({ ISO_CODE: l.ISO_CODE, LANGUAGE_TYPE: 'DUB' })),
-          ...subLangs.map((l) => ({ ISO_CODE: l.ISO_CODE, LANGUAGE_TYPE: 'SUB' })),
-        ],
-      };
+      const payload = buildMoviePayload(values, posterPath);
 
       if (isCreate) {
         await createMovie(payload);
-        notifications.show('Película creada correctamente.', { severity: 'success', autoHideDuration: 3000 });
+        notifications.show(
+          'Película creada correctamente.',
+          { severity: 'success', autoHideDuration: 5000 });
       } else {
         await updateMovie(movieId as number, payload);
-        notifications.show('Película actualizada correctamente.', { severity: 'success', autoHideDuration: 3000 });
+        notifications.show(
+          'Película actualizada correctamente.',
+          { severity: 'success', autoHideDuration: 5000 });
       }
+
       setFieldErrors({});
       onClose();
       onSaved?.();
+
     } catch (submitError) {
       setUploading(false);
       const serverErrors = readServerErrors(submitError);
       if (Object.keys(serverErrors).length > 0) {
         setFieldErrors(serverErrors);
       } else {
-        notifications.show(`Error al guardar la película: ${(submitError as Error).message}`, {
-          severity: 'error',
-          autoHideDuration: 5000,
-        });
+        notifications.show(
+          `Error al guardar la película:
+          ${(submitError as Error).message}`,
+          { severity: 'error',
+            autoHideDuration: 5000, }
+        );
       }
     }
   };
 
+  const isValid = Object.keys(validateAll(values, isCreate)).length === 0;
+
   return {
-    isCreate, loading, saving, uploading,
-    title, synopsis, yearDate, durationTime, ratingId,
-    genreIds, directorIds, formatIds, originalLangs, dubLangs, subLangs,
-    existingPoster, posterFile, posterPreview, previewSrc,
+    isCreate, loading, saving, uploading, isValid,
+
+    values, setFieldValue,
+    title: values.title,
+    synopsis: values.synopsis,
+    yearDate: values.yearDate,
+    durationTime: values.durationTime,
+    ratingId: values.ratingId,
+    genreIds: values.genreIds,
+    directorIds: values.directorIds,
+    formatIds: values.formatIds,
+    originalLangs: values.originalLangs,
+    dubLangs: values.dubLangs,
+    subLangs: values.subLangs,
+    existingPoster: values.existingPoster,
+    posterFile: values.posterFile,
+    posterPreview, previewSrc,
     fieldErrors, touched, detail, catalogs,
-    setYearDate, setDurationTime, setRatingId,
-    setGenreIds, setDirectorIds, setFormatIds,
-    setOriginalLangs, setDubLangs, setSubLangs, setPosterFile,
-    setTitle, setSynopsis,
-    validateAndSet, snapshot,
-    touchAndValidate,
+
+    setDubLangs: (val: Language[]) => setFieldValue('dubLangs', val),
+    setSubLangs: (val: Language[]) => setFieldValue('subLangs', val),
+
     handleTitleChange, handleSynopsisChange, handleBlur,
     handleYearChange, handleDurationChange, handleRatingChange,
     handleGenresChange, handleDirectorsChange, handleFormatsChange,
