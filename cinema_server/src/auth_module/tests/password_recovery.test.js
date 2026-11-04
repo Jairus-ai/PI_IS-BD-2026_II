@@ -52,13 +52,14 @@ function recoveryAccount() {
   };
 }
 
-function recoveryCode(hash, isExpired = 0) {
+function recoveryCode(hash, isExpired = 0, attempts = 0) {
   return {
     rows: [
       {
         ID_CODE: 1,
         HASH: hash,
         IS_EXPIRED: isExpired,
+        ATTEMPTS: attempts,
       },
     ],
   };
@@ -154,6 +155,86 @@ describe('POST /auth/password-recovery/request', () => {
       'No existe una cuenta registrada con este correo'
     );
   });
+
+  test('Resets recovery code attempts when a new code is generated', async () => {
+    const connection =
+      mockDatabaseConnection(async (sql) => {
+        if (
+          sql.includes(
+            'FROM PI_DEVELOPERS.CLIENTS'
+          )
+        ) {
+          return {
+            rows: [
+              {
+                ID: 7,
+                ROLE: ROLES.CLIENT,
+                EMAIL:
+                  'adrian.prueba@ucr.ac.cr',
+                FIRST_NAME: 'Adrián',
+              },
+            ],
+          };
+        }
+
+        if (
+          sql.includes(
+            'SELECT ID_CODE'
+          ) &&
+          sql.includes(
+            'FROM PI_DEVELOPERS.CODES'
+          )
+        ) {
+          return {
+            rows: [
+              {
+                ID_CODE: 10,
+              },
+            ],
+          };
+        }
+
+        if (
+          sql.includes(
+            'UPDATE PI_DEVELOPERS.CODES'
+          )
+        ) {
+          return {
+            rowsAffected: 1,
+          };
+        }
+
+        return { rows: [] };
+      });
+
+    connection.commit =
+      jest.fn().mockResolvedValue();
+
+    await request(app)
+      .post('/auth/password-recovery/request')
+      .send({
+        email:
+          'adrian.prueba@ucr.ac.cr',
+      })
+      .expect(200);
+
+    const codeUpdate =
+      connection.execute.mock.calls.find(
+        ([sql]) =>
+          sql.includes(
+            'UPDATE PI_DEVELOPERS.CODES'
+          )
+      );
+
+    expect(codeUpdate).toBeDefined();
+
+    expect(codeUpdate[0]).toMatch(
+      /ATTEMPTS = 0/
+    );
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('POST /auth/password-recovery/verify', () => {
@@ -185,27 +266,43 @@ describe('POST /auth/password-recovery/verify', () => {
   test('Returns 400 when the recovery code is incorrect', async () => {
     const codeHash = bcrypt.hashSync(CODE, 4);
 
-    mockDatabaseConnection(async (sql) => {
-        if (sql.includes('FROM PI_DEVELOPERS.CLIENTS')) {
+    const connection = mockDatabaseConnection(async (sql) => {
+      if (sql.includes('FROM PI_DEVELOPERS.CLIENTS')) {
         return recoveryAccount();
-        }
+      }
 
-        if (sql.includes('FROM PI_DEVELOPERS.CODES')) {
+      if (sql.includes('FROM PI_DEVELOPERS.CODES')) {
         return recoveryCode(codeHash);
-        }
+      }
 
-        return { rows: [] };
+      if (
+        sql.includes('UPDATE PI_DEVELOPERS.CODES') &&
+        sql.includes('ATTEMPTS = ATTEMPTS + 1')
+      ) {
+        return {
+          rowsAffected: 1,
+        };
+      }
+
+      return { rows: [] };
     });
+
+    connection.commit =
+      jest.fn().mockResolvedValue();
 
     const response = await request(app)
-        .post('/auth/password-recovery/verify')
-        .send(recoveryVerificationBody('111111'));
+      .post('/auth/password-recovery/verify')
+      .send(recoveryVerificationBody('111111'));
 
     expect(response.status).toBe(400);
+
     expect(response.body.errors.code).toBe(
-        'El código de verificación es incorrecto'
+      'El código de verificación es incorrecto'
     );
-    });
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+  });
 
   test('Returns 400 when the recovery code is expired', async () => {
     const codeHash = bcrypt.hashSync(CODE, 4);
@@ -230,6 +327,164 @@ describe('POST /auth/password-recovery/verify', () => {
     expect(response.body.errors.code).toBe(
         'El código de verificación ha expirado'
     );
+  });
+
+  test('Increments recovery code attempts when the code is incorrect', async () => {
+    const validCode = '123456';
+    const codeHash = await bcrypt.hash(validCode, 4);
+
+    const connection = mockDatabaseConnection(async (sql) => {
+      if (sql.includes('FROM PI_DEVELOPERS.CLIENTS')) {
+        return {
+          rows: [
+            {
+              ID: 7,
+              ROLE: ROLES.CLIENT,
+              EMAIL: 'adrian.prueba@ucr.ac.cr',
+            },
+          ],
+        };
+      }
+
+      if (sql.includes('FROM PI_DEVELOPERS.CODES')) {
+        return {
+          rows: [
+            {
+              ID_CODE: 10,
+              HASH: codeHash,
+              LAST_GENERATED_DATE: new Date(),
+              ATTEMPTS: 0,
+              IS_EXPIRED: 0,
+            },
+          ],
+        };
+      }
+
+      if (
+        sql.includes('UPDATE PI_DEVELOPERS.CODES') &&
+        sql.includes('ATTEMPTS = ATTEMPTS + 1')
+      ) {
+        return {
+          rowsAffected: 1,
+        };
+      }
+
+      return { rows: [] };
+    });
+
+    connection.commit =
+      jest.fn().mockResolvedValue();
+
+    const response = await request(app)
+      .post('/auth/password-recovery/verify')
+      .send({
+        email: 'adrian.prueba@ucr.ac.cr',
+        code: '999999',
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      errors: {
+        code:
+          'El código de verificación es incorrecto',
+      },
+    });
+
+    const attemptsUpdate =
+      connection.execute.mock.calls.find(
+        ([sql]) =>
+          sql.includes(
+            'ATTEMPTS = ATTEMPTS + 1'
+          )
+      );
+
+    expect(attemptsUpdate).toBeDefined();
+
+    expect(attemptsUpdate[1]).toEqual({
+      idCode: 10,
+    });
+
+    expect(connection.commit)
+      .toHaveBeenCalledTimes(1);
+  });
+
+  test('Blocks recovery code after maximum attempts', async () => {
+    const codeHash = await bcrypt.hash(
+      '123456',
+      4
+    );
+
+    const connection =
+      mockDatabaseConnection(async (sql) => {
+        if (
+          sql.includes(
+            'FROM PI_DEVELOPERS.CLIENTS'
+          )
+        ) {
+          return {
+            rows: [
+              {
+                ID: 7,
+                ROLE: ROLES.CLIENT,
+                EMAIL:
+                  'adrian.prueba@ucr.ac.cr',
+              },
+            ],
+          };
+        }
+
+        if (
+          sql.includes(
+            'FROM PI_DEVELOPERS.CODES'
+          )
+        ) {
+          return {
+            rows: [
+              {
+                ID_CODE: 10,
+                HASH: codeHash,
+                LAST_GENERATED_DATE:
+                  new Date(),
+                ATTEMPTS: 5,
+                IS_EXPIRED: 0,
+              },
+            ],
+          };
+        }
+
+        return { rows: [] };
+      });
+
+    connection.commit = jest.fn();
+
+    const response = await request(app)
+      .post('/auth/password-recovery/verify')
+      .send({
+        email:
+          'adrian.prueba@ucr.ac.cr',
+        code: '123456',
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      errors: {
+        code:
+          'Se alcanzó el límite de intentos. Solicita un nuevo código.',
+      },
+    });
+
+    const attemptsUpdate =
+      connection.execute.mock.calls.find(
+        ([sql]) =>
+          sql.includes(
+            'ATTEMPTS = ATTEMPTS + 1'
+          )
+      );
+
+    expect(attemptsUpdate).toBeUndefined();
+
+    expect(connection.commit)
+      .not.toHaveBeenCalled();
   });
 });
 
