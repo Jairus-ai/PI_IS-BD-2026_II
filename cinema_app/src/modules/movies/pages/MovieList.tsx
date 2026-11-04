@@ -1,69 +1,34 @@
 import * as React from 'react';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import type { GridColDef } from '@mui/x-data-grid';
+import Stack from '@mui/material/Stack';
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridColDef,
+  gridClasses,
+} from '@mui/x-data-grid';
+import { useNavigate } from 'react-router';
 import { useMovies } from '../hooks/useMovies';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
+import PageContainer from '../../../components/common/PageContainer';
 import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
-import MovieFormDialog from '../components/MovieFormDialog';
-import { Actions } from '../../../components/crud/Actions';
-import { FilterField } from '../../../components/crud/FilterField';
-import { CrudPage } from '../../../components/crud/CrudPage';
-
-const emptyFilters = {
-  name: '',
-  genreId: '',
-  languageCode: '',
-  ratingId: '',
-  audiovisualFormatId: '',
-};
 
 export default function MovieList() {
-  const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
-  const serverPage = paginationModel.page + 1;
-
-  const [filters, setFilters] = React.useState(emptyFilters);
-  const [selectedId, setSelectedId] = React.useState<number | null>(null);
-  const [formMovieId, setFormMovieId] = React.useState<number | null>(null);
-  const [formOpen, setFormOpen] = React.useState(false);
-
+  const navigate = useNavigate();
   const dialogs = useDialogs();
   const notifications = useNotifications();
 
-  const {
-    movies,
-    totalMovies,
-    isLoadingMovies,
-    moviesError,
-    deleteMovie,
-    genres,
-    languages,
-    ratings,
-    formats,
-  } = useMovies(serverPage, null, filters);
+  const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+  const serverPage = paginationModel.page + 1;
 
-  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value } = event.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }
+  const [selectedId, setSelectedId] = React.useState<number | null>(null);
 
-  function clearFilters() {
-    setFilters(emptyFilters);
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }
-
-  const openCreate = () => {
-    setFormMovieId(null);
-    setFormOpen(true);
-  };
-
-  const openEdit = (id: number) => {
-    setFormMovieId(id);
-    setFormOpen(true);
-  };
+  // TODO(Jesus): Uncomment delete and refetch once implemented.
+  const { movies, totalMovies, isLoadingMovies, moviesError, /* deleteMovie, refetchMovies */ } = useMovies(serverPage);
 
   const handleRowDelete = React.useCallback(
     (movie: Movie) => async () => {
@@ -79,23 +44,23 @@ export default function MovieList() {
 
       if (confirmed) {
         try {
-          await deleteMovie({ id: movie.ID_MOVIE });
+          // await deleteMovie(movie.ID_MOVIE);
           notifications.show('Película eliminada correctamente.', {
             severity: 'success',
-            autoHideDuration: 5000,
+            autoHideDuration: 3000,
           });
         } catch (error) {
           notifications.show(
             `Error al eliminar la película: ${(error as Error).message}`,
             {
               severity: 'error',
-              autoHideDuration: 5000,
+              autoHideDuration: 3000,
             },
           );
         }
       }
     },
-    [dialogs, deleteMovie, notifications],
+    [dialogs, /* deleteMovie, */ notifications],
   );
 
   const columns = React.useMemo<GridColDef[]>(
@@ -111,15 +76,13 @@ export default function MovieList() {
         headerName: 'Género',
         width: 200,
         valueGetter: (value, row: Movie) =>
-          Array.isArray(row.GENRES)
-            ? row.GENRES.join(', ')
-            : value || 'N/A',
+          Array.isArray(row.GENRES) ? row.GENRES.join(', ') : value || 'N/A',
       },
       {
         field: 'PUBLISHING_YEAR',
         headerName: 'Año de Publicación',
         width: 160,
-        valueFormatter: (value: number) => `${value ?? ''}`,
+        type: 'number',
       },
       {
         field: 'actions',
@@ -128,101 +91,84 @@ export default function MovieList() {
         flex: 1,
         minWidth: 220,
         align: 'right',
-        getActions: Actions({
-          onShow: (movie: any) => setSelectedId(movie.ID_MOVIE),
-          onEdit: (movie: any) => openEdit(movie.ID_MOVIE),
-          onDelete: (movie: any) => handleRowDelete(movie),
-        }),
+        getActions: ({ row }: { row: Movie }) => [
+          <GridActionsCellItem
+            key="show"
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'primary.main' }}>Mostrar</Box>}
+            label="Mostrar"
+            onClick={() => setSelectedId(row.ID_MOVIE)}
+            showInMenu={false}
+          />,
+          <GridActionsCellItem
+            key="edit"
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'secondary.main' }}>Editar</Box>}
+            label="Editar"
+            onClick={() => navigate(`/movies/${row.ID_MOVIE}/edit`)}
+            showInMenu={false}
+          />,
+          <GridActionsCellItem
+            key="delete"
+            icon={<Box component="span" sx={{ fontWeight: 500, color: 'error.main' }}>Eliminar</Box>}
+            label="Eliminar"
+            onClick={handleRowDelete(row)}
+            showInMenu={false}
+          />,
+        ],
       },
     ],
-    [handleRowDelete],
+    [navigate, handleRowDelete],
   );
 
   return (
-    <CrudPage
+    <PageContainer
       title="Películas"
-      createLabel="Crear Película"
-      onCreate={openCreate}
-      error={moviesError}
-      rows={movies}
-      rowCount={totalMovies}
-      getRowId={(row: Movie) => row.ID_MOVIE}
-      columns={columns}
-      loading={isLoadingMovies}
-      paginationModel={paginationModel}
-      onPaginationModelChange={setPaginationModel}
-      filters={
-        <>
-          <TextField
-            label="Buscar por nombre"
-            name="name"
-            value={filters.name}
-            onChange={handleChange}
-            size="small"
-          />
-          <FilterField
-            label="Género"
-            name="genreId"
-            value={filters.genreId}
-            onChange={handleChange}
-            itemList={genres}
-            getValue={(genre: any) => genre.ID_GENRE}
-            getLabel={(genre: any) => genre.GENRE_NAME}
-          />
-          <FilterField
-            label="Idioma"
-            name="languageCode"
-            value={filters.languageCode}
-            onChange={handleChange}
-            itemList={languages}
-            getValue={(language: any) => language.ISO_CODE}
-            getLabel={(language: any) => language.LANGUAGE_NAME}
-          />
-          <FilterField
-            label="Formato audiovisual"
-            name="audiovisualFormatId"
-            value={filters.audiovisualFormatId}
-            onChange={handleChange}
-            itemList={formats}
-            getValue={(format: any) => format.ID_AUDIOVISUAL_FORMAT}
-            getLabel={(format: any) => `${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`}
-            minWidth={220}
-          />
-          <FilterField
-            label="Clasificación"
-            name="ratingId"
-            value={filters.ratingId}
-            onChange={handleChange}
-            itemList={ratings}
-            getValue={(rating: any) => rating.ID_RATING}
-            getLabel={(rating: any) => rating.RATING_NAME}
-          />
-          <Button
-            variant="outlined"
-            onClick={clearFilters}
-            sx={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}
-          >
-            Limpiar filtros
+      breadcrumbs={[{ title: 'Películas' }]}
+      actions={
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Button variant="outlined" size="small" /* onClick={() => refetchMovies()} */>
+            Recargar
           </Button>
-        </>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/movies/new')}
+          >
+            Crear Película
+          </Button>
+        </Stack>
       }
-      dialogs={
-        <>
-          <MovieDetailDialog
-            movieId={selectedId}
-            open={selectedId !== null}
-            onClose={() => setSelectedId(null)}
-          />
-          <MovieFormDialog
-            movieId={formMovieId}
-            open={formOpen}
-            onClose={() => {
-              setFormOpen(false);
-              setFormMovieId(null);
+    >
+      <Box sx={{ flex: 1, width: '100%' }}>
+        {moviesError ? (
+          <Box sx={{ flexGrow: 1 }}>
+            <Alert severity="error">{(moviesError as Error).message}</Alert>
+          </Box>
+        ) : (
+          <DataGrid
+            rows={movies}
+            rowCount={totalMovies}
+            getRowId={(row: Movie) => row.ID_MOVIE}
+            columns={columns}
+            loading={isLoadingMovies}
+            paginationMode="server"
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10]}
+            disableRowSelectionOnClick
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
+              [`& .${gridClasses.columnHeader}`]: {
+                bgcolor: 'background.default',
+              },
+              [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
+                outline: 'transparent',
+              },
             }}
           />
-        </>
-      }
-    />
+        )}
+        <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
+      </Box>
+    </PageContainer>
   );
 }

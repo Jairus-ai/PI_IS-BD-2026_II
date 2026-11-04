@@ -266,13 +266,15 @@ export default function ClientSignUp() {
         </Stack>
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <FormField label="Tipo de identificación" name="identificationType" select required {...fieldProps}>
-            {IDENTIFICATION_TYPES.map((type) => (
-              <MenuItem key={type.value} value={type.value}>
-                {type.label}
-              </MenuItem>
-            ))}
-          </FormField>
+          <Box sx={{ minWidth: { sm: 170 } }}>
+            <FormField label="Tipo de identificación" name="identificationType" select required {...fieldProps}>
+              {IDENTIFICATION_TYPES.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
+                </MenuItem>
+              ))}
+            </FormField>
+          </Box>
           <FormField label="Número de identificación" name="identificationNumber" required {...fieldProps} />
         </Stack>
 

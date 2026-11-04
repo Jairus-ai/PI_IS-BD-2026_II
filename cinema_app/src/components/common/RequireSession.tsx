@@ -1,23 +1,9 @@
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import useSession from '../../hooks/useSession';
-import useNotifications from '../../hooks/useNotifications';
 import type { Role } from '../../context/SessionContext';
-
-const FORBIDDEN_MESSAGE = 'No tienes permisos para acceder a esta página';
-
-function ForbiddenRedirect() {
-  const notifications = useNotifications();
-
-  useEffect(() => {
-    // The key avoids a duplicated notification when the effect runs twice
-    notifications.show(FORBIDDEN_MESSAGE, { key: 'forbidden-page', severity: 'error', autoHideDuration: 3000 });
-  }, [notifications]);
-
-  return <Navigate to="/" replace />;
-}
 
 type RequireSessionProps = {
   allowedRoles?: Role[];
@@ -41,7 +27,7 @@ export default function RequireSession({ allowedRoles, children }: Readonly<Requ
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <ForbiddenRedirect />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

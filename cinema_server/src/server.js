@@ -10,9 +10,7 @@ import genreRoutes from './movie_module/routes/genre_routes.js';
 import languageRoutes from './movie_module/routes/language_routes.js';
 import ratingRoutes from './movie_module/routes/rating_routes.js';
 import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_routes.js';
-import directorRoutes from './movie_module/routes/director_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
-import feeRoutes from './fee_module/routes/fee_routes.js';
 import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
@@ -33,14 +31,6 @@ app.use(cookieParser());
 
 // Route for poster images
 app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters')));
-app.use('/posters', (req, res, next) => {
-  next({
-    status: 404,
-    code: 'NOT_FOUND',
-    message: 'El póster solicitado no existe.',
-    path: req.originalUrl,
-  });
-});
 
 //Mount routes in the app
 app.use('/auth', authRoutes);
@@ -50,20 +40,13 @@ app.use('/management/genres', genreRoutes);
 app.use('/management/languages', languageRoutes);
 app.use('/management/ratings', ratingRoutes);
 app.use('/management/audiovisual_format', audiovisualFormatRoutes);
-app.use('/management/directors', directorRoutes);
 app.use('/management/discounts', discountRoutes);
-app.use('/management/fees', feeRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
 
-// Route not found
+// Router not found
 app.use((req, res, next) => {
-  next({
-    status: 404,
-    code: 'NOT_FOUND',
-    message: 'La ruta solicitada no existe.',
-    path: req.originalUrl,
-  });
+  next({ status: 404, code: 'NOT_FOUND', message: 'La ruta solicitada no existe.' });
 });
 
 // Error handler

@@ -1,25 +1,32 @@
-const makeValidator = (source, target, code, message) => (schema) => (req, res, next) => {
-  const result = schema.safeParse(req[source]);
+export const validateQuery = (schema) => (req, res, next) => {
+  const result = schema.safeParse(req.query);
 
   if (!result.success) {
     return next({
       status: 400,
-      code,
-      message,
+      code: 'INVALID_QUERY_PARAMS',
+      message: 'Los parámetros de búsqueda no son válidos.',
       details: result.error.issues,
     });
   }
 
-  if (source === 'params') {
-    for (const k of Object.keys(req.params)) delete req.params[k];
-    Object.assign(req.params, result.data);
-  }
-  req[target] = result.data;
+  req.validatedQuery = result.data;
   next();
 };
 
-export const validateQuery = makeValidator('query', 'validatedQuery', 'INVALID_QUERY_PARAMS', 'Los parámetros de búsqueda no son validos.');
+export const validateParams = (schema) => (req, res, next) => {
+  const result = schema.safeParse(req.params);
 
-export const validateParams = makeValidator('params', 'validatedParams', 'INVALID_PATH_PARAMS', 'El ID no es valido.');
+  if (!result.success) {
+    return next({
+      status: 400,
+      code: 'INVALID_PATH_PARAMS',
+      message: 'El ID no es válido.',
+      details: result.error.issues,
+    });
+  }
 
-export const validateBody = makeValidator('body', 'validatedBody', 'INVALID_BODY', 'Los datos de la película no son validos.');
+  for (const k of Object.keys(req.params)) delete req.params[k];
+  Object.assign(req.params, result.data);
+  next();
+};
