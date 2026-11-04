@@ -1,10 +1,14 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useMemo, useRef, useState, type ChangeEvent } from 'react';
 import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import { CrudPage } from '../../../components/crud/CrudPage';
 import { Actions } from '../../../components/crud/Actions';
 import { FilterField } from '../../../components/crud/FilterField';
-import { useFees } from '../hooks/useFees';
+import { useDeactivateFee, useFees } from '../hooks/useFees';
+import { useDialogs } from '../../../hooks/useDialogs';
+import useNotifications from '../../../hooks/useNotifications';
 import FeeDetailDialog from '../components/FeeDetailDialog';
 import FeeFormDialog from '../components/FeeFormDialog';
 import { FEE_TYPE_LABELS, formatFeeAmount, type Fee, type FeeType } from '../types/fees';
@@ -13,6 +17,8 @@ const PAGE_SIZE = 10;
 const NO_FEES_MESSAGE = 'No hay tarifas registradas.';
 const NO_FILTER_RESULTS_MESSAGE = 'No se encontraron tarifas con ese filtro';
 const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las tarifas.';
+const DEACTIVATED_MESSAGE = 'Tarifa desactivada';
+const DEACTIVATE_ERROR_MESSAGE = 'No se pudo desactivar la tarifa. Intenta de nuevo.';
 
 const FEE_TYPES = Object.entries(FEE_TYPE_LABELS).map(([type, label]) => ({ type, label }));
 
@@ -42,6 +48,10 @@ function getAudiovisualFormats(fees: Fee[]) {
 
 export default function FeeList() {
   const { fees, isLoadingFees, feesError, refetchFees } = useFees();
+  const { deactivateFee } = useDeactivateFee();
+  const dialogs = useDialogs();
+  const notifications = useNotifications();
+  const deactivatingFeeIds = useRef(new Set<number>());
   const [filters, setFilters] = useState<FeeFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
@@ -93,7 +103,7 @@ export default function FeeList() {
       getActions: Actions({
         onShow: (fee: Fee) => setSelectedFee(fee),
         onEdit: (fee: Fee) => openForm(fee),
-        onDelete: () => undefined
+        onDelete: (fee: Fee) => void handleDeactivate(fee)
       })
     }
   ];
@@ -102,6 +112,34 @@ export default function FeeList() {
     const { name, value } = event.target;
     setFilters((previousFilters) => ({ ...previousFilters, [name]: value }));
     setPaginationModel(FIRST_PAGE);
+  };
+
+  const handleDeactivate = async (fee: Fee) => {
+    if (deactivatingFeeIds.current.has(fee.ID_FEE)) {
+      return;
+    }
+    const confirmed = await dialogs.confirm(
+      <Stack spacing={1}>
+        <Typography>¿Desea desactivar esta tarifa? Dejará de estar disponible para nuevas compras.</Typography>
+        <Typography><strong>Tipo:</strong> {FEE_TYPE_LABELS[fee.TYPE]}</Typography>
+        <Typography><strong>Formato:</strong> {fee.AUDIOVISUAL_FORMAT_NAME}</Typography>
+        <Typography><strong>Monto:</strong> {formatFeeAmount(fee.AMOUNT)}</Typography>
+      </Stack>,
+      { title: 'Desactivar tarifa', severity: 'error', okText: 'Desactivar tarifa', cancelText: 'Cancelar' }
+    );
+    if (!confirmed || deactivatingFeeIds.current.has(fee.ID_FEE)) {
+      return;
+    }
+
+    deactivatingFeeIds.current.add(fee.ID_FEE);
+    try {
+      await deactivateFee(fee.ID_FEE);
+      notifications.show(DEACTIVATED_MESSAGE, { severity: 'success', autoHideDuration: 3000 });
+    } catch {
+      notifications.show(DEACTIVATE_ERROR_MESSAGE, { severity: 'error', autoHideDuration: 5000 });
+    } finally {
+      deactivatingFeeIds.current.delete(fee.ID_FEE);
+    }
   };
 
   const openForm = (fee: Fee | null) => {

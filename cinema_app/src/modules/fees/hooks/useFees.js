@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { addFee, getAudiovisualFormats, getFees, updateFee } from '../services/feeService';
+import { addFee, deactivateFee, getAudiovisualFormats, getFees, updateFee } from '../services/feeService';
 
 export const FEES_QUERY_KEY = ['fees'];
 const FEE_FORMATS_QUERY_KEY = ['fee-audiovisual-formats'];
@@ -55,5 +55,17 @@ export const useUpdateFee = () => {
   return {
     updateFee: mutation.mutateAsync,
     isUpdatingFee: mutation.isPending
+  };
+};
+
+export const useDeactivateFee = () => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: deactivateFee,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: FEES_QUERY_KEY })
+  });
+
+  return {
+    deactivateFee: mutation.mutateAsync
   };
 };
