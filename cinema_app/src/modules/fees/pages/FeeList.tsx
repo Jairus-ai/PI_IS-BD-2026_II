@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { type SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import { DataGrid, GridActionsCellItem, gridClasses, type GridColDef } from '@mui/x-data-grid';
+import { DataGrid, gridClasses, type GridColDef } from '@mui/x-data-grid';
 import { esES } from '@mui/x-data-grid/locales';
 import PageContainer from '../../../components/common/PageContainer';
 import { useFees } from '../hooks/useFees';

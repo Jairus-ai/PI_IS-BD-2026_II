@@ -11,9 +11,8 @@ import type {
   Rating
 } from '../types/movies';
 import { posterUrl, readServerErrors } from '../utils/movieFormUtils';
-import { validateAll } from '../utils/movieFormValidation';
+import { validateAll, MovieFormValues } from '../utils/movieFormValidation';
 import type { ServerErrors } from '../utils/movieFormUtils';
-import { MovieFormValues } from '../utils/movieFormValidation';
 import { mapDetailToFormValues } from '../utils/movieFormHydration';
 import { buildMoviePayload } from '../utils/moviePayloadBuilder';
 

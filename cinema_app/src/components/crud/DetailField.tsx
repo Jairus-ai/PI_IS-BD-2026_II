@@ -13,8 +13,8 @@ function splitList(
 
 interface DetailFieldProps {
   readonly label: string,
-  readonly value?: string | number | undefined | null,
-  readonly list?: any | undefined,
+  readonly value?: string | number | null,
+  readonly list?: any,
 }
 
 export function DetailField({
