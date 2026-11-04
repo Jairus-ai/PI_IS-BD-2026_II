@@ -59,6 +59,43 @@ function sessionCookie(token) {
   return `${SESSION_COOKIE_NAME}=${token}`;
 }
 
+function temporaryCredentialRow(
+  hash,
+  expiration = new Date(
+    Date.now() + 24 * 60 * 60 * 1000
+  )
+) {
+  return {
+    HASH: hash,
+    SESSION_VERSION: 0,
+    IS_TEMPORARY_PASSWORD: 1,
+    TEMPORARY_PASSWORD_EXPIRATION: expiration,
+  };
+}
+
+function temporarySessionToken() {
+  return createSessionToken({
+    id: 7,
+    role: ROLES.CLIENT,
+    sessionVersion: 0,
+    requiresPasswordChange: true,
+  });
+}
+
+function temporaryPasswordChangeBody() {
+  return {
+    newPassword: 'NewPassword123!',
+    confirmPassword: 'NewPassword123!',
+  };
+}
+
+function temporaryAccountRow(expiration) {
+  return accountRow({
+    IS_TEMPORARY_PASSWORD: 1,
+    TEMPORARY_PASSWORD_EXPIRATION: expiration,
+  });
+}
+
 afterEach(() => {
   jest.restoreAllMocks();
 });
@@ -147,11 +184,11 @@ describe('POST /auth/login', () => {
   test('Log in with temporary password requires password change', async () => {
     mockDatabaseConnection(async () => ({
       rows: [
-        accountRow({
-          IS_TEMPORARY_PASSWORD: 1,
-          TEMPORARY_PASSWORD_EXPIRATION:
-            new Date(Date.now() + 24 * 60 * 60 * 1000)
-        })
+        temporaryAccountRow(
+          new Date(
+            Date.now() + 24 * 60 * 60 * 1000
+          )
+        )
       ]
     }));
 
@@ -180,11 +217,11 @@ describe('POST /auth/login', () => {
   test('Log in 401 when temporary password is expired', async () => {
     mockDatabaseConnection(async () => ({
       rows: [
-        accountRow({
-          IS_TEMPORARY_PASSWORD: 1,
-          TEMPORARY_PASSWORD_EXPIRATION:
-            new Date(Date.now() - 24 * 60 * 60 * 1000)
-        })
+        temporaryAccountRow(
+          new Date(
+            Date.now() - 24 * 60 * 60 * 1000
+          )
+        )
       ]
     }));
 
@@ -274,12 +311,7 @@ describe('GET /auth/me', () => {
       rows: [[0]]
     }));
 
-    const temporaryToken = createSessionToken({
-      id: 7,
-      role: ROLES.CLIENT,
-      sessionVersion: 0,
-      requiresPasswordChange: true
-    });
+    const temporaryToken = temporarySessionToken();
 
     const response = await request(app)
       .get('/auth/me')
@@ -510,13 +542,9 @@ describe('PATCH /auth/change-password', () => {
       ) {
         return {
           rows: [
-            {
-              HASH: temporaryHash,
-              SESSION_VERSION: 0,
-              IS_TEMPORARY_PASSWORD: 1,
-              TEMPORARY_PASSWORD_EXPIRATION:
-                new Date(Date.now() + 24 * 60 * 60 * 1000)
-            }
+            temporaryCredentialRow(
+              temporaryHash
+            )
           ]
         };
       }
@@ -535,12 +563,7 @@ describe('PATCH /auth/change-password', () => {
 
     connection.commit = jest.fn().mockResolvedValue();
 
-    const temporaryToken = createSessionToken({
-      id: 7,
-      role: ROLES.CLIENT,
-      sessionVersion: 0,
-      requiresPasswordChange: true
-    });
+    const temporaryToken = temporarySessionToken();
 
     const response = await request(app)
       .patch('/auth/change-password')
@@ -548,11 +571,7 @@ describe('PATCH /auth/change-password', () => {
         'Cookie',
         sessionCookie(temporaryToken)
       )
-      .send({
-        currentPassword: 'TemporaryPassword123!',
-        newPassword: 'NewPassword123!',
-        confirmPassword: 'NewPassword123!'
-      })
+      .send(temporaryPasswordChangeBody())
       .expect(200);
 
     expect(response.body).toEqual({
@@ -603,13 +622,9 @@ describe('PATCH /auth/change-password', () => {
       ) {
         return {
           rows: [
-            {
-              HASH: temporaryHash,
-              SESSION_VERSION: 0,
-              IS_TEMPORARY_PASSWORD: 1,
-              TEMPORARY_PASSWORD_EXPIRATION:
-                new Date(Date.now() + 24 * 60 * 60 * 1000)
-            }
+            temporaryCredentialRow(
+              temporaryHash
+            )
           ]
         };
       }
@@ -639,12 +654,7 @@ describe('PATCH /auth/change-password', () => {
 
     connection.commit = jest.fn().mockResolvedValue();
 
-    const temporaryToken = createSessionToken({
-      id: 7,
-      role: ROLES.CLIENT,
-      sessionVersion: 0,
-      requiresPasswordChange: true
-    });
+    const temporaryToken = temporarySessionToken();
 
     await request(app)
       .patch('/auth/change-password')
@@ -652,11 +662,7 @@ describe('PATCH /auth/change-password', () => {
         'Cookie',
         sessionCookie(temporaryToken)
       )
-      .send({
-        currentPassword: 'TemporaryPassword123!',
-        newPassword: 'NewPassword123!',
-        confirmPassword: 'NewPassword123!'
-      })
+      .send(temporaryPasswordChangeBody())
       .expect(200);
 
     expect(mockSendPasswordChangedEmail)
@@ -669,6 +675,8 @@ describe('PATCH /auth/change-password', () => {
   });
 
   test('Allows temporary session to establish password without current password', async () => {
+    
+    const temporaryHash = await bcrypt.hash('TemporaryPassword123!', 10);
     const connection = mockDatabaseConnection(async (sql) => {
       // requireSession()
       if (sql.includes('SELECT SESSION_VERSION')) {
@@ -679,15 +687,10 @@ describe('PATCH /auth/change-password', () => {
       if (sql.includes('SELECT HASH, SESSION_VERSION')) {
         return {
           rows: [
-            {
-              HASH: 'temporary-hash',
-              SESSION_VERSION: 0,
-              IS_TEMPORARY_PASSWORD: 1,
-              TEMPORARY_PASSWORD_EXPIRATION: new Date(
-                Date.now() + 24 * 60 * 60 * 1000
-              ),
-            },
-          ],
+            temporaryCredentialRow(
+              temporaryHash
+            )
+          ]
         };
       }
 
@@ -701,20 +704,12 @@ describe('PATCH /auth/change-password', () => {
 
     connection.commit = jest.fn().mockResolvedValue();
 
-    const token = createSessionToken({
-      id: 7,
-      role: ROLES.CLIENT,
-      sessionVersion: 0,
-      requiresPasswordChange: true,
-    });
+    const token = temporarySessionToken();
 
     const response = await request(app)
       .patch('/auth/change-password')
       .set('Cookie', sessionCookie(token))
-      .send({
-        newPassword: 'NewPassword123!',
-        confirmPassword: 'NewPassword123!',
-      })
+      .send(temporaryPasswordChangeBody())
       .expect(200);
 
     expect(response.body).toEqual({
