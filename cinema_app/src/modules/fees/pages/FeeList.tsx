@@ -6,6 +6,7 @@ import { Actions } from '../../../components/crud/Actions';
 import { FilterField } from '../../../components/crud/FilterField';
 import { useFees } from '../hooks/useFees';
 import FeeDetailDialog from '../components/FeeDetailDialog';
+import FeeFormDialog from '../components/FeeFormDialog';
 import { FEE_TYPE_LABELS, formatFeeAmount, type Fee, type FeeType } from '../types/fees';
 
 const PAGE_SIZE = 10;
@@ -44,6 +45,11 @@ export default function FeeList() {
   const [filters, setFilters] = useState<FeeFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
+  const [feeForm, setFeeForm] = useState<{ open: boolean; fee: Fee | null; key: number }>({
+    open: false,
+    fee: null,
+    key: 0
+  });
 
   const filteredFees = useMemo(() => fees.filter((fee: Fee) => matchesFilters(fee, filters)), [fees, filters]);
   const audiovisualFormats = useMemo(() => getAudiovisualFormats(fees), [fees]);
@@ -86,7 +92,7 @@ export default function FeeList() {
       minWidth: 300,
       getActions: Actions({
         onShow: (fee: Fee) => setSelectedFee(fee),
-        onEdit: () => undefined,
+        onEdit: (fee: Fee) => openForm(fee),
         onDelete: () => undefined
       })
     }
@@ -98,6 +104,14 @@ export default function FeeList() {
     setPaginationModel(FIRST_PAGE);
   };
 
+  const openForm = (fee: Fee | null) => {
+    setFeeForm((previousForm) => ({ open: true, fee, key: previousForm.key + 1 }));
+  };
+
+  const closeForm = () => {
+    setFeeForm((previousForm) => ({ ...previousForm, open: false }));
+  };
+
   const clearFilters = () => {
     setFilters(EMPTY_FILTERS);
     setPaginationModel(FIRST_PAGE);
@@ -107,7 +121,7 @@ export default function FeeList() {
     <CrudPage
       title="Tarifas"
       createLabel="Crear tarifa"
-      onCreate={() => undefined}
+      onCreate={() => openForm(null)}
       error={feesError}
       errorMessage={LOAD_ERROR_MESSAGE}
       onRetry={() => void refetchFees()}
@@ -150,7 +164,12 @@ export default function FeeList() {
           </Button>
         </>
       }
-      dialogs={<FeeDetailDialog fee={selectedFee} onClose={() => setSelectedFee(null)} />}
+      dialogs={
+        <>
+          <FeeDetailDialog fee={selectedFee} onClose={() => setSelectedFee(null)} />
+          <FeeFormDialog key={feeForm.key} open={feeForm.open} fee={feeForm.fee} onClose={closeForm} />
+        </>
+      }
     />
   );
 }

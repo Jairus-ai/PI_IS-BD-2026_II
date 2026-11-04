@@ -17,6 +17,7 @@ const MOCK_FEES = [
 ];
 
 const app = express();
+app.use(express.json());
 app.use(cookieParser());
 app.use('/management/fees', feeRoutes);
 app.use((error, req, res, next) => {
@@ -117,5 +118,210 @@ describe('GET /management/fees', () => {
       .get('/management/fees')
       .set('Cookie', sessionCookie(ROLES.CLIENT))
       .expect(403);
+  });
+});
+
+describe('POST /management/fees', () => {
+  const VALID_FEE = { type: 'G', formatId: 3, amount: '4500.50' };
+  const FORMAT_ROW = { rows: [{ AUDIOVISUAL_FORMAT_NAME: 'IMAX 3D + Dolby Atmos' }] };
+
+  function postFee(body, role = ROLES.ADMINISTRATOR) {
+    return request(app)
+      .post('/management/fees')
+      .set('Cookie', sessionCookie(role))
+      .send(body);
+  }
+
+  function mockInsert(connection, feeId = 25) {
+    connection.execute.mockResolvedValueOnce({ outBinds: { feeId: [feeId] } });
+    connection.commit = jest.fn().mockResolvedValue();
+  }
+
+  test('Creates a fee and returns 201', async () => {
+    const connection = mockDatabase(FORMAT_ROW, { rows: [] });
+    mockInsert(connection);
+
+    const response = await postFee(VALID_FEE).expect(201);
+
+    expect(response.body.data).toEqual({
+      ID_FEE: 25,
+      TYPE: 'G',
+      AMOUNT: 4500.5,
+      ID_AUDIOVISUAL_FORMAT: 3,
+      AUDIOVISUAL_FORMAT_NAME: 'IMAX 3D + Dolby Atmos'
+    });
+    const [sql, binds] = connection.execute.mock.calls[3];
+    expect(sql).toMatch(/INSERT INTO PI_DEVELOPERS\.FEES/);
+    expect(binds).toMatchObject({ type: 'G', amount: 4500.5, formatId: 3 });
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 400 with "Campo obligatorio" for every empty field', async () => {
+    const connection = mockDatabase();
+
+    const response = await postFee({ type: '', formatId: '', amount: '' }).expect(400);
+
+    expect(response.body.errors).toEqual({
+      type: 'Campo obligatorio',
+      formatId: 'Campo obligatorio',
+      amount: 'Campo obligatorio'
+    });
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(['0', '-100', 'abc'])('Returns 400 when the amount is %s', async (amount) => {
+    mockDatabase();
+
+    const response = await postFee({ ...VALID_FEE, amount }).expect(400);
+
+    expect(response.body.errors.amount).toBe('El monto debe ser un número mayor que cero');
+  });
+
+  test('Returns 400 when the amount has more than 2 decimals', async () => {
+    mockDatabase();
+
+    const response = await postFee({ ...VALID_FEE, amount: '10.555' }).expect(400);
+
+    expect(response.body.errors.amount).toBe('El monto puede tener como máximo 2 decimales');
+  });
+
+  test('Returns 400 when the type is not valid', async () => {
+    mockDatabase();
+
+    const response = await postFee({ ...VALID_FEE, type: 'X' }).expect(400);
+
+    expect(response.body.errors.type).toBe('Seleccione un tipo de tarifa válido');
+  });
+
+  test('Returns 400 when the audiovisual format does not exist', async () => {
+    mockDatabase({ rows: [] });
+
+    const response = await postFee(VALID_FEE).expect(400);
+
+    expect(response.body.errors.formatId).toBe('El formato audiovisual seleccionado no existe');
+  });
+
+  test('Returns 409 when an active fee with the same type and format exists', async () => {
+    const connection = mockDatabase(FORMAT_ROW, { rows: [{ ID_FEE: 4 }] });
+
+    const response = await postFee(VALID_FEE).expect(409);
+
+    expect(response.body.message).toBe('Ya existe una tarifa General activa para IMAX 3D + Dolby Atmos');
+    expect(connection.execute).toHaveBeenCalledTimes(3);
+  });
+
+  test('Returns 409 when the unique index rejects a concurrent duplicate', async () => {
+    const uniqueError = Object.assign(new Error('ORA-00001: unique constraint violated'), { errorNum: 1 });
+    mockDatabase(FORMAT_ROW, { rows: [] }, uniqueError);
+
+    const response = await postFee(VALID_FEE).expect(409);
+
+    expect(response.body.message).toBe('Ya existe una tarifa General activa para IMAX 3D + Dolby Atmos');
+  });
+
+  test('Returns 500 when the insert fails', async () => {
+    const connection = mockDatabase(FORMAT_ROW, { rows: [] }, new Error('ORA-12345: insert failed'));
+    const response = await postFee(VALID_FEE).expect(500);
+
+    expect(response.body.message).toMatch(/ORA-12345/);
+    expect(connection.close).toHaveBeenCalledTimes(2);
+  });
+
+  test('Rejects an employee with 403', async () => {
+    const connection = mockDatabase();
+
+    await postFee(VALID_FEE, ROLES.EMPLOYEE).expect(403);
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PUT /management/fees/:id', () => {
+  const UPDATED_FEE = { type: 'N', formatId: 3, amount: '3800' };
+  const EXISTING_FEE = { rows: [{ ID_FEE: 7 }] };
+  const FORMAT_ROW = { rows: [{ AUDIOVISUAL_FORMAT_NAME: 'IMAX 3D + Dolby Atmos' }] };
+
+  function putFee(id, body, role = ROLES.ADMINISTRATOR) {
+    return request(app)
+      .put(`/management/fees/${id}`)
+      .set('Cookie', sessionCookie(role))
+      .send(body);
+  }
+
+  test('Updates a fee and returns 200', async () => {
+    const connection = mockDatabase(EXISTING_FEE, FORMAT_ROW, { rows: [] }, { rowsAffected: 1 });
+    connection.commit = jest.fn().mockResolvedValue();
+    const response = await putFee(7, UPDATED_FEE).expect(200);
+
+    expect(response.body.data).toEqual({
+      ID_FEE: 7,
+      TYPE: 'N',
+      AMOUNT: 3800,
+      ID_AUDIOVISUAL_FORMAT: 3,
+      AUDIOVISUAL_FORMAT_NAME: 'IMAX 3D + Dolby Atmos'
+    });
+    const [duplicateSql, duplicateBinds] = connection.execute.mock.calls[3];
+    expect(duplicateSql).toMatch(/ID_FEE <> :excludeFeeId/);
+    expect(duplicateBinds).toEqual({ type: 'N', formatId: 3, excludeFeeId: 7 });
+    const [updateSql, updateBinds] = connection.execute.mock.calls[4];
+    expect(updateSql).toMatch(/UPDATE PI_DEVELOPERS\.FEES/);
+    expect(updateBinds).toEqual({ type: 'N', amount: 3800, formatId: 3, feeId: 7 });
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 400 with "Campo obligatorio" for every empty field', async () => {
+    const connection = mockDatabase();
+    const response = await putFee(7, { type: '', formatId: '', amount: '' }).expect(400);
+
+    expect(response.body.errors).toEqual({
+      type: 'Campo obligatorio',
+      formatId: 'Campo obligatorio',
+      amount: 'Campo obligatorio'
+    });
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 400 when the amount is not greater than zero', async () => {
+    mockDatabase();
+    const response = await putFee(7, { ...UPDATED_FEE, amount: '0' }).expect(400);
+
+    expect(response.body.errors.amount).toBe('El monto debe ser un número mayor que cero');
+  });
+
+  test('Returns 404 when the fee does not exist or is deactivated', async () => {
+    const connection = mockDatabase({ rows: [] });
+    const response = await putFee(99, UPDATED_FEE).expect(404);
+
+    expect(response.body.message).toBe('No se encontró la tarifa');
+    expect(connection.execute).toHaveBeenCalledTimes(2);
+  });
+
+  test('Returns 404 for an invalid fee id', async () => {
+    const connection = mockDatabase();
+    await putFee('abc', UPDATED_FEE).expect(404);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 409 when another active fee has the same type and format', async () => {
+    const connection = mockDatabase(EXISTING_FEE, FORMAT_ROW, { rows: [{ ID_FEE: 8 }] });
+    const response = await putFee(7, UPDATED_FEE).expect(409);
+
+    expect(response.body.message).toBe('Ya existe una tarifa Niño activa para IMAX 3D + Dolby Atmos');
+    expect(connection.execute).toHaveBeenCalledTimes(4);
+  });
+
+  test('Returns 409 when the unique index rejects a concurrent duplicate', async () => {
+    const uniqueError = Object.assign(new Error('ORA-00001: unique constraint violated'), { errorNum: 1 });
+    mockDatabase(EXISTING_FEE, FORMAT_ROW, { rows: [] }, uniqueError);
+    const response = await putFee(7, UPDATED_FEE).expect(409);
+
+    expect(response.body.message).toBe('Ya existe una tarifa Niño activa para IMAX 3D + Dolby Atmos');
+  });
+
+  test('Rejects an employee with 403', async () => {
+    const connection = mockDatabase();
+    await putFee(7, UPDATED_FEE, ROLES.EMPLOYEE).expect(403);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
   });
 });
