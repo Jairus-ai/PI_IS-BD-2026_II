@@ -51,6 +51,7 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
           value={form.title}
           onChange={form.handleTitleChange}
           onBlur={form.handleBlur('MOVIE_TITLE')}
+          slotProps={{ htmlInput: { maxLength: 101 } }}
           error={err('MOVIE_TITLE')}
           helperText={
             <FieldError
@@ -67,6 +68,7 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
           value={form.synopsis}
           onChange={form.handleSynopsisChange}
           onBlur={form.handleBlur('SYNOPSIS')}
+          slotProps={{ htmlInput: { maxLength: 1001 } }}
           error={err('SYNOPSIS')}
           helperText={
             <FieldError

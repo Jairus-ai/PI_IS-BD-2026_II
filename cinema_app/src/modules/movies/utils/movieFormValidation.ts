@@ -24,9 +24,11 @@ export function validateAll(
 ): ServerErrors {
   const errors: ServerErrors = {};
   if (!values.title.trim()) errors.MOVIE_TITLE = 'Campo obligatorio';
+  if (values.title.trim().length > 100) errors.MOVIE_TITLE = 'El título no puede exceder 100 caracteres.';
   if (!values.yearDate?.isValid()) errors.PUBLISHING_YEAR = 'Seleccione el año';
   if (!values.durationTime?.isValid()) errors.MOVIE_DURATION = 'Seleccione la duración';
   if (!values.synopsis.trim()) errors.SYNOPSIS = 'Campo obligatorio';
+  if (values.synopsis.trim().length > 1000) errors.SYNOPSIS = 'La sinopsis no puede exceder los 1000 caracteres.';
   if (values.ratingId === '') errors.ID_RATING = 'Campo obligatorio';
   if (values.genreIds.length === 0) errors.GENRE_IDS = 'Seleccione al menos un género';
   if (values.directorIds.length === 0) errors.DIRECTOR_IDS = 'Seleccione al menos un director';
