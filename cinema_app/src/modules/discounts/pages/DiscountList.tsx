@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -19,6 +20,11 @@ import DiscountCreate from '../components/DiscountCreate';
 import {deleteDiscount} from '../services/discountService';
 import DiscountEdit from '../components/DiscountEdit';
 import { Actions } from '../../../components/crud/Actions';
+import TextField from '@mui/material/TextField';
+
+interface DiscountFilters {
+  name: string;
+}
 
 export default function DiscountList() {
   const navigate = useNavigate();
@@ -78,6 +84,29 @@ export default function DiscountList() {
     setModifyOpen(false);
   }
 
+  const [filters, setFilters] = useState<DiscountFilters>({
+    name: ''
+  });
+
+  function handleChange(event:any) {
+    const { name, value } = event.target;
+
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      [name]: value,
+    }));
+  }
+
+  const filteredDiscounts = React.useMemo(() => {
+  if (!Array.isArray(discounts?.data)) return []; 
+
+  return discounts.data.filter((discount: Discount) =>
+    discount.DISCOUNT_NAME
+      ?.toLowerCase()
+      .includes(filters.name.toLowerCase())
+  );
+}, [discounts?.data, filters.name]);
+
   const columns = React.useMemo<GridColDef[]>(
     () => [
       {
@@ -134,14 +163,21 @@ export default function DiscountList() {
         </Stack>
       }
     >
-      <Box sx={{ flex: 1, width: '100%' }}>
+      <Box sx={{ flex: 1, width: '100%', marginLeft:'5px'}}>
+        <TextField
+          label="Buscar por nombre"
+          name="name"
+          value={filters.name}
+          onChange={handleChange}
+          size="small"
+         />
         {discountsError ? (
           <Box sx={{ flexGrow: 1 }}>
             <Alert severity="error">{(discountsError as Error).message}</Alert>
           </Box>
         ) : (
           <DataGrid
-            rows={Array.isArray(discounts?.data) ? discounts.data : []}
+            rows={filteredDiscounts}
             getRowId={(row: Discount) => row.ID_DISCOUNT}
             columns={columns}
             loading={isLoadingDiscounts}
@@ -153,6 +189,7 @@ export default function DiscountList() {
               [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
                 outline: 'transparent',
               },
+              marginTop:'15px',
             }}
           />
         )}
