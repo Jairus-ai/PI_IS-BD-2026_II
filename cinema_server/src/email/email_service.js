@@ -99,6 +99,26 @@ async function sendPasswordChangedEmail({ email }) {
   });
 }
 
+async function sendQREmail({email, pdfBuffer, filename = 'entradas.pdf'})
+{
+  const transporter = await getTransporter();
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM ?? DEFAULT_SENDER,
+    to: email,
+    subject: 'Entradas',
+    text:
+      'Adjuntamos los códigos QR de tus entradas.',
+    attachments: [
+      {
+        filename,
+        content: pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ],
+  });
+};
+
 async function sendTemporaryPasswordEmail({
   email,
   firstName,
@@ -130,7 +150,8 @@ const emailService = {
   sendWelcomeEmail,
   sendPasswordRecoveryEmail,
   sendPasswordChangedEmail,
-  sendTemporaryPasswordEmail
+  sendQREmail,
+  sendTemporaryPasswordEmail,
 };
 
 export default emailService;
