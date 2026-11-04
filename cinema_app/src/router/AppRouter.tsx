@@ -38,11 +38,7 @@ const router = createHashRouter([
         path:'/seats/:screeningId',
         Component: ShowSeats,
       }
-    ]
-  },
-  {
-  path: '/password-recovery',
-    Component: PasswordRecovery,
+    ],
   },
   {
     element: (
