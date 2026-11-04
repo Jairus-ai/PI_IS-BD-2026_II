@@ -18,6 +18,7 @@ import type { AudiovisualFormat, Director, Genre, Language, Rating } from '../ty
 import { firstError } from '../utils/movieFormUtils';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import type { MovieForm } from '../hooks/useMovieForm';
+import dayjs from 'dayjs';
 
 interface FieldErrorProps {
   readonly show: boolean;
@@ -90,6 +91,8 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
               openTo="year"
               value={form.yearDate}
               onChange={form.handleYearChange}
+              minDate={dayjs('1888-01-01')}
+              maxDate={dayjs('2026-12-31')}
               onClose={form.handleBlur('PUBLISHING_YEAR')}
               slotProps={{
                 textField: {
@@ -112,6 +115,7 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
               ampm={false}
               value={form.durationTime}
               onChange={form.handleDurationChange}
+              timeSteps={{ minutes: 1 }}
               onClose={form.handleBlur('MOVIE_DURATION')}
               slotProps={{
                 textField: {

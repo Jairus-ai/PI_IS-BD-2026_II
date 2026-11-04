@@ -27,9 +27,18 @@ export function FilterField({
         name={name}
         value={value}
         onChange={onChange}
+        MenuProps={{
+          slotProps: {
+            paper: {
+              sx: {
+                maxHeight: 280,
+              },
+            },
+          },
+        }}
       >
         <MenuItem value="">
-          Ningún {label} seleccionado
+          Sin selección
         </MenuItem>
 
         {itemList.map((item) => (
