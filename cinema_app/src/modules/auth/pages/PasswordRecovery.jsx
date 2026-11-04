@@ -190,7 +190,7 @@ export default function PasswordRecovery() {
 
       const currentUser = await getCurrentUser();
 
-      startSession(currentUser);
+      startSession(currentUser.data);
 
       notifications.show(response.message, {
         severity: 'success',
