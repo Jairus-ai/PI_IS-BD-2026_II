@@ -24,7 +24,7 @@ type RequireSessionProps = {
   children: ReactNode;
 };
 
-export default function RequireSession({ allowedRoles, children }: Readonly<RequireSessionProps>) {
+export function RequireSession({ allowedRoles, children }: Readonly<RequireSessionProps>) {
   const { user, isCheckingSession } = useSession();
   const location = useLocation();
 
@@ -56,3 +56,17 @@ export default function RequireSession({ allowedRoles, children }: Readonly<Requ
 
   return children;
 }
+
+export function CheckUserSession(allowedRoles?: readonly Role[]): boolean {
+  const { user, isCheckingSession } = useSession();
+
+    if (isCheckingSession || !user) {
+        return false;
+    }
+
+    if (!allowedRoles) {
+        return true;
+    }
+
+    return allowedRoles.includes(user.role);
+};
