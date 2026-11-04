@@ -1,5 +1,3 @@
-import { useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
-import { Link as RouterLink, Navigate, useLocation } from 'react-router';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
@@ -9,6 +7,9 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { isAxiosError } from 'axios';
 
+
+import { useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
+import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router';
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
@@ -53,6 +54,7 @@ export default function LogIn() {
 
   const [values, setValues] = useState<LogInFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<LogInFormErrors>({});
+  const navigate = useNavigate();
 
   if (user) {
     
@@ -111,6 +113,28 @@ export default function LogIn() {
   };
 
   const handleLogInError = (error: Error) => {
+    if (
+      isAxiosError(error) &&
+      error.response?.data?.code ===
+        'TEMPORARY_PASSWORD_EXPIRED'
+    ) {
+      notifications.show(
+        error.response.data.message,
+        {
+          severity: 'warning',
+          autoHideDuration: 5000,
+        }
+      );
+
+      navigate('/password-recovery', {
+        state: {
+          email: values.email,
+        },
+      });
+
+      return;
+    }
+
     if (isAxiosError<LogInErrorResponse>(error) && error.response?.data?.errors) {
       setErrors(error.response.data.errors);
       return;

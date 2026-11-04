@@ -40,6 +40,16 @@ export default function RequireSession({ allowedRoles, children }: Readonly<Requ
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
+   if (user.requiresPasswordChange) {
+    return (
+      <Navigate
+        to="/password-recovery"
+        replace
+        state={{ establishPassword: true }}
+      />
+    );
+  }
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <ForbiddenRedirect />;
   }
