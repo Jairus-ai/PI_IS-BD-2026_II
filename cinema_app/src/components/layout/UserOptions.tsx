@@ -10,6 +10,7 @@ import Button from '@mui/material/Button';
 import { Link } from 'react-router';
 import HistoryIcon from '@mui/icons-material/History';   
 import LogOutButton from '../common/LogOutButton';
+import { ROLES } from '../../context/SessionContext';
 
 interface UserOptionsProps {
   readonly anchorEl: HTMLElement | null;
@@ -56,15 +57,17 @@ export default function UserOptions({ anchorEl, onClose }: UserOptionsProps) {
           Mi perfil
         </Button>
 
-        <Button
-          component={Link}
-          to="/settings"
-          startIcon={<HistoryIcon />}
-          onClick={onClose}
-          sx={{ justifyContent: 'flex-start' }}
-        >
-          Historial de compras
-        </Button>
+        {user?.role === ROLES.CLIENT && (
+          <Button
+            component={Link}
+            to="/purchase-history"
+            startIcon={<HistoryIcon />}
+            onClick={onClose}
+            sx={{ justifyContent: 'flex-start' }}
+          >
+            Historial de pagos
+          </Button>
+        )}
 
         <LogOutButton sx={{ justifyContent: 'flex-start' }} />
 

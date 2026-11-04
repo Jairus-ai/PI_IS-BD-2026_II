@@ -13,12 +13,14 @@ import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_ro
 import directorRoutes from './movie_module/routes/director_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
 import feeRoutes from './fee_module/routes/fee_routes.js';
+import purchaseRoutes from './purchase_module/routes/purchase_routes.js';
 import billboardRoutes from './billboard_module/routes/billboard_routes.js';
 import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
+import seatsRoutes from './seats_module/routes/seats_routes.js';
 
 dotenv.config();
 
@@ -38,6 +40,7 @@ app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters'
 //Mount routes in the app
 app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
+app.use('/purchases', purchaseRoutes);
 app.use('/billboard', billboardRoutes);
 app.use('/management/movies', movieRoutes);
 app.use('/management/genres', genreRoutes);
@@ -49,6 +52,7 @@ app.use('/management/discounts', discountRoutes);
 app.use('/management/fees', feeRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
+app.use('/seats', seatsRoutes);
 
 // Router not found
 app.use((req, res, next) => {
