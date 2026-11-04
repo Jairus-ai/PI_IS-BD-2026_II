@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormGroup from '@mui/material/FormGroup';
 import Grid from '@mui/material/Grid';
-import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { Dayjs } from 'dayjs';
@@ -16,6 +15,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useDiscountProducts } from '../hooks/useDiscounts';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import DialogActions from '@mui/material/DialogActions';
 
 export interface DiscountFormState {
   values: Partial<Omit<Discount, 'id'>>;
@@ -225,20 +225,23 @@ export default function DiscountForm(props:DiscountFormProps) {
           </Grid>
         </Grid>
       </FormGroup>
-      <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-        <Button
-          variant="contained" onClick={props.onCancel} disabled={isSubmitting}>
-          Volver
-        </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          size="large"
-          loading={isSubmitting}
-        >
-          {submitButtonLabel}
-        </Button>
-      </Stack>
+
+
+      <DialogActions>
+        <>
+          <Button
+            onClick={props.onCancel} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+          >
+            {submitButtonLabel}
+          </Button>
+        </>
+      </DialogActions>
     </Box>
   );
 }

@@ -2,119 +2,159 @@ import * as React from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
-import Typography from '@mui/material/Typography';
-import { getDiscountsByID} from '../services/discountService';
-import type { Discount } from '../types/discounts';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
+import { getDiscountsByID } from '../services/discountService';
+import type {Discount} from '../types/discounts';
 
-interface Props {
-  readonly discountId: number | null;
-  readonly onClose: () => void;
+function DetailItem({ label, value }: Readonly<{ label: string; value: React.ReactNode }>) {
+  return (
+    <Box>
+      <Typography variant="body2" sx={{ color: 'primary.dark' }}>
+        {label}
+      </Typography>
+
+      <Typography variant="body1">{value || '-'}</Typography>
+    </Box>
+  );
 }
 
-export default function DiscountShow({ discountId, onClose }: Props) {
+export default function DiscountShow({
+  discountId,
+  onClose,
+}: Readonly<{
+  discountId: number | string | null | undefined;
+  onClose: () => void;
+}>) {
   const [discount, setDiscount] = React.useState<Discount | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
 
   const loadData = React.useCallback(async () => {
+    if (!discountId) {
+      setDiscount(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     setError(null);
     setIsLoading(true);
 
     try {
-      const showData = await getDiscountsByID(Number(discountId));
-      setDiscount(showData.data[0]);
+      const response = await getDiscountsByID(Number(discountId));
+      setDiscount(Array.isArray(response?.data) ? response.data[0] ?? null : null);
     } catch (showDataError) {
-      setError(showDataError as Error);
+      setError(
+        showDataError instanceof Error ? showDataError : new Error(String(showDataError)),
+      );
+      setDiscount(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [discountId]);
 
   React.useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  const renderShow = React.useMemo(() => {
-    if (isLoading) {
-      return (
-        <Box
+  return (
+    <Dialog
+      open={discountId !== null && discountId !== undefined}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          color: 'primary.dark',
+          fontWeight: 700,
+          position: 'relative',
+          pr: 6,
+        }}
+      >
+        {discount?.DISCOUNT_NAME ?? 'Descuento'}
+
+        <IconButton
+          onClick={onClose}
+          aria-label="Cerrar"
           sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: 'text.secondary',
           }}
         >
-          <CircularProgress />
-        </Box>
-      );
-    }
-    if (error) {
-      return (
-        <Box sx={{ flexGrow: 1 }}>
-          <Alert severity="error">{error.message}</Alert>
-        </Box>
-      );
-    }
-    return discount ? (
-    <Dialog open={discountId !== null} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2, display:'flex', alignItems:'center' } } }}>
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700}}>{discount.DISCOUNT_NAME}</DialogTitle>
-      <DialogContent>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
         {isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
             <CircularProgress />
           </Box>
         )}
-        {discount && (
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            <div>
-              <Typography sx={{ color: 'primary.dark' }}>Nombre</Typography>
-              <Typography>{discount.DISCOUNT_NAME}</Typography>
-            </div>
-            <div>
-              <Typography sx={{ color: 'primary.dark' }}>Porcentaje</Typography>
-              <Typography>{discount.DISCOUNT_PORCENTAGE}%</Typography>
-            </div>
-            <div style = {{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-              <div>
-                <Typography sx={{ color: 'primary.dark' }}>Fecha de inicio</Typography>
-                <Typography>{discount.DISCOUNT_START_DATE}</Typography>
-              </div>
-              <div>
-                <Typography sx={{ color: 'primary.dark' }}>Fecha de finalización</Typography>
-                <Typography>{discount.DISCOUNT_FINISH_DATE}</Typography>
-              </div>
-            </div>
-            <div>
-                <Typography sx={{ color: 'primary.dark' }}>Tipo de descuento</Typography>
-                <Typography>{discount.TYPE}: {discount.NAME_FK_PRODUCT}</Typography>
-              </div>
-          </Box>
+
+        {error && <Alert severity="error">{error.message}</Alert>}
+
+        {!isLoading && !error && !discount && (
+          <Alert severity="info">No se encontró información del descuento.</Alert>
+        )}
+
+        {!isLoading && !error && discount && (
+          <Stack spacing={2}>
+            <DetailItem label="Nombre" value={discount.DISCOUNT_NAME} />
+            <DetailItem label="Porcentaje" value={`${discount.DISCOUNT_PORCENTAGE}%`} />
+
+            <Stack direction="row" spacing={4} sx={{ flexWrap: 'wrap' }}>
+              <DetailItem label="Fecha de inicio" value={discount.DISCOUNT_START_DATE} />
+              <DetailItem label="Fecha de finalización" value={discount.DISCOUNT_FINISH_DATE} />
+            </Stack>
+
+            <Box>
+              <Typography variant="body2" sx={{ color: 'primary.dark' }}>
+                Tipo de descuento
+              </Typography>
+
+              <Box>
+                <Chip label={discount.TYPE} color="primary" variant="outlined" />
+              </Box>
+            </Box>
+
+            <DetailItem label="Producto" value={discount.NAME_FK_PRODUCT} />
+          </Stack>
         )}
       </DialogContent>
+
       <DialogActions>
         <Button
+          variant="outlined"
           onClick={onClose}
-          sx={{ border: '1px solid', borderColor: 'primary.main', width:'25rem' }}
+          sx={{
+            fontSize: '14px',
+            borderRadius: '8px',
+          }}
         >
           Cerrar
         </Button>
       </DialogActions>
     </Dialog>
-    ) : null;
-  }, [
-    isLoading,
-    error,
-    discount,
-  ]);
-  
-  return (
-    <Box>{renderShow}</Box>
   );
 }
