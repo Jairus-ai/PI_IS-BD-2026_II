@@ -1,8 +1,8 @@
+import * as React from 'react';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import { useMovies } from '../hooks/useMovies';
 import { API_BASE_URL } from '../../../services/api';
@@ -29,7 +29,7 @@ function posterSrc(poster: string | null): string | undefined {
 export default function MovieDetailDialog({
   movieId,
   open,
-  onClose
+  onClose,
 }: {
   readonly movieId: number | null;
   readonly open: boolean;
@@ -37,7 +37,7 @@ export default function MovieDetailDialog({
 }) {
   const { movieDetail, isLoadingDetail } = useMovies(1, movieId as any);
   const movie = movieDetail as MovieDetail | null;
-  const title = isLoadingDetail ? 'Cargando…' : 'Película';
+  const title = movie?.MOVIE_TITLE ?? (isLoadingDetail ? 'Cargando…' : 'Película');
 
   return (
     <CrudDialog
@@ -45,55 +45,43 @@ export default function MovieDetailDialog({
       title={title}
       onClose={onClose}
       loading={isLoadingDetail}
-      actions={
-        <>
-          <Button onClick={onClose}>
-            Cerrar
-          </Button>
-        </>
-      }
+      actions={<Button onClick={onClose}>Cerrar</Button>}
     >
-      {isLoadingDetail ?
-        <Box
-          sx={{
-            display:'flex',
-            justifyContent:'center'
-            ,p:4
-        }}>
-          <CircularProgress color="primary" />
-        </Box>
-      : !movie ? (movieId != null ?
-        <Alert severity="warning">
-          Sin datos.
-        </Alert> : null)
-      : (
+      {!movie && movieId != null && (
+        <Alert severity="warning">Sin datos.</Alert>
+      )}
+
+      {movie && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <Box sx={{ width: { sm: 240 }, flexShrink: 0 }}>
-            {posterSrc(movie.POSTER)
-              ? <Box
-                  component="img"
-                  src={posterSrc(movie.POSTER)}
-                  alt={movie.MOVIE_TITLE}
-                  sx={{
-                    width: '100%',
-                    borderRadius: 1,
-                    objectFit: 'cover' }}
-                  />
-              : <Box
-                  sx={{
-                    width:'100%',
-                    height: 320,
-                    bgcolor:'background.default',
-                    borderRadius:1,
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center'
-                  }}>
-                  <Typography color="text.secondary">
-                    Sin póster
-                  </Typography>
-                </Box>}
+            {posterSrc(movie.POSTER) ? (
+              <Box
+                component="img"
+                src={posterSrc(movie.POSTER)}
+                alt={movie.MOVIE_TITLE}
+                sx={{
+                  width: '100%',
+                  borderRadius: 1,
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 320,
+                  bgcolor: 'background.default',
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography color="text.secondary">Sin póster</Typography>
+              </Box>
+            )}
           </Box>
+
           <Stack spacing={1.5} sx={{ flex: 1 }}>
             <DetailField
               label="Clasificación"
@@ -106,11 +94,6 @@ export default function MovieDetailDialog({
             <DetailField
               label="Sinopsis"
               value={movie.SYNOPSIS}
-            />
-
-            <DetailField
-              label="Géneros"
-              list={movie.GENRES}
             />
             <DetailField
               label="Géneros"

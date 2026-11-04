@@ -20,7 +20,7 @@ export interface MovieFormValues {
 
 export function validateAll(
   values: MovieFormValues,
-  isCreate: Boolean
+  isCreate: boolean
 ): ServerErrors {
   const errors: ServerErrors = {};
   if (!values.title.trim()) errors.MOVIE_TITLE = 'Campo obligatorio';
