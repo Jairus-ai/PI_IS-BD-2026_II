@@ -667,4 +667,79 @@ describe('PATCH /auth/change-password', () => {
         email: 'adrian.prueba@ucr.ac.cr'
       });
   });
+
+  test('Allows temporary session to establish password without current password', async () => {
+    const connection = mockDatabaseConnection(async (sql) => {
+      // requireSession()
+      if (sql.includes('SELECT SESSION_VERSION')) {
+        return { rows: [[0]] };
+      }
+
+      // getCredential()
+      if (sql.includes('SELECT HASH, SESSION_VERSION')) {
+        return {
+          rows: [
+            {
+              HASH: 'temporary-hash',
+              SESSION_VERSION: 0,
+              IS_TEMPORARY_PASSWORD: 1,
+              TEMPORARY_PASSWORD_EXPIRATION: new Date(
+                Date.now() + 24 * 60 * 60 * 1000
+              ),
+            },
+          ],
+        };
+      }
+
+      // updatePasswordAndSessionVersion()
+      if (sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')) {
+        return { rowsAffected: 1 };
+      }
+
+      return { rows: [] };
+    });
+
+    connection.commit = jest.fn().mockResolvedValue();
+
+    const token = createSessionToken({
+      id: 7,
+      role: ROLES.CLIENT,
+      sessionVersion: 0,
+      requiresPasswordChange: true,
+    });
+
+    const response = await request(app)
+      .patch('/auth/change-password')
+      .set('Cookie', sessionCookie(token))
+      .send({
+        newPassword: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!',
+      })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      message: 'La contraseña ha sido cambiada correctamente',
+    });
+
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+
+    const updateCall = connection.execute.mock.calls.find(
+      ([sql]) =>
+        sql.includes('UPDATE PI_DEVELOPERS.CREDENTIALS')
+    );
+
+    expect(updateCall).toBeDefined();
+
+    expect(updateCall[0]).toMatch(
+      /IS_TEMPORARY_PASSWORD = 0/
+    );
+
+    expect(updateCall[0]).toMatch(
+      /TEMPORARY_PASSWORD_EXPIRATION = NULL/
+    );
+
+    expect(response.headers['set-cookie'].join(';')).toMatch(
+      /session_token=/
+    );
+  });
 });

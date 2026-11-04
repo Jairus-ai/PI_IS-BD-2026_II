@@ -272,6 +272,21 @@ export const changePassword = async (req, res, next) => {
       }
     }
 
+    const isSamePassword = await bcrypt.compare(
+        newPassword,
+        credential.HASH
+      );
+
+      if (isSamePassword) {
+        return res.status(400).json({
+          errors: {
+            newPassword:
+              'La nueva contraseña debe ser diferente a la contraseña actual'
+          }
+        });
+      }
+    
+
     const passwordHash = await bcrypt.hash(
       newPassword,
       HASH_SALT_ROUNDS
