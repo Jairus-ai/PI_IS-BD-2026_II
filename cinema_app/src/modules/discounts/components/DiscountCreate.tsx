@@ -1,13 +1,11 @@
 import * as React from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import type { Discount } from '../types/discounts';
 import { addDiscount } from '../services/discountService';
 import {
   type DiscountFormState,
 } from './DiscountForm';
 import DiscountFormContainer from '../components/DiscountFormContainer'
+import {CrudDialog} from '../../../components/crud/CrudDialog'
 
 type ValidationResult = {
   issues: { message: string; path: (keyof Discount)[] }[];
@@ -61,13 +59,9 @@ export function DiscountDialog({
   onClose: () => void;
 }>) {
   return(
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700 }}>{title}</DialogTitle>
-      <DialogContent sx={{ margin: 0, color: 'GrayText' }}>
-        Los campos marcados con * son obligatorios
-      </DialogContent>
-      <DialogContent>{children}</DialogContent>
-    </Dialog>
+    <CrudDialog title={title} open={open} onClose={onClose}>
+      {children}
+    </CrudDialog>
   );
 }
 
@@ -90,8 +84,8 @@ export default function DiscountCreate({
           initialValues={INITIAL_FORM_VALUES}
           submitAction={(values) => addDiscount(values, values.TYPE)}
           submitLabel="Crear"
-          successMessage="Descuento añadido correctamente."
-          errorMessage="No se pudo añadir el descuento."
+          successMessage="Descuento creado correctamente."
+          errorMessage="No se pudo crear el descuento."
           onSuccess={onCreated}
           onClose={onClose}
         />
