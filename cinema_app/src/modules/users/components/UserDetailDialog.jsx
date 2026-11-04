@@ -123,52 +123,64 @@ export default function UserDetailDialog({
         sx={{ bgcolor: 'background.default' }}
       >
         <Stack spacing={2}>
-          <DetailItem
-            label="Identificación"
-            value={user.IDENTIFICATION_NUMBER}
-          />
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+          >
+            <Box sx={{ flex: 1 }}>
+              <DetailItem
+                label="Identificación"
+                value={user.IDENTIFICATION_NUMBER}
+              />
+            </Box>
+
+            <Box sx={{ flex: 1 }}>
+              <DetailItem
+                label="Teléfono"
+                value={user.PHONE_NUMBER}
+              />
+            </Box>
+          </Stack>
 
           <DetailItem
             label="Correo"
             value={user.EMAIL}
           />
 
-          <DetailItem
-            label="Fecha de nacimiento"
-            value={formatDate(user.BIRTHDATE)}
-          />
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+          >
+            <Box sx={{ flex: 1 }}>
+              <DetailItem
+                label="Fecha de nacimiento"
+                value={formatDate(user.BIRTHDATE)}
+              />
+            </Box>
 
-          <DetailItem
-            label="Teléfono"
-            value={user.PHONE_NUMBER}
-          />
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: 'primary.dark' }}
+              >
+                Rol
+              </Typography>
 
-          <Box>
-            <Typography
-              variant="body2"
-              sx={{ color: 'primary.dark' }}
-            >
-              Rol
-            </Typography>
-
-            <Box>
               <Chip
                 label={formatRole(user.ROLE)}
                 color="primary"
                 variant="outlined"
               />
             </Box>
-          </Box>
 
-          <Box>
-            <Typography
-              variant="body2"
-              sx={{ color: 'primary.dark' }}
-            >
-              Estado
-            </Typography>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: 'primary.dark' }}
+              >
+                Estado
+              </Typography>
 
-            <Box>
               <Chip
                 label={formatStatus(user.STATUS)}
                 color={
@@ -178,7 +190,7 @@ export default function UserDetailDialog({
                 }
               />
             </Box>
-          </Box>
+          </Stack>
 
           {user.ROLE !== 'CLIENT' && (
             <DetailItem
@@ -187,7 +199,7 @@ export default function UserDetailDialog({
             />
           )}
         </Stack>
-      </DialogContent>
+              </DialogContent>
 
       <DialogActions>
         <Button

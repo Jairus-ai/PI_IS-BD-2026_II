@@ -276,60 +276,74 @@ const roleOptions = availableRoles[user?.role] || [];
             size="small"
           />
 
+          {user?.role !== 'EMPLOYEE' && (
+            <>
+              <FilterField
+                label="Rol"
+                name="role"
+                value={filters.role}
+                onChange={handleChange}
+                itemList={roleOptions}
+                getValue={(role) => role.value}
+                getLabel={(role) => role.label}
+                minWidth={170}
+              />
 
-          <FilterField
-            label="Rol"
-            name="role"
-            value={filters.role}
-            onChange={handleChange}
-            itemList={roleOptions}
-            getValue={(role) => role.value}
-            getLabel={(role) => role.label}
-            minWidth={170}
-          />
+              <FormControl
+                size="small"
+                sx={{ minWidth: 170 }}
+              >
+                <InputLabel>Estado</InputLabel>
 
-          <FormControl size="small" sx={{ minWidth: 170 }}>
-            <InputLabel>Estado</InputLabel>
-
-            <Select
-              label="Estado"
-              name="status"
-              value={filters.status}
-              onChange={handleChange}
-            >
-              <MenuItem value="">Todos los estados</MenuItem>
-              <MenuItem value="ACTIVE">Activo</MenuItem>
-              <MenuItem value="INACTIVE">Inactivo</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl
-            size="small"
-            sx={{ minWidth: 220 }}
-            disabled={loadingLocations}
-          >
-            <InputLabel>Sucursal</InputLabel>
-
-            <Select
-              label="Sucursal"
-              name="locationId"
-              value={filters.locationId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todas las sucursales
-              </MenuItem>
-
-              {locations.map((location) => (
-                <MenuItem
-                  key={location.ID_LOCATION}
-                  value={location.ID_LOCATION}
+                <Select
+                  label="Estado"
+                  name="status"
+                  value={filters.status}
+                  onChange={handleChange}
                 >
-                  {location.LOCATION_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                  <MenuItem value="">
+                    Todos los estados
+                  </MenuItem>
+
+                  <MenuItem value="ACTIVE">
+                    Activo
+                  </MenuItem>
+
+                  <MenuItem value="INACTIVE">
+                    Inactivo
+                  </MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl
+                size="small"
+                sx={{ minWidth: 220 }}
+                disabled={loadingLocations}
+              >
+                <InputLabel>Sucursal</InputLabel>
+
+                <Select
+                  label="Sucursal"
+                  name="locationId"
+                  value={filters.locationId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    Todas las sucursales
+                  </MenuItem>
+
+                  {locations.map((location) => (
+                    <MenuItem
+                      key={location.ID_LOCATION}
+                      value={location.ID_LOCATION}
+                    >
+                      {location.LOCATION_NAME}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </>
+          )}
 
           <Button
             variant="outlined"

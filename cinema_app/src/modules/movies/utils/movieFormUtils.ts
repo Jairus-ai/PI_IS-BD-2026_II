@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios';
 import { API_BASE_URL } from '../../../services/api';
 import { LanguageType } from '../types/movies';
 
@@ -6,12 +5,20 @@ const VALID_LANGUAGE_TYPES = ['OG', 'DUB', 'SUB'] as const;
 
 export type ServerErrors = Partial<Record<string, string | string[]>>;
 
-export function readServerErrors(error: unknown): ServerErrors {
-  if (isAxiosError(error)) {
-    const details = error.response?.data?.error?.details as ServerErrors | undefined;
-    return details ?? {};
+export function readServerErrors(error: any): ServerErrors {
+  const responseData = error?.response?.data;
+  const serverErrors: ServerErrors = {};
+
+  if (responseData?.details && Array.isArray(responseData.details)) {
+    for (const detail of responseData.details) {
+      const fieldName = detail.path?.[0];
+      if (fieldName) {
+        serverErrors[fieldName] = detail.message;
+      }
+    }
   }
-  return {};
+
+  return serverErrors;
 }
 
 export function firstError(value: string | string[] | undefined): string {
