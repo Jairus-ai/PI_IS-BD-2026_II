@@ -1,9 +1,10 @@
 import { validatePasswordStrength } from '../../shared/validators/password_validator.js';
-import { isAdult, normalizeUserData, validateUserData} from '../../shared/validators/user_data_validator.js';
+
+import { normalizeUserData, validateUserData} from '../../shared/validators/user_data_validator.js';
+
+export { isAdult, normalizeUserData, validateUserData} from '../../shared/validators/user_data_validator.js';
 
 const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
-
-export { isAdult };
 
 function validatePassword(errors, password, client) {
   if (!password) {

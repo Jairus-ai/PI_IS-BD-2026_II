@@ -96,13 +96,15 @@ export async function createWorkerRecord(connection, worker, roleCode) {
 }
 
 export async function createWorkerLocations(connection, idWorker, locations) {
-  for (const idLocation of locations) {
-    await connection.execute(
-      INSERT_WORKER_LOCATION_SQL,
-      {
-        idWorker,
-        idLocation
-      }
-    );
-  }
+  await Promise.all(
+    locations.map((idLocation) =>
+      connection.execute(
+        INSERT_WORKER_LOCATION_SQL,
+        {
+          idWorker,
+          idLocation
+        }
+      )
+    )
+  );
 }

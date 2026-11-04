@@ -58,7 +58,7 @@ function validateLocations(errors, targetRole, locations) {
   }
 }
 
-export function validateUserRegistration(body = {}, creatorRole) {
+export function validateUserRegistration(creatorRole, body = {}) {
   const user = normalizeUserData(body);
   const errors = validateUserData(user);
 

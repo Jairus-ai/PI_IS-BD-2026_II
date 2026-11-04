@@ -12,13 +12,7 @@ import PasswordField from '../../../components/common/PasswordField';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useNotifications from '../../../hooks/useNotifications';
 import useSession from '../../../hooks/useSession';
-import {
-  establishPassword,
-  requestPasswordRecovery,
-  verifyPasswordRecoveryCode,
-  resetPassword,
-  getCurrentUser
-} from '../services/authService';
+import { establishPassword, requestPasswordRecovery, verifyPasswordRecoveryCode, resetPassword, getCurrentUser} from '../services/authService';
 import {checkPasswordStrength, MINIMUM_PASSWORD_SCORE,} from '../../../shared/validators/passwordValidator';
 
 const PASSWORD_STRENGTH_LABELS = [

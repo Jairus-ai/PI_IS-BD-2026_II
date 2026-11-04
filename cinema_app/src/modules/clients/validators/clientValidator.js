@@ -1,10 +1,10 @@
 import { validateRequiredUserField, validateUserData} from '../../../shared/validators/userDataValidator';
 import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE} from '../../../shared/validators/passwordValidator';
 
-const REQUIRED_PASSWORD_FIELDS = [
+const REQUIRED_PASSWORD_FIELDS = new Set([
   'password',
   'confirmPassword',
-];
+]);
 
 export function validateRequiredField(fieldName, value) {
   const userFieldError = validateRequiredUserField(fieldName, value);
@@ -14,7 +14,7 @@ export function validateRequiredField(fieldName, value) {
   }
 
   if (
-    REQUIRED_PASSWORD_FIELDS.includes(fieldName) &&
+    REQUIRED_PASSWORD_FIELDS.has(fieldName) &&
     !String(value ?? '').trim()
   ) {
     return 'Campo obligatorio';

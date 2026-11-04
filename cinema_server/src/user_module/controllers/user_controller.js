@@ -377,8 +377,8 @@ export const deactivateWorker = async (req, res, next) => {
 
 export const createUser = async (req, res, next) => {
   const {errors, user, role, locations} = validateUserRegistration(
-    req.body,
-    req.user.role
+    req.user.role,
+    req.body
   );
 
   if (Object.keys(errors).length > 0) {
