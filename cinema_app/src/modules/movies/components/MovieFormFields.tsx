@@ -1,4 +1,3 @@
-import * as React from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -39,7 +38,13 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
   const err = (name: string) => form.touched[name] && Boolean((form.fieldErrors as Record<string, unknown>)[name]);
 
   return (
-    <Box component="form" id={formId} onSubmit={form.handleSubmit} noValidate autoComplete="off">
+    <Box
+      component="form"
+      id={formId}
+      onSubmit={form.handleSubmit}
+      noValidate
+      autoComplete="off"
+    >
       <Stack spacing={2}>
         <TextField
           label="Título"
@@ -47,22 +52,34 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
           onChange={form.handleTitleChange}
           onBlur={form.handleBlur('MOVIE_TITLE')}
           error={err('MOVIE_TITLE')}
-          helperText={<FieldError show={err('MOVIE_TITLE')} message={firstError(form.fieldErrors.MOVIE_TITLE)} />}
+          helperText={
+            <FieldError
+              show={err('MOVIE_TITLE')}
+              message={firstError(form.fieldErrors.MOVIE_TITLE)}
+            />
+          }
           fullWidth
           required
         />
+
         <TextField
           label="Sinopsis"
           value={form.synopsis}
           onChange={form.handleSynopsisChange}
           onBlur={form.handleBlur('SYNOPSIS')}
           error={err('SYNOPSIS')}
-          helperText={<FieldError show={err('SYNOPSIS')} message={firstError(form.fieldErrors.SYNOPSIS)} />}
+          helperText={
+            <FieldError
+              show={err('SYNOPSIS')}
+              message={firstError(form.fieldErrors.SYNOPSIS)}
+            />
+          }
           multiline
           rows={3}
           fullWidth
           required
         />
+
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <DatePicker
@@ -77,10 +94,15 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
                   fullWidth: true,
                   required: true,
                   error: err('PUBLISHING_YEAR'),
-                  helperText: <FieldError show={err('PUBLISHING_YEAR')} message={firstError(form.fieldErrors.PUBLISHING_YEAR)} />,
+                  helperText:
+                    <FieldError
+                      show={err('PUBLISHING_YEAR')}
+                      message={firstError(form.fieldErrors.PUBLISHING_YEAR)}
+                    />,
                 },
               }}
             />
+
             <TimePicker
               label="Duración"
               views={['hours', 'minutes']}
@@ -94,91 +116,124 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
                   fullWidth: true,
                   required: true,
                   error: err('MOVIE_DURATION'),
-                  helperText: <FieldError show={err('MOVIE_DURATION')} message={firstError(form.fieldErrors.MOVIE_DURATION)} />,
+                  helperText:
+                    <FieldError
+                      show={err('MOVIE_DURATION')}
+                      message={firstError(form.fieldErrors.MOVIE_DURATION)}
+                    />,
                 },
               }}
             />
           </Stack>
         </LocalizationProvider>
+
         <FormControl fullWidth required error={err('ID_RATING')}>
-          <InputLabel id="movie-rating-label">Clasificación</InputLabel>
+          <InputLabel id="movie-rating-label">
+            Clasificación
+          </InputLabel>
+
           <Select
             labelId="movie-rating-label"
             value={form.ratingId}
             label="Clasificación"
-            onChange={(e) => form.handleRatingChange(e.target.value as number)}
+            onChange={(element) => form.handleRatingChange(element.target.value as number)}
             onBlur={form.handleBlur('ID_RATING')}
           >
-            {(form.catalogs.ratings as Rating[]).map((r) => (
-              <MenuItem key={r.ID_RATING} value={r.ID_RATING}>
-                {r.RATING_CODE} - {r.RATING_NAME}
+            {(form.catalogs.ratings as Rating[]).map((rating) => (
+              <MenuItem
+                key={rating.ID_RATING}
+                value={rating.ID_RATING}
+              >
+                {rating.RATING_CODE} - {rating.RATING_NAME}
               </MenuItem>
             ))}
           </Select>
-          <FormHelperText><FieldError show={err('ID_RATING')} message={firstError(form.fieldErrors.ID_RATING)} /></FormHelperText>
+
+          <FormHelperText>
+            <FieldError
+              show={err('ID_RATING')}
+              message={firstError(form.fieldErrors.ID_RATING)}
+            />
+          </FormHelperText>
         </FormControl>
+
         <Autocomplete
           multiple
           options={form.catalogs.genres as Genre[]}
           value={form.genreIds}
-          onChange={(_, v) => form.handleGenresChange(v)}
+          onChange={(_, event) => form.handleGenresChange(event)}
           onBlur={form.handleBlur('GENRE_IDS')}
-          getOptionLabel={(g) => g.GENRE_NAME}
-          isOptionEqualToValue={(a, b) => a.ID_GENRE === b.ID_GENRE}
+          getOptionLabel={(genre) => genre.GENRE_NAME}
+          isOptionEqualToValue={(valueA, valueB) => valueA.ID_GENRE === valueB.ID_GENRE}
           renderInput={(params) => (
             <TextField
               {...params}
               label="Géneros"
               required
               error={err('GENRE_IDS')}
-              helperText={<FieldError show={err('GENRE_IDS')} message={firstError(form.fieldErrors.GENRE_IDS)} />}
+              helperText={
+                <FieldError
+                  show={err('GENRE_IDS')}
+                  message={firstError(form.fieldErrors.GENRE_IDS)}
+                />}
             />
           )}
         />
+
         <Autocomplete
           multiple
           options={form.catalogs.directors as Director[]}
           value={form.directorIds}
-          onChange={(_, v) => form.handleDirectorsChange(v)}
+          onChange={(_, event) => form.handleDirectorsChange(event)}
           onBlur={form.handleBlur('DIRECTOR_IDS')}
-          getOptionLabel={(d) => `${d.DIRECTOR_FIRST_NAME} ${d.DIRECTOR_LAST_NAME}`}
-          isOptionEqualToValue={(a, b) => a.ID_DIRECTOR === b.ID_DIRECTOR}
+          getOptionLabel={(director) => `${director.DIRECTOR_FIRST_NAME} ${director.DIRECTOR_LAST_NAME}`}
+          isOptionEqualToValue={(valueA, valueB) => valueA.ID_DIRECTOR === valueB.ID_DIRECTOR}
           renderInput={(params) => (
             <TextField
               {...params}
               label="Directores"
               required
               error={err('DIRECTOR_IDS')}
-              helperText={<FieldError show={err('DIRECTOR_IDS')} message={firstError(form.fieldErrors.DIRECTOR_IDS)} />}
+              helperText={
+                <FieldError
+                  show={err('DIRECTOR_IDS')}
+                  message={firstError(form.fieldErrors.DIRECTOR_IDS)}
+                />}
             />
           )}
         />
+
         <Autocomplete
           multiple
           options={form.catalogs.formats as AudiovisualFormat[]}
           value={form.formatIds}
-          onChange={(_, v) => form.handleFormatsChange(v)}
+          onChange={(_, event) => form.handleFormatsChange(event)}
           onBlur={form.handleBlur('FORMAT_IDS')}
-          getOptionLabel={(f) => `${f.VIDEO_FORMAT_NAME} ${f.AUDIO_FORMAT_NAME}`}
-          isOptionEqualToValue={(a, b) => a.ID_AUDIOVISUAL_FORMAT === b.ID_AUDIOVISUAL_FORMAT}
+          getOptionLabel={(format) => `${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`}
+          isOptionEqualToValue={(valueA, valueB) => valueA.ID_AUDIOVISUAL_FORMAT === valueB.ID_AUDIOVISUAL_FORMAT}
           renderInput={(params) => (
             <TextField
               {...params}
               label="Formatos audiovisuales"
               required
               error={err('FORMAT_IDS')}
-              helperText={<FieldError show={err('FORMAT_IDS')} message={firstError(form.fieldErrors.FORMAT_IDS)} />}
+              helperText={
+                <FieldError
+                  show={err('FORMAT_IDS')}
+                  message={firstError(form.fieldErrors.FORMAT_IDS)}
+                />}
             />
           )}
         />
+
         <Autocomplete
           multiple
           options={form.catalogs.languages as Language[]}
           value={form.originalLangs}
-          onChange={(_, v) => form.handleOriginalLangsChange(v)}
+          onChange={(_, event) => form.handleOriginalLangsChange(event)}
           onBlur={form.handleBlur('LANGUAGES_ORIGINAL')}
-          getOptionLabel={(l) => l.LANGUAGE_NAME}
-          isOptionEqualToValue={(a, b) => a.ISO_CODE === b.ISO_CODE}
+          getOptionLabel={(language) => language.LANGUAGE_NAME}
+          isOptionEqualToValue={(valueA, valueB) => valueA.ISO_CODE === valueB.ISO_CODE}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -189,59 +244,90 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
             />
           )}
         />
+
         <Autocomplete
           multiple
           options={form.catalogs.languages as Language[]}
           value={form.dubLangs}
-          onChange={(_, v) => form.setDubLangs(v)}
-          getOptionLabel={(l) => l.LANGUAGE_NAME}
-          isOptionEqualToValue={(a, b) => a.ISO_CODE === b.ISO_CODE}
+          onChange={(_, event) => form.setDubLangs(event)}
+          getOptionLabel={(language) => language.LANGUAGE_NAME}
+          isOptionEqualToValue={(valueA, valueB) => valueA.ISO_CODE === valueB.ISO_CODE}
           renderInput={(params) => (
-            <TextField {...params} label="Doblaje" helperText=" " />
+            <TextField
+              {...params}
+              label="Doblaje"
+              helperText=" "
+            />
           )}
         />
+
         <Autocomplete
           multiple
           options={form.catalogs.languages as Language[]}
           value={form.subLangs}
-          onChange={(_, v) => form.setSubLangs(v)}
-          getOptionLabel={(l) => l.LANGUAGE_NAME}
-          isOptionEqualToValue={(a, b) => a.ISO_CODE === b.ISO_CODE}
+          onChange={(_, event) => form.setSubLangs(event)}
+          getOptionLabel={(language) => language.LANGUAGE_NAME}
+          isOptionEqualToValue={(valueA, valueB) => valueA.ISO_CODE === valueB.ISO_CODE}
           renderInput={(params) => (
-            <TextField {...params} label="Subtitulado" helperText=" " />
+            <TextField
+              {...params}
+              label="Subtitulado"
+              helperText=" "
+            />
           )}
         />
+
         <Box>
           <Typography variant="overline" sx={{ color: 'primary.dark' }}>
             Póster
           </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start', mt: 1 }}>
+
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{ alignItems: 'flex-start', mt: 1 }}
+          >
             <Button variant="outlined" component="label">
               Seleccionar imagen
               <input
                 type="file"
                 hidden
                 accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                onChange={(e) => form.handlePosterChange(e.target.files?.[0] ?? null)}
+                onChange={(element) => form.handlePosterChange(element.target.files?.[0] ?? null)}
               />
             </Button>
-            {form.previewSrc ? (
-              <Box
-                component="img"
-                src={form.previewSrc}
-                alt="Póster de la película"
-                sx={{ width: 120, borderRadius: 1, objectFit: 'cover' }}
-              />
-            ) : (
-              <Typography variant="body2" color={form.touched.POSTER && form.fieldErrors.POSTER ? 'error' : 'text.secondary'}>
-                {form.touched.POSTER && firstError(form.fieldErrors.POSTER) ? firstError(form.fieldErrors.POSTER) : 'Sin imagen seleccionada'}
-              </Typography>
-            )}
+
+            {form.previewSrc
+              ? (
+                <Box
+                  component="img"
+                  src={form.previewSrc}
+                  alt="Póster de la película"
+                  sx={{ width: 120, borderRadius: 1, objectFit: 'cover' }}
+                />
+              ) : (
+                <Typography
+                  variant="body2"
+                  color={form.touched.POSTER && form.fieldErrors.POSTER
+                    ? 'error'
+                    : 'text.secondary'
+                  }
+                >
+                  {form.touched.POSTER && firstError(form.fieldErrors.POSTER) ? firstError(form.fieldErrors.POSTER) : 'Sin imagen seleccionada'}
+                </Typography>
+              )
+            }
           </Stack>
         </Box>
+
         <RequiredFieldsHint />
         {form.saving ? (
-          <Alert severity="info">{form.isCreate ? 'Subiendo póster y creando película' : 'Subiendo póster y actualizando póster de la película'}</Alert>
+          <Alert severity="info">
+            {form.isCreate
+              ? 'Subiendo póster y creando película'
+              : 'Subiendo póster y actualizando póster de la película'
+            }
+          </Alert>
         ) : null}
       </Stack>
     </Box>
