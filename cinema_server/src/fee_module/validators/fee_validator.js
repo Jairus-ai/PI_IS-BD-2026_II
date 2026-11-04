@@ -3,7 +3,7 @@ export const FEE_TYPES = ['G', 'N', 'E', 'M'];
 const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
 const INVALID_TYPE_MESSAGE = 'Seleccione un tipo de tarifa válido';
 const INVALID_FORMAT_MESSAGE = 'Seleccione un formato audiovisual válido';
-const INVALID_AMOUNT_MESSAGE = 'El monto debe ser un número mayor a cero';
+const INVALID_AMOUNT_MESSAGE = 'El monto debe ser un número mayor que cero';
 const AMOUNT_TOO_LARGE_MESSAGE = 'El monto no puede ser mayor a ₡99 999 999,99';
 const AMOUNT_DECIMALS_MESSAGE = 'El monto puede tener como máximo 2 decimales';
 
