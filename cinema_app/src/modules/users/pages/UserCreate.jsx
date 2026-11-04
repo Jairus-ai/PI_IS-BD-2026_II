@@ -2,14 +2,30 @@ import { useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { esES } from '@mui/x-date-pickers/locales';
+
+import dayjs from 'dayjs';
+import 'dayjs/locale/es';
+
 import PageContainer from '../../../components/common/PageContainer';
-import { useLocations } from '../hooks/useLocations.js';
+import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useSession from '../../../hooks/useSession';
+
+import { useLocations } from '../hooks/useLocations.js';
+import { validateRequiredField, validateUserForm,} from '../validators/userValidator.js';
+import { useNavigate } from 'react-router';
+import useNotifications from '../../../hooks/useNotifications';
+import { useCreateUser } from '../hooks/useCreateUser.js';
 
 const INITIAL_VALUES = {
   role: 'CLIENT',
@@ -26,18 +42,18 @@ const INITIAL_VALUES = {
 };
 
 const ROLE_OPTIONS = {
-    CLIENT: {
-        value: 'CLIENT',
-        label: 'Cliente',
-    },
-    EMPLOYEE: {
-        value: 'EMPLOYEE',
-        label: 'Empleado',
-    },
-    ADMINISTRATOR: {
-        value: 'ADMINISTRATOR',
-        label: 'Administrador',
-    },
+  CLIENT: {
+    value: 'CLIENT',
+    label: 'Cliente',
+  },
+  EMPLOYEE: {
+    value: 'EMPLOYEE',
+    label: 'Empleado',
+  },
+  ADMINISTRATOR: {
+    value: 'ADMINISTRATOR',
+    label: 'Administrador',
+  },
 };
 
 const IDENTIFICATION_TYPES = [
@@ -45,6 +61,12 @@ const IDENTIFICATION_TYPES = [
   { value: 'P', label: 'Pasaporte' },
   { value: 'D', label: 'DIMEX' },
 ];
+
+const BIRTHDATE_FORMAT = 'DD/MM/YYYY';
+const API_DATE_FORMAT = 'YYYY-MM-DD';
+
+const DATE_PICKER_TEXT =
+  esES.components.MuiLocalizationProvider.defaultProps.localeText;
 
 function getAvailableRoles(userRole) {
   if (userRole === 'SUPERUSER') {
@@ -67,8 +89,43 @@ function getAvailableRoles(userRole) {
   ];
 }
 
+function FormField({
+  label,
+  name,
+  values,
+  errors,
+  onChange,
+  children,
+  ...textFieldProps
+}) {
+  return (
+    <FormControl fullWidth>
+      <FormLabel
+        htmlFor={name}
+        required={textFieldProps.required}
+      >
+        {label}
+      </FormLabel>
+
+      <TextField
+        id={name}
+        name={name}
+        value={values[name]}
+        onChange={onChange}
+        error={Boolean(errors[name])}
+        helperText={errors[name]}
+        fullWidth
+        {...textFieldProps}
+      >
+        {children}
+      </TextField>
+    </FormControl>
+  );
+}
+
 export default function UserCreate() {
   const [values, setValues] = useState(INITIAL_VALUES);
+  const [errors, setErrors] = useState({});
 
   const { user } = useSession();
 
@@ -78,9 +135,24 @@ export default function UserCreate() {
     locationsError,
   } = useLocations();
 
-  const requiresLocations = values.role === 'EMPLOYEE' || values.role === 'ADMINISTRATOR';
+  const requiresLocations =
+    values.role === 'EMPLOYEE' ||
+    values.role === 'ADMINISTRATOR';
 
-  const availableRoles = getAvailableRoles(user?.role);
+  const availableRoles =
+    getAvailableRoles(user?.role);
+
+  const navigate = useNavigate();
+  const notifications = useNotifications();
+
+  const {createUser, creatingUser} = useCreateUser();
+
+  const fieldProps = {
+    values,
+    errors,
+    onChange: handleChange,
+    onBlur: handleBlur,
+  };
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -88,22 +160,130 @@ export default function UserCreate() {
     setValues((currentValues) => ({
       ...currentValues,
       [name]: value,
+      ...(name === 'role' && value === 'CLIENT'
+        ? { locations: [] }
+        : {}),
+    }));
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: undefined,
+      ...(name === 'role'
+        ? { locations: undefined }
+        : {}),
     }));
   }
 
   function handleLocationsChange(event) {
-    const value = event.target.value;
+    setValues((currentValues) => ({
+      ...currentValues,
+      locations: event.target.value,
+    }));
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      locations: undefined,
+    }));
+  }
+
+  function handleBlur(event) {
+    const { name, value } = event.target;
+
+    const error =
+      validateRequiredField(name, value);
+
+    if (error) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        [name]: error,
+      }));
+    }
+  }
+
+  function handleBirthdateChange(birthdate) {
+    const formattedBirthdate =
+      birthdate?.isValid()
+        ? birthdate.format(API_DATE_FORMAT)
+        : '';
 
     setValues((currentValues) => ({
-        ...currentValues,
-        locations: event.target.value,
+      ...currentValues,
+      birthdate: formattedBirthdate,
     }));
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      birthdate: undefined,
+    }));
+  }
+
+  function handleBirthdateBlur() {
+    const error = validateRequiredField(
+      'birthdate',
+      values.birthdate
+    );
+
+    if (error) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        birthdate: error,
+      }));
+    }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (creatingUser) {
+      return;
+    }
+
+    const formErrors = validateUserForm(values);
+
+    setErrors(formErrors);
+
+    if (Object.keys(formErrors).length > 0) {
+      return;
+    }
+
+    try {
+      await createUser(values);
+
+      notifications.show(
+        'El usuario fue registrado correctamente. Se envió una contraseña temporal por correo.',
+        {
+          severity: 'success',
+          autoHideDuration: 5000,
+        }
+      );
+
+      navigate('/users');
+    } catch (error) {
+      if (error.errors) {
+        setErrors((currentErrors) => ({
+          ...currentErrors,
+          ...error.errors,
+        }));
+
+        return;
+      }
+
+      notifications.show(
+        error.message || 'No fue posible crear el usuario.',
+        {
+          severity: 'error',
+          autoHideDuration: 5000,
+        }
+      );
+    }
   }
 
   return (
     <PageContainer title="Crear usuario">
       <Box
         component="form"
+        noValidate
+        onSubmit={handleSubmit}
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -111,155 +291,219 @@ export default function UserCreate() {
           maxWidth: 700,
         }}
       >
-        <TextField
-          select
+        <RequiredFieldsHint />
+
+        <FormField
           label="Rol"
           name="role"
-          value={values.role}
-          onChange={handleChange}
+          select
           required
+          {...fieldProps}
         >
           {availableRoles.map((role) => (
-            <MenuItem key={role.value} value={role.value}>
+            <MenuItem
+              key={role.value}
+              value={role.value}
+            >
               {role.label}
             </MenuItem>
           ))}
-        </TextField>
+        </FormField>
 
         {requiresLocations && (
+          <FormControl fullWidth>
+            <FormLabel required>
+              Sucursales
+            </FormLabel>
+
             <TextField
-                select
-                label="Sucursales"
-                value={values.locations}
-                onChange={handleLocationsChange}
-                required
-                disabled={loadingLocations}
-                SelectProps={{
-                    multiple: true,
-                }}
+              select
+              value={values.locations}
+              onChange={handleLocationsChange}
+              error={Boolean(errors.locations)}
+              helperText={errors.locations}
+              disabled={loadingLocations}
+              fullWidth
+              SelectProps={{
+                multiple: true,
+                renderValue: (selected) =>
+                  selected
+                    .map((locationId) => {
+                      const location =
+                        locations.find(
+                          (item) =>
+                            item.ID_LOCATION ===
+                            locationId
+                        );
+
+                      return location?.LOCATION_NAME;
+                    })
+                    .filter(Boolean)
+                    .join(', '),
+              }}
             >
-            {locations.map((location) => (
+              {locations.map((location) => (
                 <MenuItem
-                    key={location.ID_LOCATION}
-                    value={location.ID_LOCATION}
+                  key={location.ID_LOCATION}
+                  value={location.ID_LOCATION}
                 >
-                    {location.LOCATION_NAME}
+                  {location.LOCATION_NAME}
                 </MenuItem>
-                ))}
+              ))}
             </TextField>
+          </FormControl>
         )}
 
         {requiresLocations && locationsError && (
-            <Alert severity="error">
-                No fue posible cargar las sucursales.
-            </Alert>
+          <Alert severity="error">
+            No fue posible cargar las sucursales.
+          </Alert>
         )}
 
-        <TextField
+        <FormField
           label="Correo electrónico"
           name="email"
           type="email"
-          value={values.email}
-          onChange={handleChange}
+          autoComplete="email"
+          placeholder="tu@correo.com"
           required
+          {...fieldProps}
         />
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+        >
+          <FormField
             label="Nombre"
             name="firstName"
-            value={values.firstName}
-            onChange={handleChange}
-            fullWidth
+            autoComplete="given-name"
             required
+            {...fieldProps}
           />
 
-          <TextField
-            label="Segundo nombre"
+          <FormField
+            label="Segundo nombre (opcional)"
             name="middleName"
-            value={values.middleName}
-            onChange={handleChange}
-            fullWidth
+            {...fieldProps}
           />
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+        >
+          <FormField
             label="Primer apellido"
             name="firstSurname"
-            value={values.firstSurname}
-            onChange={handleChange}
-            fullWidth
+            autoComplete="family-name"
             required
+            {...fieldProps}
           />
 
-          <TextField
-            label="Segundo apellido"
+          <FormField
+            label="Segundo apellido (opcional)"
             name="lastSurname"
-            value={values.lastSurname}
-            onChange={handleChange}
-            fullWidth
+            {...fieldProps}
           />
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField
-            select
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+        >
+          <FormField
             label="Tipo de identificación"
             name="identificationType"
-            value={values.identificationType}
-            onChange={handleChange}
-            fullWidth
+            select
             required
+            {...fieldProps}
           >
             {IDENTIFICATION_TYPES.map((type) => (
-              <MenuItem key={type.value} value={type.value}>
+              <MenuItem
+                key={type.value}
+                value={type.value}
+              >
                 {type.label}
               </MenuItem>
             ))}
-          </TextField>
+          </FormField>
 
-          <TextField
+          <FormField
             label="Número de identificación"
             name="identificationNumber"
-            value={values.identificationNumber}
-            onChange={handleChange}
-            fullWidth
             required
+            {...fieldProps}
           />
         </Stack>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <TextField
-            label="Fecha de nacimiento"
-            name="birthdate"
-            type="date"
-            value={values.birthdate}
-            onChange={handleChange}
-            fullWidth
-            required
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-          />
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+        >
+          <FormControl fullWidth>
+            <FormLabel
+              htmlFor="birthdate"
+              required
+            >
+              Fecha de nacimiento
+            </FormLabel>
 
-          <TextField
+            <LocalizationProvider
+              dateAdapter={AdapterDayjs}
+              adapterLocale="es"
+              localeText={DATE_PICKER_TEXT}
+            >
+              <DatePicker
+                value={
+                  values.birthdate
+                    ? dayjs(values.birthdate)
+                    : null
+                }
+                onChange={handleBirthdateChange}
+                format={BIRTHDATE_FORMAT}
+                openTo="year"
+                views={[
+                  'year',
+                  'month',
+                  'day',
+                ]}
+                disableFuture
+                slotProps={{
+                  textField: {
+                    id: 'birthdate',
+                    fullWidth: true,
+                    required: true,
+                    onBlur:
+                      handleBirthdateBlur,
+                    error: Boolean(
+                      errors.birthdate
+                    ),
+                    helperText:
+                      errors.birthdate,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </FormControl>
+
+          <FormField
             label="Celular"
             name="phoneNumber"
-            value={values.phoneNumber}
-            onChange={handleChange}
-            fullWidth
+            type="tel"
+            autoComplete="tel"
+            placeholder="8888-8888"
             required
+            {...fieldProps}
           />
         </Stack>
 
         <Button
           type="submit"
           variant="contained"
+          disabled={creatingUser}
         >
-          Crear usuario
+          {creatingUser ? 'Creando...' : 'Crear usuario'}
         </Button>
       </Box>
     </PageContainer>
