@@ -242,7 +242,7 @@ export default function ShowSeats() {
                     variant="contained"
                     disableElevation
                     disabled={seatList.length === 0}
-                    onClick={() => console.log('Asientos seleccionados:', seatList)}
+                    onClick={() => navigate('/purchaseConfirmationEmail', {state:{seatList, screeningId: validScreeningId}})}
                 >
                     Continuar
                 </Button>
