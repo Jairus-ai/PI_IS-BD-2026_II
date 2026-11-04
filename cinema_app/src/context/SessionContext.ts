@@ -11,6 +11,10 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export const WORKER_ROLES: Role[] = [ROLES.SUPERUSER, ROLES.ADMINISTRATOR, ROLES.EMPLOYEE];
 
+export const MANAGER_ROLES: Role[] = [ROLES.SUPERUSER, ROLES.ADMINISTRATOR];
+
+export const CLIENT_ROLES: Role[] = [ROLES.CLIENT];
+
 export interface SessionUser {
   id: number;
   role: Role;

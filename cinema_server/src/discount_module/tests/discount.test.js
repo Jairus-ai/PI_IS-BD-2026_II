@@ -1,4 +1,4 @@
-import { expect, jest } from '@jest/globals';
+import { describe, expect, jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import oracledb from 'oracledb';
@@ -10,13 +10,13 @@ const MOCK_DISCOUNTS = [
 ];
 
 const MOCK_SNACKS = [
-  { PRODUCT_ID: 1, PRODUCT_NAME: 'PALOMITAS' },
-  { PRODUCT_ID: 2, PRODUCT_NAME: 'REFRESCO' },
+  { ID_PRODUCT: 1, PRODUCT_NAME: 'PALOMITAS' },
+  { ID_PRODUCT: 2, PRODUCT_NAME: 'REFRESCO' },
 ];
 
 const MOCK_MOVIES = [
-  { PRODUCT_ID: 1, PRODUCT_NAME: 'DUNE from CINEPOLIS' },
-  { PRODUCT_ID: 2, PRODUCT_NAME: 'ALIEN from CINEPOLIS' },
+  { ID_PRODUCT: 1, PRODUCT_NAME: 'DUNE from San Carlos' },
+  { ID_PRODUCT: 2, PRODUCT_NAME: 'ALIEN from Multicentro' },
 ];
 
 const NEW_DISCOUNT = {
@@ -88,7 +88,7 @@ describe('GET /management/discounts/DP/:type', () => {
 
   test.each([
     ['SNACK', MOCK_SNACKS, /PI_DEVELOPERS\.SNACKS/],
-    ['PELICULA EN CARTELERA', MOCK_MOVIES, /PI_DEVELOPERS\.MOVIES_IN_BILLBOARD/],
+    ['PELICULA', MOCK_MOVIES, /PI_DEVELOPERS\.MOVIES_IN_BILLBOARD/],
   ])('type %s 200 OK', async (type, rows, tablePattern) => {
     const connection = useConnection([{ rows }]);
 
@@ -104,7 +104,7 @@ describe('GET /management/discounts/DP/:type', () => {
     expect(connection.close).toHaveBeenCalledTimes(1);
   });
 
-  test.each([['SNACK'], ['PELICULA EN CARTELERA']])(
+  test.each([['SNACK'], ['PELICULA']])(
     'type %s 500 when the query fails',
     async (type) => {
       const connection = useConnection([
@@ -137,7 +137,7 @@ describe('POST /management/discounts/:type', () => {
 
   test.each([
     ['SNACK', 'ID_SNACKS', 'ID_MOVIE_IN_BILLBOARD'],
-    ['PELICULA EN CARTELERA', 'ID_MOVIE_IN_BILLBOARD', 'ID_SNACKS'],
+    ['PELICULA', 'ID_MOVIE_IN_BILLBOARD', 'ID_SNACKS'],
   ])('type %s 200 OK and inserts into %s', async (type, column, otherColumn) => {
     const connection = useConnection([
       { rows: [{ LAST_ID: 121 }] },
@@ -201,6 +201,38 @@ describe('POST /management/discounts/:type', () => {
 
     const executedSql = connection.execute.mock.calls.map(([sql]) => sql);
     expect(executedSql.some((sql) => /INSERT/i.test(sql))).toBe(false);
+
+    expect(connection.close).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PUT /management/discounts/:id', () => {
+  test('204 when the discount is deleted logically', async () => {
+    const connection = useConnection([{ rowsAffected: 1 }]);
+
+    await request(app).put('/management/discounts/4').expect(204);
+
+    const [sql, binds, options] = connection.execute.mock.calls[0];
+    expect(sql).toMatch(/UPDATE PI_DEVELOPERS\.DISCOUNTS/);
+    expect(sql).toMatch(/IS_DELETED\s*=\s*1/);
+    expect(sql).not.toMatch(/DELETE FROM/i);
+    expect(binds).toEqual({ id: 4 });
+    expect(options).toEqual({ autoCommit: true });
+    expect(connection.close).toHaveBeenCalledTimes(1);
+  });
+
+  test('404 when the discount does not exist', async () => {
+    const connection = useConnection([{ rowsAffected: 0 }]);
+
+    await request(app).put('/management/discounts/999').expect(404);
+
+    expect(connection.close).toHaveBeenCalledTimes(1);
+  });
+
+  test('500 when the update fails', async () => {
+    const connection = useConnection([new Error('ORA-01031: insufficient privileges')]);
+
+    await request(app).put('/management/discounts/4').expect(500);
 
     expect(connection.close).toHaveBeenCalledTimes(1);
   });

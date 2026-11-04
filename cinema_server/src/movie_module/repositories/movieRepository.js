@@ -20,14 +20,22 @@ export async function rollback(connection) {
 
 // Functions for visualize movies
 export function buildMovieFilters(queryParams) {
-  const { genreId, languageCode, directorId, audiovisualFormatId } = queryParams;
+  const { movieName, genreId, languageCode, directorId, audiovisualFormatId, ratingId } = queryParams;
   const conditions = ['m.IS_DELETED = 0'];
   const binds = {};
+
+  if (movieName && movieName.trim() != '') {
+    conditions.push(`
+      LOWER(m.MOVIE_TITLE) LIKE LOWER(:movieName)
+    `);
+    binds.movieName = `%${movieName.trim()}%`;
+  }
 
   if (genreId) {
     conditions.push(`
       EXISTS (
-        SELECT 1 FROM PI_DEVELOPERS.movies_genres mg
+        SELECT 1
+        FROM PI_DEVELOPERS.movies_genres mg
         WHERE mg.id_movie = m.id_movie AND mg.id_genre = :genreId
       )
     `);
@@ -37,7 +45,8 @@ export function buildMovieFilters(queryParams) {
   if (languageCode) {
     conditions.push(`
       EXISTS (
-        SELECT 1 FROM PI_DEVELOPERS.movies_languages ml
+        SELECT 1
+        FROM PI_DEVELOPERS.movies_languages ml
         WHERE ml.id_movie = m.id_movie AND ml.iso_code = :languageCode
       )
     `);
@@ -47,7 +56,8 @@ export function buildMovieFilters(queryParams) {
   if (directorId) {
     conditions.push(`
       EXISTS (
-        SELECT 1 FROM PI_DEVELOPERS.movies_directors md
+        SELECT 1
+        FROM PI_DEVELOPERS.movies_directors md
         WHERE md.id_movie = m.id_movie AND md.id_director = :directorId
       )
     `);
@@ -57,11 +67,19 @@ export function buildMovieFilters(queryParams) {
   if (audiovisualFormatId) {
     conditions.push(`
       EXISTS (
-        SELECT 1 FROM PI_DEVELOPERS.movies_formats mf
+        SELECT 1
+        FROM PI_DEVELOPERS.movies_formats mf
         WHERE mf.id_movie = m.id_movie AND mf.id_audiovisual_format = :audiovisualFormatId
       )
     `);
     binds.audiovisualFormatId = Number(audiovisualFormatId);
+  }
+
+  if (ratingId) {
+    conditions.push(`
+      m.ID_RATING = :ratingId
+    `);
+    binds.ratingId = Number(ratingId);
   }
 
   const whereClause = `WHERE ${conditions.join(' AND ')}`;

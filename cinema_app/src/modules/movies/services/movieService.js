@@ -1,7 +1,18 @@
 import { api } from '../../../services/api'
 
-export const getMovies = async (page = 1) => {
-  const { data } = await api.get('/management/movies', { params: { page } });
+export const getMovies = async (page = 1, filters = {}) => {
+  const cleanedFilters = Object.fromEntries(
+    Object.entries(filters).filter(
+      ([_,value]) => value !== '' && value !== null && value !== undefined
+    )
+  )
+
+  const { data } = await api.get('/management/movies', {
+      params: {
+        page,
+        ...cleanedFilters,
+    },
+  });
   return data;
 };
 
@@ -56,5 +67,10 @@ export const createMovie = async (movie) => {
 
 export const updateMovie = async (id, movie) => {
   const { data } = await api.put(`/management/movies/${id}`, movie);
+  return data;
+};
+
+export const deleteMovie = async (id) => {
+  const { data } = await api.delete(`/management/movies/${id}`);
   return data;
 };

@@ -1,14 +1,14 @@
 import Footer from '../components/Footer.jsx'
-import NavBar from '../components/NavBar.jsx'
-import Sugestions from '../components/Suggestion.jsx'
+import MovieCarousel from '../modules/billboard/components/MovieCarousel'
 import Billboard from '../components/Billboard.jsx'
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 function Mainpage() {
   return(
     <>
-      <NavBar />
+    <DashboardLayout />
       <div id = "mainPageBody">
-        <Sugestions />
+        <MovieCarousel />
         <Billboard />
       </div>
       <Footer />

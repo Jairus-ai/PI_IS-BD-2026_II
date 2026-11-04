@@ -14,7 +14,8 @@ export const getDiscountList = async (req, res, next) =>
       DISCOUNT_PORCENTAGE,  
       TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE, 
       TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE
-      FROM PI_DEVELOPERS.DISCOUNTS`;
+      FROM PI_DEVELOPERS.DISCOUNTS
+      WHERE IS_DELETED=0`;
 
     const result = await connection.execute(
       request, [], 
@@ -96,7 +97,6 @@ async function MovieName(connection, idMovieInBillboard) {
 export const getDiscountByID = async (req, res, next) => 
   {
   let connection;
-  
   try 
   {
     const { id } = req.params;
@@ -111,7 +111,7 @@ export const getDiscountByID = async (req, res, next) =>
       ID_SNACKS,
       ID_MOVIE_IN_BILLBOARD
       FROM PI_DEVELOPERS.DISCOUNTS
-      WHERE ID_DISCOUNT = :id`;
+      WHERE ID_DISCOUNT = :id AND IS_DELETED = 0`;
 
     const result = await connection.execute(
       request,
@@ -136,10 +136,12 @@ export const getDiscountByID = async (req, res, next) =>
       {
         row.TYPE = 'PELICULA';
         row.NAME_FK_PRODUCT = movieNames[index];
+        row.ID_FK_PRODUCT = row.ID_MOVIE_IN_BILLBOARD;
       }else
       {
         row.TYPE = 'SNACK';
         row.NAME_FK_PRODUCT = snackNames[index];
+        row.ID_FK_PRODUCT = row.ID_SNACKS;
       }
 
       delete row.ID_SNACKS;
@@ -206,8 +208,6 @@ export const getDiscountProducts = async (req, res, next ) =>
       }
     );
 
-    console.log(result.rows[0])
-
   } catch (error) 
   {
     next(error);
@@ -231,7 +231,9 @@ export const addDiscount = async (req, res, next) =>
     const { type } = req.params;
 
     const result = await connection.execute(
-      'SELECT MAX(ID_DISCOUNT) AS LAST_ID FROM PI_DEVELOPERS.DISCOUNTS', [],
+      `SELECT MAX(ID_DISCOUNT) AS LAST_ID 
+      FROM PI_DEVELOPERS.DISCOUNTS`, 
+      [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
     );
 
@@ -289,6 +291,110 @@ export const addDiscount = async (req, res, next) =>
   {
     if(connection)
     {
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
+
+export const deleteDiscount = async (req,res,next) =>
+{
+  let connection;
+  try{
+    const { id } = req.params;
+
+    connection = await oracledb.getConnection();
+    const request = `
+      UPDATE PI_DEVELOPERS.DISCOUNTS
+      SET IS_DELETED = 1
+      WHERE ID_DISCOUNT = :id`;
+
+    const result = await connection.execute(
+      request,
+      {id: Number(id)}, 
+      { autoCommit: true }  // Convert output to JSON
+    );
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Discount not found' });
+    }
+  
+    res.status(204).send();
+  }catch (error) {
+    if (error.errorNum === 2292) {
+      return res.status(409).json({ message: 'Discount is in use and cannot be deleted' });
+    }
+    next(error);
+  }finally {
+    if (connection) {
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
+
+export const modifyDiscount = async (req,res,next) =>
+{
+  let connection;
+  try{
+    connection = await oracledb.getConnection();
+    const {id,type} = req.params;
+
+    const {DISCOUNT_NAME, DISCOUNT_PORCENTAGE, DISCOUNT_START_DATE, DISCOUNT_FINISH_DATE,  ID_FK_PRODUCT } = req.body;
+
+    let request;
+    if(type == "SNACK")
+    {
+      request = 
+        `UPDATE PI_DEVELOPERS.DISCOUNTS
+          SET
+          DISCOUNT_NAME = :NAME, 
+          DISCOUNT_PORCENTAGE = :PORCENTAGE,
+          DISCOUNT_START_DATE = TO_DATE(:START_DATE, 'YYYY-MM-DD'), 
+          DISCOUNT_FINISH_DATE = TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'),
+          ID_MOVIE_IN_BILLBOARD = null, 
+          ID_SNACKS = :PRODUCT
+          WHERE ID_DISCOUNT= :id`
+    }else if(type == "PELICULA")
+    {
+      request =
+        `UPDATE PI_DEVELOPERS.DISCOUNTS
+          SET
+          DISCOUNT_NAME = :NAME, 
+          DISCOUNT_PORCENTAGE = :PORCENTAGE,
+          DISCOUNT_START_DATE = TO_DATE(:START_DATE, 'YYYY-MM-DD'), 
+          DISCOUNT_FINISH_DATE = TO_DATE(:FINISH_DATE, 'YYYY-MM-DD'), 
+          ID_MOVIE_IN_BILLBOARD = :PRODUCT,
+          ID_SNACKS = null
+          WHERE ID_DISCOUNT= :id`
+    }else
+    {
+      return res.status(400).json({ message: 'Invalid product type' });
+    }
+
+      await connection.execute(
+        request,
+        {
+          NAME: DISCOUNT_NAME,
+          PORCENTAGE: Number(DISCOUNT_PORCENTAGE),
+          START_DATE: DISCOUNT_START_DATE,
+          FINISH_DATE: DISCOUNT_FINISH_DATE,
+          PRODUCT: ID_FK_PRODUCT,
+          id: Number(id)
+        },
+        { autoCommit: true }
+      )
+
+    res.status(200).json(
+      {
+        message:'succes'
+      }
+    );
+  }catch (error) {
+    if (error.errorNum === 2292) {
+      return res.status(409).json({ message: 'Discount is in use and cannot be modified' });
+    }
+    next(error);
+  }finally {
+    if (connection) {
       await closeDatabaseConnection(connection);
     }
   }
