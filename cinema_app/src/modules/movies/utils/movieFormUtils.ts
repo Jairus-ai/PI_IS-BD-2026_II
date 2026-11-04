@@ -21,7 +21,7 @@ export function firstError(value: string | string[] | undefined): string {
 
 export function splitNames(value: string | null): string[] {
   if (!value) return [];
-  return value.split(',').map((x) => x.trim()).filter(Boolean);
+  return value.split(',').map((value) => value.trim()).filter(Boolean);
 }
 
 export function parseLanguageEntry(entry: string): { name: string; type: LanguageType } | null {
