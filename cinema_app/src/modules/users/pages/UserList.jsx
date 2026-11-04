@@ -19,8 +19,6 @@ import { useLocations } from '../hooks/useLocations.js';
 import { deactivateWorker } from '../services/userService.js';
 import { useDialogs } from '../../../hooks/useDialogs.tsx';
 import useNotifications from '../../../hooks/useNotifications.tsx';
-import useSession from '../../../hooks/useSession';
-import { FilterField } from '../../../components/crud/FilterField.jsx';
 
 function formatRole(role) {
   const roles = {
@@ -70,24 +68,6 @@ export default function UserList() {
 
   const dialogs = useDialogs();
   const notifications = useNotifications();
-  const { user } = useSession();
-
-  const availableRoles = {
-    SUPERUSER: [
-      ['CLIENT', 'Cliente'],
-      ['ADMINISTRATOR', 'Administrador'],
-      ['EMPLOYEE', 'Empleado'],
-    ],
-    ADMINISTRATOR: [
-      ['CLIENT', 'Cliente'],
-      ['EMPLOYEE', 'Empleado'],
-    ],
-    EMPLOYEE: [
-      ['CLIENT', 'Cliente'],
-    ],
-};
-
-const roleOptions = availableRoles[user?.role] || [];
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -184,8 +164,6 @@ const roleOptions = availableRoles[user?.role] || [];
         type: 'actions',
         headerName: 'Acciones',
         width: 230,
-        headerAlign: 'left',
-        align: 'left',
         getActions: ({ row }) => {
           const actions = [
             <GridActionsCellItem
@@ -195,12 +173,11 @@ const roleOptions = availableRoles[user?.role] || [];
                 <Box
                   component="span"
                   sx={{
-                    fontSize: '1rem',
                     fontWeight: 500,
                     color: 'primary.main',
                     border: '1px solid',
                     borderColor: 'primary.main',
-                    borderRadius: '8px',
+                    borderRadius: 1,
                     px: 1.5,
                     py: 0.5,
                     '&:hover': {
@@ -218,28 +195,27 @@ const roleOptions = availableRoles[user?.role] || [];
           ];
 
           if (
+            row.ROLE !== 'CLIENT' &&
             row.STATUS === 'ACTIVE'
           ) {
             actions.push(
               <GridActionsCellItem
                 key="deactivate"
                 label="Desactivar"
-                disabled={row.ROLE === 'CLIENT'}
                 icon={
                   <Box
                     component="span"
                     sx={{
-                      fontSize: '1rem',
                       fontWeight: 500,
-                      color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.main',
+                      color: 'error.main',
                       border: '1px solid',
-                      borderColor: row.ROLE === 'CLIENT' ? 'grey.400' : 'primary.main',
-                      borderRadius: '8px',
+                      borderColor: 'error.main',
+                      borderRadius: 1,
                       px: 1.5,
                       py: 0.5,
                       '&:hover': {
-                        bgcolor: row.ROLE === 'CLIENT' ? 'transparent' : 'primary.main',
-                        color: row.ROLE === 'CLIENT' ? 'grey.500' : 'primary.contrastText',
+                        bgcolor: 'error.main',
+                        color: 'error.contrastText',
                       },
                     }}
                   >
@@ -276,17 +252,22 @@ const roleOptions = availableRoles[user?.role] || [];
             size="small"
           />
 
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Rol</InputLabel>
 
-          <FilterField
-            label="Rol"
-            name="role"
-            value={filters.role}
-            onChange={handleChange}
-            itemList={roleOptions}
-            getValue={(role) => role.value}
-            getLabel={(role) => role.label}
-            minWidth={170}
-          />
+            <Select
+              label="Rol"
+              name="role"
+              value={filters.role}
+              onChange={handleChange}
+            >
+              <MenuItem value="">Todos los roles</MenuItem>
+              <MenuItem value="CLIENT">Cliente</MenuItem>
+              <MenuItem value="SUPERUSER">Superusuario</MenuItem>
+              <MenuItem value="ADMINISTRATOR">Administrador</MenuItem>
+              <MenuItem value="EMPLOYEE">Empleado</MenuItem>
+            </Select>
+          </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 170 }}>
             <InputLabel>Estado</InputLabel>
@@ -364,6 +345,7 @@ const roleOptions = availableRoles[user?.role] || [];
             getRowId={(row) => row.USER_KEY}
             loading={loading}
             disableRowSelectionOnClick
+            pageSizeOptions={[5, 10, 25]}
             initialState={{
               pagination: {
                 paginationModel: {
