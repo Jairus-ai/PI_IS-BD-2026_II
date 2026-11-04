@@ -13,6 +13,7 @@ import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_ro
 import directorRoutes from './movie_module/routes/director_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
 import feeRoutes from './fee_module/routes/fee_routes.js';
+import billboardRoutes from './billboard_module/routes/billboard_routes.js';
 import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
@@ -38,6 +39,7 @@ app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters'
 //Mount routes in the app
 app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
+app.use('/billboard', billboardRoutes);
 app.use('/management/movies', movieRoutes);
 app.use('/management/genres', genreRoutes);
 app.use('/management/languages', languageRoutes);
