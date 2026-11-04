@@ -1,15 +1,11 @@
 import * as React from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 import type { Discount } from '../types/discounts';
 import { addDiscount } from '../services/discountService';
 import {
   type DiscountFormState,
 } from './DiscountForm';
 import DiscountFormContainer from '../components/DiscountFormContainer'
+import {CrudDialog} from '../../../components/crud/CrudDialog'
 
 type ValidationResult = {
   issues: { message: string; path: (keyof Discount)[] }[];
@@ -63,43 +59,9 @@ export function DiscountDialog({
   onClose: () => void;
 }>) {
   return(
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth={'md'}
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-          },
-        },
-      }}
-    >
-      <DialogTitle sx={{
-        color: 'primary.dark',
-        fontWeight: 700,
-        padingRight: '48px'
-      }}>
-        {title}
-        <IconButton
-          aria-label="Cerrar"
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
-        {children}
-      </DialogContent>
-    </Dialog>
+    <CrudDialog title={title} open={open} onClose={onClose}>
+      {children}
+    </CrudDialog>
   );
 }
 
