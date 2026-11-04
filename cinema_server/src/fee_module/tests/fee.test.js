@@ -325,3 +325,61 @@ describe('PUT /management/fees/:id', () => {
     expect(connection.execute).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('PATCH /management/fees/:id/deactivate', () => {
+  function deactivateFee(id, role = ROLES.ADMINISTRATOR) {
+    return request(app)
+      .patch(`/management/fees/${id}/deactivate`)
+      .set('Cookie', sessionCookie(role));
+  }
+
+  test('Deactivates an active fee with a logical deletion', async () => {
+    const connection = mockDatabase({ rowsAffected: 1 });
+    connection.commit = jest.fn().mockResolvedValue();
+    const response = await deactivateFee(7).expect(200);
+
+    expect(response.body.message).toBe('Tarifa desactivada');
+    const [sql, binds] = connection.execute.mock.calls[1];
+    expect(sql).toMatch(/SET IS_DELETED = 1/);
+    expect(sql).not.toMatch(/DELETE FROM/);
+    expect(binds).toEqual({ feeId: 7 });
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 200 without changes when the fee was already deactivated', async () => {
+    const connection = mockDatabase({ rowsAffected: 0 }, { rows: [{ ID_FEE: 7 }] });
+    connection.commit = jest.fn();
+    const response = await deactivateFee(7).expect(200);
+
+    expect(response.body.message).toBe('La tarifa ya estaba desactivada');
+    expect(connection.commit).not.toHaveBeenCalled();
+  });
+
+  test('Returns 404 when the fee does not exist', async () => {
+    mockDatabase({ rowsAffected: 0 }, { rows: [] });
+    const response = await deactivateFee(99).expect(404);
+
+    expect(response.body.message).toBe('No se encontró la tarifa');
+  });
+
+  test('Returns 404 for an invalid fee id', async () => {
+    const connection = mockDatabase();
+    await deactivateFee('abc').expect(404);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 500 when the update fails', async () => {
+    const connection = mockDatabase(new Error('ORA-12345: update failed'));
+    const response = await deactivateFee(7).expect(500);
+    expect(response.body.message).toMatch(/ORA-12345/);
+    expect(connection.close).toHaveBeenCalledTimes(2);
+  });
+
+  test('Rejects an employee with 403', async () => {
+    const connection = mockDatabase();
+    await deactivateFee(7, ROLES.EMPLOYEE).expect(403);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+});

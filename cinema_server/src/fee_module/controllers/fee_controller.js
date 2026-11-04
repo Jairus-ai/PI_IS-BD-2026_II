@@ -75,6 +75,20 @@ const UPDATE_FEE_QUERY = `
 
 const FEE_NOT_FOUND_MESSAGE = 'No se encontró la tarifa';
 
+//logical delete so the row stays and the purchases that used this fee keep it
+const DEACTIVATE_FEE_QUERY = `
+  UPDATE PI_DEVELOPERS.FEES
+  SET IS_DELETED = 1
+  WHERE ID_FEE = :feeId
+    AND IS_DELETED = 0
+`;
+
+const FEE_BY_ID_QUERY = `
+  SELECT ID_FEE
+  FROM PI_DEVELOPERS.FEES
+  WHERE ID_FEE = :feeId
+`;
+
 const INSERT_FEE_QUERY = `
   INSERT INTO PI_DEVELOPERS.FEES (TYPE, AMOUNT, ID_AUDIOVISUAL_FORMAT)
   VALUES (:type, :amount, :formatId)
@@ -208,6 +222,35 @@ export const updateFee = async (req, res, next) => {
     if (error.errorNum === UNIQUE_CONSTRAINT_ERROR && formatName) {
       return duplicateFeeResponse(res, fee.type, formatName);
     }
+    next(error);
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const deactivateFee = async (req, res, next) => {
+  const feeId = parseFeeId(req.params.id);
+  if (!feeId) {
+    return res.status(404).json({ message: FEE_NOT_FOUND_MESSAGE });
+  }
+
+  let connection;
+  try {
+    connection = await getConnection();
+
+    const result = await connection.execute(DEACTIVATE_FEE_QUERY, { feeId });
+    if (result.rowsAffected === 0) {
+      //already deactivated for a possible second click, not an error
+      const existingResult = await connection.execute(FEE_BY_ID_QUERY, { feeId }, OBJECT_FORMAT);
+      if (existingResult.rows.length === 0) {
+        return res.status(404).json({ message: FEE_NOT_FOUND_MESSAGE });
+      }
+      return res.status(200).json({ message: 'La tarifa ya estaba desactivada' });
+    }
+
+    await connection.commit();
+    res.status(200).json({ message: 'Tarifa desactivada' });
+  } catch (error) {
     next(error);
   } finally {
     await closeDatabaseConnection(connection);
