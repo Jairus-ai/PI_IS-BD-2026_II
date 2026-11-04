@@ -6,6 +6,7 @@ import { Actions } from '../../../components/crud/Actions';
 import { FilterField } from '../../../components/crud/FilterField';
 import { useFees } from '../hooks/useFees';
 import FeeDetailDialog from '../components/FeeDetailDialog';
+import FeeFormDialog from '../components/FeeFormDialog';
 import { FEE_TYPE_LABELS, formatFeeAmount, type Fee, type FeeType } from '../types/fees';
 
 const PAGE_SIZE = 10;
@@ -44,6 +45,8 @@ export default function FeeList() {
   const [filters, setFilters] = useState<FeeFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createFormKey, setCreateFormKey] = useState(0);
 
   const filteredFees = useMemo(() => fees.filter((fee: Fee) => matchesFilters(fee, filters)), [fees, filters]);
   const audiovisualFormats = useMemo(() => getAudiovisualFormats(fees), [fees]);
@@ -98,6 +101,11 @@ export default function FeeList() {
     setPaginationModel(FIRST_PAGE);
   };
 
+  const openCreate = () => {
+    setCreateFormKey((key) => key + 1);
+    setIsCreateOpen(true);
+  };
+
   const clearFilters = () => {
     setFilters(EMPTY_FILTERS);
     setPaginationModel(FIRST_PAGE);
@@ -107,7 +115,7 @@ export default function FeeList() {
     <CrudPage
       title="Tarifas"
       createLabel="Crear tarifa"
-      onCreate={() => undefined}
+      onCreate={openCreate}
       error={feesError}
       errorMessage={LOAD_ERROR_MESSAGE}
       onRetry={() => void refetchFees()}
@@ -150,7 +158,12 @@ export default function FeeList() {
           </Button>
         </>
       }
-      dialogs={<FeeDetailDialog fee={selectedFee} onClose={() => setSelectedFee(null)} />}
+      dialogs={
+        <>
+          <FeeDetailDialog fee={selectedFee} onClose={() => setSelectedFee(null)} />
+          <FeeFormDialog key={createFormKey} open={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+        </>
+      }
     />
   );
 }
