@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 import { useMovieForm } from '../hooks/useMovieForm';
 import MovieFormFields from './MovieFormFields';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
+import { Tooltip } from '@mui/material';
 
 interface MovieFormDialogProps {
   readonly movieId: number | null;
@@ -33,17 +34,22 @@ export default function MovieFormDialog({
           <Button onClick={onClose}>
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            form="movie-form"
-            variant="contained"
-            disabled={form.saving}
-          >
-            {form.isCreate
-              ? 'Crear'
-              : 'Guardar'
-            }
-          </Button>
+          <Tooltip title={!form.isValid
+              ? 'Completa todos los campos obligatorios correctamente'
+              : ''
+          }>
+            <Button
+              type="submit"
+              form="movie-form"
+              variant="contained"
+              disabled={!form.isValid || form.saving}
+            >
+              {form.isCreate
+                ? 'Crear'
+                : 'Guardar'
+              }
+            </Button>
+          </Tooltip>
         </>
       }
     >

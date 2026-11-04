@@ -19,7 +19,7 @@ export function Actions({
     />,
     <ActionButton
       key="edit"
-      label="Mostrar"
+      label="Modificar"
       onClick={() => {onEdit?.(row)}}
     />,
     <ActionButton
