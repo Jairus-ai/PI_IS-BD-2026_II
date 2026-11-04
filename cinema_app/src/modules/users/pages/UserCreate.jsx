@@ -8,6 +8,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
+import Select from '@mui/material/Select';
+import FormHelperText from '@mui/material/FormHelperText';
 
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -175,9 +177,11 @@ export default function UserCreate() {
   }
 
   function handleLocationsChange(event) {
+    const value = event.target.value;
+
     setValues((currentValues) => ({
       ...currentValues,
-      locations: event.target.value,
+      locations: value,
     }));
 
     setErrors((currentErrors) => ({
@@ -311,36 +315,35 @@ export default function UserCreate() {
         </FormField>
 
         {requiresLocations && (
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={Boolean(errors.locations)}
+          >
             <FormLabel required>
               Sucursales
             </FormLabel>
 
-            <TextField
-              select
+            <Select
+              multiple
+              name="locations"
               value={values.locations}
               onChange={handleLocationsChange}
-              error={Boolean(errors.locations)}
-              helperText={errors.locations}
               disabled={loadingLocations}
-              fullWidth
-              SelectProps={{
-                multiple: true,
-                renderValue: (selected) =>
-                  selected
-                    .map((locationId) => {
-                      const location =
-                        locations.find(
-                          (item) =>
-                            item.ID_LOCATION ===
-                            locationId
-                        );
+              renderValue={(selected) =>
+                selected
+                  .map((locationId) => {
+                    const location =
+                      locations.find(
+                        (item) =>
+                          item.ID_LOCATION ===
+                          locationId
+                      );
 
-                      return location?.LOCATION_NAME;
-                    })
-                    .filter(Boolean)
-                    .join(', '),
-              }}
+                    return location?.LOCATION_NAME;
+                  })
+                  .filter(Boolean)
+                  .join(', ')
+              }
             >
               {locations.map((location) => (
                 <MenuItem
@@ -350,7 +353,13 @@ export default function UserCreate() {
                   {location.LOCATION_NAME}
                 </MenuItem>
               ))}
-            </TextField>
+            </Select>
+
+            {errors.locations && (
+              <FormHelperText>
+                {errors.locations}
+              </FormHelperText>
+            )}
           </FormControl>
         )}
 

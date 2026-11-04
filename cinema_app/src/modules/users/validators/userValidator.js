@@ -13,8 +13,9 @@ export function validateUserForm(values) {
   if (
     (values.role === 'EMPLOYEE' ||
       values.role === 'ADMINISTRATOR') &&
-    values.locations.length === 0
-  ) {
+    (!Array.isArray(values.locations) ||
+      values.locations.length === 0)
+    ) {
     errors.locations =
       'Debes seleccionar al menos una sucursal';
   }
