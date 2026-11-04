@@ -11,8 +11,6 @@ import {
 } from '../repositories/movieRepository.js';
 
 export const getMoviesCount = async (req, res, next) => {
-  console.log("getMoviesCount is being called");
-
   let connection;
 
   try {
@@ -31,8 +29,6 @@ export const getMoviesCount = async (req, res, next) => {
 };
 
 export const getMoviesList = async (req, res, next) => {
-  console.log("getMoviesList is being called");
-
   let connection;
 
   try {
@@ -55,8 +51,6 @@ export const getMoviesList = async (req, res, next) => {
 };
 
 export const getMovieByID = async (req, res, next) => {
-  console.log("getMovieByID is being called");
-
   let connection;
 
   try {
@@ -83,8 +77,6 @@ export const getMovieByID = async (req, res, next) => {
 };
 
 export const createMovie = async (req, res, next) => {
-  console.log("createMovie is being called");
-
   let connection;
 
   try {
@@ -111,8 +103,6 @@ export const updateMovie = async (req, res, next) => {
   if (Object.keys(movie).length === 0 && Object.keys(relations).length === 0) {
     return next({ status: 400, code: 'EMPTY_BODY', message: 'Nada que actualizar.' });
   }
-
-  console.log("updateMovie is being called");
 
   let connection;
 
@@ -141,8 +131,6 @@ export const updateMovie = async (req, res, next) => {
 
 export const deleteMovie = async (req, res, next) => {
   const { id } = req.validatedParams ?? req.params;
-
-  console.log("deleteMovie is being called");
 
   let connection;
 
