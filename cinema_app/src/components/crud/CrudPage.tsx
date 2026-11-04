@@ -9,6 +9,7 @@ import {
   gridClasses,
   GridValidRowModel,
 } from '@mui/x-data-grid';
+import { esES } from '@mui/x-data-grid/locales';
 import PageContainer from '../../components/common/PageContainer';
 
 export interface CrudPageProps<R extends GridValidRowModel> {
@@ -25,7 +26,13 @@ export interface CrudPageProps<R extends GridValidRowModel> {
   readonly paginationModel: { page: number; pageSize: number };
   readonly onPaginationModelChange: (model: { page: number; pageSize: number }) => void;
   readonly dialogs?: React.ReactNode;
+  readonly noRowsLabel?: string;
+  readonly errorMessage?: string;
+  readonly onRetry?: () => void;
+  readonly hideFooter?: boolean;
 }
+
+const GRID_LOCALE_TEXT = esES.components.MuiDataGrid.defaultProps.localeText;
 
 export function CrudPage<R extends GridValidRowModel>({
   title,
@@ -41,6 +48,10 @@ export function CrudPage<R extends GridValidRowModel>({
   paginationModel,
   onPaginationModelChange,
   dialogs,
+  noRowsLabel,
+  errorMessage,
+  onRetry,
+  hideFooter = false,
 }: CrudPageProps<R>) {
   return (
     <PageContainer
@@ -66,8 +77,17 @@ export function CrudPage<R extends GridValidRowModel>({
 
         {error ? (
           <Box sx={{ my: 2 }}>
-            <Alert severity="error">
-              Error al cargar datos: {error.message}
+            <Alert
+              severity="error"
+              action={
+                onRetry ? (
+                  <Button color="inherit" size="small" onClick={onRetry}>
+                    Reintentar
+                  </Button>
+                ) : undefined
+              }
+            >
+              {errorMessage ?? `Error al cargar datos: ${error.message}`}
             </Alert>
           </Box>
         ) : null}
@@ -85,6 +105,8 @@ export function CrudPage<R extends GridValidRowModel>({
               onPaginationModelChange={onPaginationModelChange}
               pageSizeOptions={[10]}
               disableRowSelectionOnClick
+              hideFooter={hideFooter}
+              localeText={noRowsLabel ? { ...GRID_LOCALE_TEXT, noRowsLabel } : GRID_LOCALE_TEXT}
               sx={{
                 bgcolor: 'background.paper',
                 borderRadius: 2,
