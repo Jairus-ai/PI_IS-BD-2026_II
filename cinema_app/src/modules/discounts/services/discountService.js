@@ -12,14 +12,30 @@ export const getDiscountsByID = async (id) =>
   return data;
 };
 
-export const getDiscountProducts = async() =>
+export const getDiscountsByIDForEdit = async (id) => 
 {
-  const {data} = await api.get('/management/discounts/DP');
-  return data.data;
-}
+  const { data } = await api.get(`/management/discounts/${id}`);
+  return data.data[0];
+};
 
-export const addDiscount = async (discount) =>
+export const getDiscountProducts = async(type) =>
 {
-  const {data} = await api.post(`/management/discounts`, discount);
+  const {data} = await api.get(`/management/discounts/DP/${encodeURIComponent(type)}`);
+  return data.data;
+};
+
+export const addDiscount = async (discount,type) =>
+{
+  const {data} = await api.post(`/management/discounts/${encodeURIComponent(type)}`, discount);
   return data;
-}
+};
+
+export const deleteDiscount = async (id) => {
+  const {data} = await api.put(`/management/discounts/${id}`);
+  return data;
+};
+
+export const editDiscount = async (id, discount, type) => {
+  const {data} = await api.put(`/management/discounts/DD/${id}/${encodeURIComponent(type)}`, discount);
+  return data;
+};

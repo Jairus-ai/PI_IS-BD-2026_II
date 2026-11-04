@@ -14,6 +14,8 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useDiscountProducts } from '../hooks/useDiscounts';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 export interface DiscountFormState {
   values: Partial<Omit<Discount, 'id'>>;
@@ -31,7 +33,7 @@ export interface DiscountFormProps {
   readonly submitButtonLabel: string;
 }
 
-export default function MovieForm(props:DiscountFormProps) {
+export default function DiscountForm(props:DiscountFormProps) {
   const {
     formState,
     onFieldChange,
@@ -42,9 +44,11 @@ export default function MovieForm(props:DiscountFormProps) {
   const formValues = formState.values;
   const formErrors = formState.errors;
 
+  const selectedType = formValues.TYPE ?? null;
+  const { products: rawProducts } = useDiscountProducts(selectedType);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { products: rawProducts} = useDiscountProducts();
   const products = rawProducts as DiscountProduct[];
+  
 
   const handleSubmit = React.useCallback(
     async (event: React.SubmitEvent<HTMLFormElement>) => {
@@ -89,7 +93,15 @@ export default function MovieForm(props:DiscountFormProps) {
     }
   },
   [formValues, onFieldChange],
-);
+  );
+
+  const handleBoxChecked = React.useCallback(
+    (type: string) => (_event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+      onFieldChange('TYPE', checked ? type : null);
+      onFieldChange('ID_FK_PRODUCT', null);
+    },
+    [onFieldChange],
+  );
 
   return (
     <Box
@@ -97,12 +109,16 @@ export default function MovieForm(props:DiscountFormProps) {
       onSubmit={handleSubmit}
       noValidate
       autoComplete="off"
-      sx={{ width: '100%' }}
+      sx={{ 
+        width: '100%',
+        padding : 0,
+        margin : 0
+       }}
     >
       <FormGroup>
         <Grid container spacing={2} sx={{ mb: 2, width: '100%' }}>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
-            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Nombre</Typography>
+            <Typography sx={{ color: 'primary.dark' }}>Nombre*</Typography>
             <TextField
               value={formValues.DISCOUNT_NAME ?? ''}
               onChange={handleTextFieldChange}
@@ -114,7 +130,7 @@ export default function MovieForm(props:DiscountFormProps) {
             />
           </Grid>
            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
-            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Porcentaje</Typography>
+            <Typography sx={{ color: 'primary.dark'}}>Porcentaje*</Typography>
             <TextField
               type="number"
               value={formValues.DISCOUNT_PORCENTAGE ?? ''}
@@ -128,7 +144,7 @@ export default function MovieForm(props:DiscountFormProps) {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de inicio</Typography>
+              <Typography sx={{ color: 'primary.dark'}}>Fecha de inicio*</Typography>
               <DatePicker
                 value={formValues.DISCOUNT_START_DATE ? dayjs(formValues.DISCOUNT_START_DATE) : null}
                 onChange={handleDateFieldChange('DISCOUNT_START_DATE')}
@@ -146,7 +162,7 @@ export default function MovieForm(props:DiscountFormProps) {
           </Grid>
          <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column'}}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Fecha de finalización</Typography>
+              <Typography sx={{ color: 'primary.dark' }}>Fecha de finalización*</Typography>
               <DatePicker
                 value={formValues.DISCOUNT_FINISH_DATE ? dayjs(formValues.DISCOUNT_FINISH_DATE) : null}
                 onChange={handleDateFieldChange('DISCOUNT_FINISH_DATE')}
@@ -162,14 +178,41 @@ export default function MovieForm(props:DiscountFormProps) {
               />
             </LocalizationProvider>
           </Grid>
+          <Grid sx={{display:'flex', flexDirection:'row'}}>
+            <Typography  sx={{ color: 'primary.dark'}}>Producto del descuento*</Typography>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
+              <FormControlLabel
+                label="PELICULA"
+                control={
+                  <Checkbox
+                    size="large"
+                    checked={selectedType === 'PELICULA'}
+                    onChange={handleBoxChecked('PELICULA')}
+                  />
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
+              <FormControlLabel
+                label="SNACK"
+                control={
+                  <Checkbox
+                    size="large"
+                    checked={selectedType === 'SNACK'}
+                    onChange={handleBoxChecked('SNACK')}
+                  />
+                }
+              />
+            </Grid>
+          </Grid>
           <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', flexDirection: 'column',  marginLeft: '25%'}}>
-            <Typography variant="overline" sx={{ color: 'primary.dark', fontWeight: 700 }}>Producto del descuento</Typography>
+            <Typography  sx={{ color: 'primary.dark'}}>Producto del descuento*</Typography>
             <Autocomplete
               options={products}
-              getOptionLabel={(p) => p.SNACK_NAME}
-              isOptionEqualToValue={(a, b) => a.ID_SNACK === b.ID_SNACK}
-              value={products.find((p) => p.ID_SNACK === formValues.ID_FK_PRODUCT) ?? null}
-              onChange={(_, selected) => onFieldChange('ID_FK_PRODUCT', selected?.ID_SNACK ?? null)}
+              getOptionLabel={(p) => p.PRODUCT_NAME}
+              isOptionEqualToValue={(a, b) => a.ID_PRODUCT === b.ID_PRODUCT}
+              value={products.find((p) => p.ID_PRODUCT === formValues.ID_FK_PRODUCT) ?? null}
+              onChange={(_, selected) => onFieldChange('ID_FK_PRODUCT', selected?.ID_PRODUCT ?? null)}
               renderInput={(params) => (
                 <TextField
                   {...params}
