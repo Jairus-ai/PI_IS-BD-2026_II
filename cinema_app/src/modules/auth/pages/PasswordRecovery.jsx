@@ -5,15 +5,20 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import { isAxiosError } from 'axios';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useNotifications from '../../../hooks/useNotifications';
 import useSession from '../../../hooks/useSession';
-import { useLocation } from 'react-router';
-import {establishPassword, requestPasswordRecovery, verifyPasswordRecoveryCode, resetPassword, getCurrentUser} from '../services/authService';
+import {
+  establishPassword,
+  requestPasswordRecovery,
+  verifyPasswordRecoveryCode,
+  resetPassword,
+  getCurrentUser
+} from '../services/authService';
 import {checkPasswordStrength, MINIMUM_PASSWORD_SCORE,} from '../../../shared/validators/passwordValidator';
 
 const PASSWORD_STRENGTH_LABELS = [
@@ -196,7 +201,7 @@ export default function PasswordRecovery() {
         severity: 'success',
       });
 
-      navigate('/');
+       await navigate('/');
     } catch (error) {
       if (isAxiosError(error) && error.response?.data?.errors) {
         setErrors(error.response.data.errors);
