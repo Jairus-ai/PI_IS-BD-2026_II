@@ -195,7 +195,7 @@ export default function MovieList() {
             onChange={handleChange}
             itemList={ratings}
             getValue={(rating: any) => rating.ID_RATING}
-            getLabel={(rating: any) => rating.RATING_NAME}
+            getLabel={(rating: any) => rating.RATING_CODE}
           />
           <Button
             variant="outlined"
