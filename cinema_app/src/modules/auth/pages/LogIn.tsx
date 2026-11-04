@@ -135,6 +135,15 @@ export default function LogIn() {
           onChange={handleChange}
           onBlur={handleBlur}
         />
+        <Typography sx={{ textAlign: 'right', mt: -1  }}>
+        <Link
+          component={RouterLink}
+          to="/password-recovery"
+          variant="body2"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </Typography>
 
         <Button type="submit" fullWidth variant="contained" disabled={isLoggingIn}>
           {isLoggingIn ? 'Ingresando…' : 'Iniciar sesión'}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PersonIcon from '@mui/icons-material/Person';
 import Button, { type ButtonProps } from '@mui/material/Button';
-import UserOptions from '../layout/userOptions';
+import UserOptions from '../layout/UserOptions';
 
 export default function UserButton(buttonProps: Readonly<Omit<ButtonProps, 'onClick'>>) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
