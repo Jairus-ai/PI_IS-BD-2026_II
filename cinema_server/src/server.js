@@ -21,6 +21,7 @@ import { globalErrorHandler } from './middleware/errorHandler.js';
 import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
 import seatsRoutes from './seats_module/routes/seats_routes.js';
+import QR_routes from './QR_module/routes/QR_routes.js';
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.use('/management/fees', feeRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
 app.use('/seats', seatsRoutes);
+app.use('/purchase', QR_routes);
 
 // Router not found
 app.use((req, res, next) => {

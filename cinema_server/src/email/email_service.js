@@ -60,24 +60,6 @@ async function sendWelcomeEmail({ email, firstName }) {
   return info;
 }
 
-async function sendPasswordChangedEmail({ email }) {
-  const transporter = await getTransporter();
-
-  return transporter.sendMail({
-    from: process.env.EMAIL_FROM ?? DEFAULT_SENDER,
-    to: email,
-    subject: 'Tu contraseña de CinePI fue modificada',
-    text:
-      'Tu contraseña de CinePI fue modificada correctamente. ' +
-      'Si no realizaste este cambio, comunícate con soporte.',
-    html: `
-      <p>Tu contraseña de CinePI fue modificada correctamente.</p>
-      <p>Si no realizaste este cambio, comunícate con soporte.</p>
-    `,
-  });
-}
-
-const emailService = { sendWelcomeEmail, sendPasswordChangedEmail };
 async function sendPasswordRecoveryEmail({
   email,
   recoveryCode,
@@ -117,6 +99,10 @@ async function sendPasswordChangedEmail({ email }) {
   });
 }
 
-const emailService = { sendWelcomeEmail, sendPasswordRecoveryEmail, sendPasswordChangedEmail };
+const emailService = {
+  sendWelcomeEmail,
+  sendPasswordRecoveryEmail,
+  sendPasswordChangedEmail,
+};
 
 export default emailService;
