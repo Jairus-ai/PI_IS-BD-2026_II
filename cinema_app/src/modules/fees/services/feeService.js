@@ -13,6 +13,11 @@ export const addFee = async (fee) => {
   return data.data;
 };
 
+export const updateFee = async ({ id, fee }) => {
+  const { data } = await api.put(`/management/fees/${id}`, fee, SESSION_REQUEST_CONFIG);
+  return data.data;
+};
+
 export const getAudiovisualFormats = async () => {
   const { data } = await api.get('/management/audiovisual_format', SESSION_REQUEST_CONFIG);
   return data.data;

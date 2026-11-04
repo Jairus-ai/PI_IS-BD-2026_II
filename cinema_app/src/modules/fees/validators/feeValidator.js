@@ -1,5 +1,5 @@
 export const REQUIRED_FIELD_MESSAGE = 'Campo obligatorio';
-const INVALID_AMOUNT_MESSAGE = 'El monto debe ser un número mayor a cero';
+const INVALID_AMOUNT_MESSAGE = 'El monto debe ser un número mayor que cero';
 const AMOUNT_DECIMALS_MESSAGE = 'El monto puede tener como máximo 2 decimales';
 const AMOUNT_TOO_LARGE_MESSAGE = 'El monto no puede ser mayor a ₡99 999 999,99';
 

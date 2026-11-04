@@ -45,8 +45,11 @@ export default function FeeList() {
   const [filters, setFilters] = useState<FeeFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createFormKey, setCreateFormKey] = useState(0);
+  const [feeForm, setFeeForm] = useState<{ open: boolean; fee: Fee | null; key: number }>({
+    open: false,
+    fee: null,
+    key: 0
+  });
 
   const filteredFees = useMemo(() => fees.filter((fee: Fee) => matchesFilters(fee, filters)), [fees, filters]);
   const audiovisualFormats = useMemo(() => getAudiovisualFormats(fees), [fees]);
@@ -89,7 +92,7 @@ export default function FeeList() {
       minWidth: 300,
       getActions: Actions({
         onShow: (fee: Fee) => setSelectedFee(fee),
-        onEdit: () => undefined,
+        onEdit: (fee: Fee) => openForm(fee),
         onDelete: () => undefined
       })
     }
@@ -101,9 +104,12 @@ export default function FeeList() {
     setPaginationModel(FIRST_PAGE);
   };
 
-  const openCreate = () => {
-    setCreateFormKey((key) => key + 1);
-    setIsCreateOpen(true);
+  const openForm = (fee: Fee | null) => {
+    setFeeForm((previousForm) => ({ open: true, fee, key: previousForm.key + 1 }));
+  };
+
+  const closeForm = () => {
+    setFeeForm((previousForm) => ({ ...previousForm, open: false }));
   };
 
   const clearFilters = () => {
@@ -115,7 +121,7 @@ export default function FeeList() {
     <CrudPage
       title="Tarifas"
       createLabel="Crear tarifa"
-      onCreate={openCreate}
+      onCreate={() => openForm(null)}
       error={feesError}
       errorMessage={LOAD_ERROR_MESSAGE}
       onRetry={() => void refetchFees()}
@@ -161,7 +167,7 @@ export default function FeeList() {
       dialogs={
         <>
           <FeeDetailDialog fee={selectedFee} onClose={() => setSelectedFee(null)} />
-          <FeeFormDialog key={createFormKey} open={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+          <FeeFormDialog key={feeForm.key} open={feeForm.open} fee={feeForm.fee} onClose={closeForm} />
         </>
       }
     />

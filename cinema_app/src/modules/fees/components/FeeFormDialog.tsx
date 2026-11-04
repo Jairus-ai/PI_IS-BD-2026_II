@@ -10,13 +10,26 @@ import TextField from '@mui/material/TextField';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useNotifications from '../../../hooks/useNotifications';
-import { useAudiovisualFormats, useCreateFee } from '../hooks/useFees';
+import { useDialogs } from '../../../hooks/useDialogs';
+import { useAudiovisualFormats, useCreateFee, useUpdateFee } from '../hooks/useFees';
 import { normalizeAmount, REQUIRED_FIELD_MESSAGE, validateAmount, validateFeeForm } from '../validators/feeValidator';
-import { FEE_TYPE_LABELS } from '../types/fees';
+import { FEE_TYPE_LABELS, type Fee } from '../types/fees';
 
 const FORM_ID = 'fee-form';
-const SUCCESS_MESSAGE = 'Tarifa agregada';
-const SAVE_ERROR_MESSAGE = 'No se pudo agregar la tarifa. Intenta de nuevo.';
+const CREATE_TEXTS = {
+  title: 'Crear tarifa',
+  submit: 'Crear',
+  submitting: 'Creando…',
+  success: 'Tarifa agregada',
+  saveError: 'No se pudo agregar la tarifa. Intenta de nuevo.'
+};
+const EDIT_TEXTS = {
+  title: 'Modificar tarifa',
+  submit: 'Guardar',
+  submitting: 'Guardando…',
+  success: 'Tarifa actualizada',
+  saveError: 'No se pudo actualizar la tarifa. Intenta de nuevo.'
+};
 const NO_FORMATS_MESSAGE = 'No hay formatos audiovisuales registrados. Primero deben registrarse formatos para poder agregar tarifas.';
 const FORMATS_ERROR_MESSAGE = 'No se pudieron cargar los formatos audiovisuales.';
 
@@ -43,6 +56,21 @@ interface FeeErrorResponse {
 
 const EMPTY_VALUES: FeeFormValues = { type: '', formatId: null, amount: '' };
 
+function getInitialValues(fee: Fee | null | undefined): FeeFormValues {
+  if (!fee) {
+    return EMPTY_VALUES;
+  }
+  return { type: fee.TYPE, formatId: fee.ID_AUDIOVISUAL_FORMAT, amount: String(fee.AMOUNT) };
+}
+
+function hasChanges(values: FeeFormValues, initialValues: FeeFormValues): boolean {
+  return (
+    values.type !== initialValues.type ||
+    values.formatId !== initialValues.formatId ||
+    values.amount.trim() !== initialValues.amount
+  );
+}
+
 function getFormatName(format: AudiovisualFormatOption): string {
   return `${format.VIDEO_FORMAT_NAME} + ${format.AUDIO_FORMAT_NAME}`;
 }
@@ -50,20 +78,29 @@ function getFormatName(format: AudiovisualFormatOption): string {
 interface FeeFormDialogProps {
   readonly open: boolean;
   readonly onClose: () => void;
+  //without fee the dialog creates one and with an existing oone it modifies it
+  readonly fee?: Fee | null;
 }
 
-export default function FeeFormDialog({ open, onClose }: FeeFormDialogProps) {
+export default function FeeFormDialog({ open, onClose, fee = null }: FeeFormDialogProps) {
   const notifications = useNotifications();
+  const dialogs = useDialogs();
   const { formats, isLoadingFormats, formatsError } = useAudiovisualFormats(open);
   const { createFee, isCreatingFee } = useCreateFee();
+  const { updateFee, isUpdatingFee } = useUpdateFee();
 
-  const [values, setValues] = useState<FeeFormValues>(EMPTY_VALUES);
+  const isEdit = fee !== null;
+  const texts = isEdit ? EDIT_TEXTS : CREATE_TEXTS;
+  const isSaving = isCreatingFee || isUpdatingFee;
+  const [initialValues] = useState<FeeFormValues>(() => getInitialValues(fee));
+
+  const [values, setValues] = useState<FeeFormValues>(initialValues);
   const [errors, setErrors] = useState<FeeFormErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
 
   const hasNoFormats = !isLoadingFormats && !formatsError && formats.length === 0;
-  const canSubmit = !hasNoFormats && !formatsError && !isCreatingFee;
+  const canSubmit = !hasNoFormats && !formatsError && !isSaving;
   const selectedFormat = formats.find((format: AudiovisualFormatOption) => format.ID_AUDIOVISUAL_FORMAT === values.formatId) ?? null;
 
   const setField = <K extends keyof FeeFormValues>(name: K, value: FeeFormValues[K]) => {
@@ -89,7 +126,7 @@ export default function FeeFormDialog({ open, onClose }: FeeFormDialogProps) {
       setSaveError(error.response.data.message ?? null);
       return;
     }
-    setSaveError(SAVE_ERROR_MESSAGE);
+    setSaveError(texts.saveError);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -105,8 +142,13 @@ export default function FeeFormDialog({ open, onClose }: FeeFormDialogProps) {
 
     isSubmittingRef.current = true;
     try {
-      await createFee({ type: values.type, formatId: values.formatId, amount: normalizeAmount(values.amount) });
-      notifications.show(SUCCESS_MESSAGE, { severity: 'success', autoHideDuration: 3000 });
+      const feeData = { type: values.type, formatId: values.formatId, amount: normalizeAmount(values.amount) };
+      if (isEdit) {
+        await updateFee({ id: fee.ID_FEE, fee: feeData });
+      } else {
+        await createFee(feeData);
+      }
+      notifications.show(texts.success, { severity: 'success', autoHideDuration: 3000 });
       onClose();
     } catch (error) {
       handleSaveError(error);
@@ -115,18 +157,35 @@ export default function FeeFormDialog({ open, onClose }: FeeFormDialogProps) {
     }
   };
 
+  const handleClose = async () => {
+    if (isSaving) {
+      return;
+    }
+    if (hasChanges(values, initialValues)) {
+      const confirmed = await dialogs.confirm('Tienes cambios sin guardar. ¿Deseas descartarlos?', {
+        title: 'Descartar cambios',
+        okText: 'Descartar',
+        cancelText: 'Seguir editando'
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+    onClose();
+  };
+
   return (
     <CrudDialog
       open={open}
-      title="Crear tarifa"
-      onClose={onClose}
+      title={texts.title}
+      onClose={() => void handleClose()}
       maxWidth="sm"
       loading={isLoadingFormats}
       actions={
         <>
-          <Button onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => void handleClose()}>Cancelar</Button>
           <Button type="submit" form={FORM_ID} variant="contained" disabled={!canSubmit}>
-            {isCreatingFee ? 'Creando…' : 'Crear'}
+            {isSaving ? texts.submitting : texts.submit}
           </Button>
         </>
       }
