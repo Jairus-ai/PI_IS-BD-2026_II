@@ -109,10 +109,6 @@ async function getAccountEmail(connection, role, id) {
   return result.rows[0]?.EMAIL;
 }
 
-function getCredentialOwnerColumn(role) {
-  return role === ROLES.CLIENT ? 'ID_CLIENT' : 'ID_WORKER';
-}
-
 export const logIn = async (req, res, next) => {
   const { errors, email, password } = validateLogIn(req.body);
   if (Object.keys(errors).length > 0) {

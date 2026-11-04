@@ -1,33 +1,23 @@
 import * as React from 'react';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridColDef,
-  gridClasses,
-} from '@mui/x-data-grid';
-import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import MenuItem from '@mui/material/MenuItem';
+import type { GridColDef } from '@mui/x-data-grid';
 import { useMovies } from '../hooks/useMovies';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
-import PageContainer from '../../../components/common/PageContainer';
 import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
 import MovieFormDialog from '../components/MovieFormDialog';
+import { Actions } from '../../../components/crud/Actions';
+import { FilterField } from '../../../components/crud/FilterField';
+import { CrudPage } from '../../../components/crud/CrudPage';
 
 const emptyFilters = {
-    name: '',
-    genreId: '',
-    languageCode: '',
-    ratingId: '',
-    audiovisualFormatId: '',
+  name: '',
+  genreId: '',
+  languageCode: '',
+  ratingId: '',
+  audiovisualFormatId: '',
 };
 
 export default function MovieList() {
@@ -35,33 +25,12 @@ export default function MovieList() {
   const serverPage = paginationModel.page + 1;
 
   const [filters, setFilters] = React.useState(emptyFilters);
-
-  function handleChange(event: any) {
-    const { name, value } = event.target;
-
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      [name]: value,
-    }));
-    setPaginationModel((currentFilters) => ({ ...currentFilters, page: 0 }));
-  }
-
-  function clearFilters() {
-    setFilters(emptyFilters);
-    setPaginationModel((currentFilters) => ({ ...currentFilters, page: 0 }));
-  }
-
-  const dialogs = useDialogs();
-  const notifications = useNotifications();
-
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [formMovieId, setFormMovieId] = React.useState<number | null>(null);
   const [formOpen, setFormOpen] = React.useState(false);
 
-  const openCreate = () => {
-    setFormMovieId(null);
-    setFormOpen(true);
-  };
+  const dialogs = useDialogs();
+  const notifications = useNotifications();
 
   const {
     movies,
@@ -75,14 +44,25 @@ export default function MovieList() {
     formats,
   } = useMovies(serverPage, null, filters);
 
-  const openEdit = (id: number) => {
-    setFormMovieId(id);
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  }
+
+  function clearFilters() {
+    setFilters(emptyFilters);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  }
+
+  const openCreate = () => {
+    setFormMovieId(null);
     setFormOpen(true);
   };
 
-  const closeForm = () => {
-    setFormOpen(false);
-    setFormMovieId(null);
+  const openEdit = (id: number) => {
+    setFormMovieId(id);
+    setFormOpen(true);
   };
 
   const handleRowDelete = React.useCallback(
@@ -102,14 +82,14 @@ export default function MovieList() {
           await deleteMovie({ id: movie.ID_MOVIE });
           notifications.show('Película eliminada correctamente.', {
             severity: 'success',
-            autoHideDuration: 3000,
+            autoHideDuration: 5000,
           });
         } catch (error) {
           notifications.show(
             `Error al eliminar la película: ${(error as Error).message}`,
             {
               severity: 'error',
-              autoHideDuration: 3000,
+              autoHideDuration: 5000,
             },
           );
         }
@@ -131,7 +111,9 @@ export default function MovieList() {
         headerName: 'Género',
         width: 200,
         valueGetter: (value, row: Movie) =>
-          Array.isArray(row.GENRES) ? row.GENRES.join(', ') : value || 'N/A',
+          Array.isArray(row.GENRES)
+            ? row.GENRES.join(', ')
+            : value || 'N/A',
       },
       {
         field: 'PUBLISHING_YEAR',
@@ -146,53 +128,31 @@ export default function MovieList() {
         flex: 1,
         minWidth: 220,
         align: 'right',
-        getActions: ({ row }: { row: Movie }) => [
-          <GridActionsCellItem
-            key="show"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Mostrar</Box>}
-            label="Mostrar"
-            onClick={() => setSelectedId(row.ID_MOVIE)}
-            showInMenu={false}
-          />,
-          <GridActionsCellItem
-            key="edit"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Editar</Box>}
-            label="Editar"
-            onClick={() => openEdit(row.ID_MOVIE)}
-            showInMenu={false}
-          />,
-          <GridActionsCellItem
-            key="delete"
-            icon={<Box component="span" sx={{fontSize: '1rem', fontWeight: 500, color: 'primary.main', border: '1px solid', borderColor: 'primary.main', borderRadius: '4px', padding: '0.2rem', width: '5rem'}}>Eliminar</Box>}
-            label="Eliminar"
-            onClick={handleRowDelete(row)}
-            showInMenu={false}
-          />,
-        ],
+        getActions: Actions({
+          onShow: (movie: any) => setSelectedId(movie.ID_MOVIE),
+          onEdit: (movie: any) => openEdit(movie.ID_MOVIE),
+          onDelete: (movie: any) => handleRowDelete(movie),
+        }),
       },
     ],
     [handleRowDelete],
   );
 
   return (
-    <PageContainer
+    <CrudPage
       title="Películas"
-      actions={
-        <Button
-          variant="contained"
-          onClick={() => openCreate()}
-        >
-          Crear Película
-        </Button>
-      }
-    >
-      <Stack spacing={2}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          sx={{ alignItems: { md: 'center' } }}
-        >
-          {/* Filters */}
+      createLabel="Crear Película"
+      onCreate={openCreate}
+      error={moviesError}
+      rows={movies}
+      rowCount={totalMovies}
+      getRowId={(row: Movie) => row.ID_MOVIE}
+      columns={columns}
+      loading={isLoadingMovies}
+      paginationModel={paginationModel}
+      onPaginationModelChange={setPaginationModel}
+      filters={
+        <>
           <TextField
             label="Buscar por nombre"
             name="name"
@@ -200,149 +160,69 @@ export default function MovieList() {
             onChange={handleChange}
             size="small"
           />
-
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Género</InputLabel>
-
-            <Select
-              label="Género"
-              name="genreId"
-              value={filters.genreId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos los géneros
-              </MenuItem>
-
-              {genres.map((genre: any) => (
-                <MenuItem
-                  key={genre.ID_GENRE}
-                  value={genre.ID_GENRE}
-                >
-                  {genre.GENRE_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Idioma</InputLabel>
-
-            <Select
-              label="Idioma"
-              name="languageCode"
-              value={filters.languageCode}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos los idiomas
-              </MenuItem>
-
-              {languages.map((language: any) => (
-                <MenuItem
-                  key={language.ISO_CODE}
-                  value={language.ISO_CODE}
-                >
-                  {language.LANGUAGE_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel>Formato audiovisual</InputLabel>
-
-            <Select
-              label="Formato audiovisual"
-              name="audiovisualFormatId"
-              value={filters.audiovisualFormatId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos los formatos audiovisuales
-              </MenuItem>
-
-              {formats.map((format: any) => (
-                <MenuItem
-                  key={format.ID_AUDIOVISUAL_FORMAT}
-                  value={format.ID_AUDIOVISUAL_FORMAT}
-                >
-                  {format.VIDEO_FORMAT_NAME} {format.AUDIO_FORMAT_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Clasificación</InputLabel>
-
-            <Select
-              label="Clasificación"
-              name="ratingId"
-              value={filters.ratingId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todos las clasificaciones
-              </MenuItem>
-
-              {ratings.map((rating: any) => (
-                <MenuItem
-                  key={rating.ID_RATING}
-                  value={rating.ID_RATING}
-                >
-                  {rating.RATING_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
+          <FilterField
+            label="Género"
+            name="genreId"
+            value={filters.genreId}
+            onChange={handleChange}
+            itemList={genres}
+            getValue={(genre: any) => genre.ID_GENRE}
+            getLabel={(genre: any) => genre.GENRE_NAME}
+          />
+          <FilterField
+            label="Idioma"
+            name="languageCode"
+            value={filters.languageCode}
+            onChange={handleChange}
+            itemList={languages}
+            getValue={(language: any) => language.ISO_CODE}
+            getLabel={(language: any) => language.LANGUAGE_NAME}
+          />
+          <FilterField
+            label="Formato audiovisual"
+            name="audiovisualFormatId"
+            value={filters.audiovisualFormatId}
+            onChange={handleChange}
+            itemList={formats}
+            getValue={(format: any) => format.ID_AUDIOVISUAL_FORMAT}
+            getLabel={(format: any) => `${format.VIDEO_FORMAT_NAME} ${format.AUDIO_FORMAT_NAME}`}
+            minWidth={220}
+          />
+          <FilterField
+            label="Clasificación"
+            name="ratingId"
+            value={filters.ratingId}
+            onChange={handleChange}
+            itemList={ratings}
+            getValue={(rating: any) => rating.ID_RATING}
+            getLabel={(rating: any) => rating.RATING_CODE}
+          />
           <Button
             variant="outlined"
             onClick={clearFilters}
-            sx={{ whiteSpace: 'nowrap', minWidth: 'max-content'}}>
-              Limpiar filtros
+            sx={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}
+          >
+            Limpiar filtros
           </Button>
-        </Stack>
-
-        {moviesError ? (
-          <Box sx={{ my: 2 }}>
-            <Alert severity="error">
-              Error al cargar las películas: {(moviesError as Error).message}
-            </Alert>
-          </Box>
-        ) : null}
-
-        <Box sx={{ flex: 1, width: '100%' }}>
-          {!moviesError &&
-            <DataGrid
-              rows={movies}
-              rowCount={totalMovies}
-              getRowId={(row: Movie) => row.ID_MOVIE}
-              columns={columns}
-              loading={isLoadingMovies}
-              paginationMode="server"
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              pageSizeOptions={[10]}
-              disableRowSelectionOnClick
-              sx={{
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.05), 0px 15px 35px -5px rgba(0, 0, 0, 0.05)',
-                [`& .${gridClasses.columnHeader}`]: {
-                  bgcolor: 'background.default',
-                },
-                [`& .${gridClasses.columnHeader}, & .${gridClasses.cell}`]: {
-                  outline: 'transparent',
-                },
-              }}
-            />
-          }
-          <MovieDetailDialog movieId={selectedId} open={selectedId !== null} onClose={() => setSelectedId(null)} />
-          <MovieFormDialog movieId={formMovieId} open={formOpen} onClose={closeForm} />
-        </Box>
-      </Stack>
-    </PageContainer>
+        </>
+      }
+      dialogs={
+        <>
+          <MovieDetailDialog
+            movieId={selectedId}
+            open={selectedId !== null}
+            onClose={() => setSelectedId(null)}
+          />
+          <MovieFormDialog
+            movieId={formMovieId}
+            open={formOpen}
+            onClose={() => {
+              setFormOpen(false);
+              setFormMovieId(null);
+            }}
+          />
+        </>
+      }
+    />
   );
 }

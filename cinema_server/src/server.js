@@ -37,6 +37,14 @@ app.use(cookieParser());
 
 // Route for poster images
 app.use('/posters', express.static(path.join(process.cwd(), 'uploads', 'posters')));
+app.use('/posters', (req, res, next) => {
+  next({
+    status: 404,
+    code: 'NOT_FOUND',
+    message: 'El póster solicitado no existe.',
+    path: req.originalUrl,
+  });
+});
 
 //Mount routes in the app
 app.use('/auth', authRoutes);
@@ -56,9 +64,14 @@ app.use('/management/locations', locationRoutes);
 app.use('/seats', seatsRoutes);
 app.use('/purchase', QR_routes);
 
-// Router not found
+// Route not found
 app.use((req, res, next) => {
-  next({ status: 404, code: 'NOT_FOUND', message: 'La ruta solicitada no existe.' });
+  next({
+    status: 404,
+    code: 'NOT_FOUND',
+    message: 'La ruta solicitada no existe.',
+    path: req.originalUrl,
+  });
 });
 
 // Error handler

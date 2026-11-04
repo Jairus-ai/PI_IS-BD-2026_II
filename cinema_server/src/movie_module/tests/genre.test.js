@@ -1,8 +1,16 @@
-import { beforeAll, expect, jest } from '@jest/globals';
+import { describe, test, expect, jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
-import oracledb, { errorOnConcurrentExecute } from 'oracledb';
-import genreRoutes from '../routes/genre_routes.js';
+
+const mockGetConnection = jest.fn();
+const mockCloseDatabaseConnection = jest.fn();
+
+jest.unstable_mockModule('../../database/database.js', () => ({
+  getConnection: mockGetConnection,
+  closeDatabaseConnection: mockCloseDatabaseConnection,
+}));
+
+const { default: genreRoutes } = await import('../routes/genre_routes.js');
 
 const app = express();
 app.use(express.json());
@@ -12,42 +20,36 @@ describe('GET /management/genres', () => {
 
   test('Genre list 200 OK', async () => {
     const mockGenres = [
-      { id_genre: 1, genre_name: 'Acción'},
-      { id_genre: 2, genre_name: 'Comedia'},
+      { id_genre: 1, genre_name: 'Acción' },
+      { id_genre: 2, genre_name: 'Comedia' },
     ];
 
     const mockConnection = {
       execute: jest.fn().mockResolvedValue({
         rows: mockGenres
       }),
-      close: jest.fn().mockResolvedValue()
     };
 
-    jest.spyOn(oracledb, 'getConnection').mockResolvedValue(mockConnection);
+    mockGetConnection.mockResolvedValue(mockConnection);
+    mockCloseDatabaseConnection.mockResolvedValue();
 
     const response = await request(app)
       .get('/management/genres')
-      .expect('Content-type', /json/)
+      .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(response.body).toHaveProperty('data');
-    expect(response.body.data).toEqual(mockGenres);
-    expect(response.body.data).toHaveLength(2);
-    expect(mockConnection.close).toHaveBeenCalledTimes(1);
+    expect(response.body).toEqual({ data: mockGenres });
+    expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(mockConnection);
   });
 
   test('Genre list 500 Internal Server Error', async () => {
-    const mockConnection = {
-      execute: jest.fn().mockRejectedValue(new Error('Oracle error')),
-      close: jest.fn().mockResolvedValue()
-    };
+    mockGetConnection.mockRejectedValue(new Error('Oracle error'));
+    mockCloseDatabaseConnection.mockResolvedValue();
 
-    jest.spyOn(oracledb, 'getConnection').mockResolvedValue(mockConnection);
-
-    const response = await request(app)
+    await request(app)
       .get('/management/genres')
       .expect(500);
 
-    expect(mockConnection.close).toHaveBeenCalledTimes(1);
-  })
+    expect(mockCloseDatabaseConnection).toHaveBeenCalled();
+  });
 });
