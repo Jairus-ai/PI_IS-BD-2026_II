@@ -35,7 +35,10 @@ const router = createHashRouter([
         path:'/seats/:screeningId',
         Component: ShowSeats,
       }
-    ]
+    ],
+  },
+  {
+    element: (
       <RequireSession>
         <ChangePassword />
       </RequireSession>
