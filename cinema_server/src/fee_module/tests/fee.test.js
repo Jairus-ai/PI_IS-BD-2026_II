@@ -220,14 +220,17 @@ describe('POST /management/fees', () => {
   });
 
   test('Returns 500 when the insert fails', async () => {
-    mockDatabase(FORMAT_ROW, { rows: [] }, new Error('ORA-12345: insert failed'));
+    const connection = mockDatabase(FORMAT_ROW, { rows: [] }, new Error('ORA-12345: insert failed'));
+    const response = await postFee(VALID_FEE).expect(500);
 
-    await postFee(VALID_FEE).expect(500);
+    expect(response.body.message).toMatch(/ORA-12345/);
+    expect(connection.close).toHaveBeenCalledTimes(2);
   });
 
   test('Rejects an employee with 403', async () => {
-    mockDatabase();
+    const connection = mockDatabase();
 
     await postFee(VALID_FEE, ROLES.EMPLOYEE).expect(403);
+    expect(connection.execute).toHaveBeenCalledTimes(1);
   });
 });
