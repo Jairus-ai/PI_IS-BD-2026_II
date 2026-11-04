@@ -2,28 +2,58 @@ import { expect, jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import oracledb from 'oracledb';
+import emailService from '../../email/email_service.js';
 import qrRoutes from '../routes/QR_routes.js';
-import emailService from '../../email/email_service.js'
 
 const BASE_PATH = '/purchase';
 
 
-function createMockConnection(responses = []) {
-    const execute = jest.fn();
-    for (const response of responses) {
-        if (response instanceof Error) {
-            execute.mockRejectedValueOnce(response);
-        } else {
-            execute.mockResolvedValueOnce(response);
+const USER_ID = 1;
+const USER_EMAIL = 'cliente@correo.com';
+
+const SEAT_ROW_C5 = {
+    SEAT: 'C5',
+    SCREEN: 2,
+    SCREENING_DATE: '2026-12-01',
+    SCREENING_START_TIME: '18:30',
+};
+const SEAT_ROW_C6 = { ...SEAT_ROW_C5, SEAT: 'C6' };
+
+const BODY = {
+    data: [
+        { screeningId: 7, seatId: 12 },
+        { screeningId: 7, seatId: 13 },
+    ],
+};
+
+function useDatabase({
+    seatRows = { '7-12': SEAT_ROW_C5, '7-13': SEAT_ROW_C6 },
+    emailRow = { EMAIL: USER_EMAIL },
+    seatError = null,
+    emailError = null,
+} = {}) {
+    const execute = jest.fn(async (sql, binds) => {
+        if (/PI_DEVELOPERS\.CLIENTS/.test(sql)) {
+            if (emailError) {
+                throw emailError;
+            }
+            return { rows: emailRow ? [emailRow] : [] };
         }
-    }
+
+        if (/PI_DEVELOPERS\.SEATS/.test(sql)) {
+            if (seatError) {
+                throw seatError;
+            }
+            const row = seatRows[`${binds.screeningId}-${binds.seatId}`];
+            return { rows: row ? [row] : [] };
+        }
+
+        throw new Error(`SQL inesperado en el test: ${sql}`);
+    });
 
     const close = jest.fn().mockResolvedValue();
-    return { execute, close, release: close };
-}
+    const connection = { execute, close, release: close };
 
-function useConnection(responses) {
-    const connection = createMockConnection(responses);
     jest.spyOn(oracledb, 'getConnection').mockResolvedValue(connection);
     return connection;
 }
@@ -36,76 +66,93 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message });
 });
 
+let sendEmail;
+
 beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    sendEmail = jest
+        .spyOn(emailService, 'sendQREmail')
+        .mockResolvedValue({ messageId: 'test' });
 });
 
 afterEach(() => {
     jest.restoreAllMocks();
 });
 
+describe(`POST ${BASE_PATH}/qr/:idUser`, () => {
+    const post = (body = BODY, idUser = USER_ID) =>
+        request(app).post(`${BASE_PATH}/qr/${idUser}`).send(body);
 
-describe(`POST ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
-    const MOCK_QR_DATA = {
-        SEAT: 'C5',
-        SCREEN: 2,
-        SCREENING_DATE: '2026-12-01',
-        SCREENING_START_TIME: '18:30',
-    };
-
-    const post = (screeningId = 7, seatId = 12) =>
-        request(app).post(`${BASE_PATH}/${screeningId}/${seatId}/qr`);
-
-    test('200 OK returns the QR as a data URL in JSON', async () => {
-        const connection = useConnection([{ rows: [MOCK_QR_DATA] }]);
+    test('200 OK generates the PDF and sends it by email', async () => {
+        const connection = useDatabase();
 
         const response = await post()
             .expect('Content-type', /json/)
             .expect(200);
 
-        expect(response.body).toHaveProperty('message');
+        expect(response.body).toEqual({ message: 'success' });
 
-        const [sql, binds, options] = connection.execute.mock.calls[0];
-        expect(sql).toMatch(/FROM PI_DEVELOPERS\.SEATS/);
-        expect(sql).toMatch(/JOIN PI_DEVELOPERS\.SCREENINGS/);
-        expect(sql).toMatch(/JOIN PI_DEVELOPERS\.SCREENS/);
-        expect(sql).not.toMatch(/;\s*$/);
-        expect(binds).toEqual({ screeningId: 7, seatId: 12 });
-        expect(options).toEqual({ outFormat: oracledb.OUT_FORMAT_OBJECT });
+        expect(sendEmail).toHaveBeenCalledTimes(1);
+        const [{ email, pdfBuffer }] = sendEmail.mock.calls[0];
+        expect(email).toBe(USER_EMAIL);
 
-        expect(connection.close).toHaveBeenCalledTimes(1);
+        expect(Buffer.isBuffer(pdfBuffer)).toBe(true);
+        expect(pdfBuffer.subarray(0, 4).toString()).toBe('%PDF');
+
+        const calls = connection.execute.mock.calls;
+        const seatBinds = calls
+            .filter(([sql]) => /PI_DEVELOPERS\.SEATS/.test(sql))
+            .map(([, binds]) => binds);
+        const emailBinds = calls
+            .filter(([sql]) => /PI_DEVELOPERS\.CLIENTS/.test(sql))
+            .map(([, binds]) => binds);
+
+        expect(seatBinds).toEqual(
+            expect.arrayContaining([
+                { screeningId: 7, seatId: 12 },
+                { screeningId: 7, seatId: 13 },
+            ]),
+        );
+        expect(seatBinds).toHaveLength(2);
+        expect(emailBinds).toEqual([{ id: USER_ID }]);
+        expect(connection.close).toHaveBeenCalledTimes(3);
     });
 
-    test('404 when there is no data for that screening and seat', async () => {
-        const connection = useConnection([{ rows: [] }]);
+    test('200 OK with a single seat', async () => {
+        useDatabase();
 
-        const response = await post(7, 999)
-            .expect('Content-type', /json/)
-            .expect(404);
+        await post({ data: [{ screeningId: 7, seatId: 12 }] }).expect(200);
 
-        expect(response.body).toHaveProperty('message');
-        expect(connection.close).toHaveBeenCalledTimes(1);
+        expect(sendEmail).toHaveBeenCalledTimes(1);
     });
 
-    test('500 when the query fails, and the connection is still closed', async () => {
-        const connection = useConnection([
-            new Error('ORA-00942: table or view does not exist'),
-        ]);
+    test('500 when a seat query fails, no email is sent and connections are closed', async () => {
+        const connection = useDatabase({
+            seatError: new Error('ORA-00942: table or view does not exist'),
+        });
 
         const response = await post().expect(500);
 
         expect(response.body.message).toMatch(/ORA-00942/);
-        expect(connection.close).toHaveBeenCalledTimes(1);
+        expect(sendEmail).not.toHaveBeenCalled();
+        expect(connection.close).toHaveBeenCalledTimes(2);
     });
 
-    test('500 when the connection cannot be opened', async () => {
-        jest.spyOn(oracledb, 'getConnection').mockRejectedValue(
-            new Error('NJS-503: connection refused'),
-        );
+    test('500 when the email lookup fails', async () => {
+        useDatabase({ emailError: new Error('ORA-01031: insufficient privileges') });
 
         const response = await post().expect(500);
 
-        expect(response.body.message).toMatch(/NJS-503/);
+        expect(response.body.message).toMatch(/ORA-01031/);
+        expect(sendEmail).not.toHaveBeenCalled();
     });
+
+    test('500 when sending the email fails', async () => {
+        useDatabase();
+        sendEmail.mockRejectedValue(new Error('SMTP connection refused'));
+
+        const response = await post().expect(500);
+
+        expect(response.body.message).toMatch(/SMTP/);
+    });
+
 });
