@@ -3,6 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import oracledb from 'oracledb';
 import qrRoutes from '../routes/QR_routes.js';
+import emailService from '../../email/email_service.js'
 
 const BASE_PATH = '/purchase';
 
@@ -53,13 +54,13 @@ describe(`POST ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
         SCREENING_START_TIME: '18:30',
     };
 
-    const put = (screeningId = 7, seatId = 12) =>
-        request(app).put(`${BASE_PATH}/${screeningId}/${seatId}/qr`);
+    const post = (screeningId = 7, seatId = 12) =>
+        request(app).post(`${BASE_PATH}/${screeningId}/${seatId}/qr`);
 
     test('200 OK returns the QR as a data URL in JSON', async () => {
         const connection = useConnection([{ rows: [MOCK_QR_DATA] }]);
 
-        const response = await put()
+        const response = await post()
             .expect('Content-type', /json/)
             .expect(200);
 
@@ -79,7 +80,7 @@ describe(`POST ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
     test('404 when there is no data for that screening and seat', async () => {
         const connection = useConnection([{ rows: [] }]);
 
-        const response = await put(7, 999)
+        const response = await post(7, 999)
             .expect('Content-type', /json/)
             .expect(404);
 
@@ -92,7 +93,7 @@ describe(`POST ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
             new Error('ORA-00942: table or view does not exist'),
         ]);
 
-        const response = await put().expect(500);
+        const response = await post().expect(500);
 
         expect(response.body.message).toMatch(/ORA-00942/);
         expect(connection.close).toHaveBeenCalledTimes(1);
@@ -103,7 +104,7 @@ describe(`POST ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
             new Error('NJS-503: connection refused'),
         );
 
-        const response = await put().expect(500);
+        const response = await post().expect(500);
 
         expect(response.body.message).toMatch(/NJS-503/);
     });
