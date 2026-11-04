@@ -6,9 +6,6 @@ import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Toolbar from '@mui/material/Toolbar';
 import PersonIcon from '@mui/icons-material/Person';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import DescriptionIcon from '@mui/icons-material/Description';
-import LayersIcon from '@mui/icons-material/Layers';
 import MovieIcon from '@mui/icons-material/Movie';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import { matchPath, useLocation } from 'react-router';
@@ -16,7 +13,6 @@ import DashboardSidebarContext from '../../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
 import DashboardSidebarPageItem from './DashboardSidebarPageItem';
 import DashboardSidebarHeaderItem from './DashboardSidebarHeaderItem';
-import DashboardSidebarDividerItem from './DashboardSidebarDividerItem';
 import getDrawerSxTransitionMixin from '../../theme/mixins';
 
 export interface DashboardSidebarProps {

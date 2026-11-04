@@ -12,23 +12,45 @@ export interface MovieFormValues {
   directorIds: Director[];
   formatIds: AudiovisualFormat[];
   originalLangs: Language[];
+  dubLangs: Language[];
+  subLangs: Language[];
   posterFile: File | null;
   existingPoster: string | null;
-  isCreate: boolean;
 }
 
-export function validateAll(values: MovieFormValues): ServerErrors {
+export function validateAll(
+  values: MovieFormValues,
+  isCreate: boolean
+): ServerErrors {
   const errors: ServerErrors = {};
   if (!values.title.trim()) errors.MOVIE_TITLE = 'Campo obligatorio';
-  if (!values.yearDate?.isValid()) errors.PUBLISHING_YEAR = 'Seleccione el año';
-  if (!values.durationTime?.isValid()) errors.MOVIE_DURATION = 'Seleccione la duración';
+  if (values.title.trim().length > 100) errors.MOVIE_TITLE = 'El título no puede exceder 100 caracteres.';
+  if (!values.yearDate?.isValid()) {
+    errors.PUBLISHING_YEAR = 'Seleccione el año de publicación.';
+  } else {
+    const year = values.yearDate.year();
+    if (year < 1888) {
+      errors.PUBLISHING_YEAR = 'El año debe ser 1888 o posterior a este año.';
+    } else if (year > 2026) {
+      errors.PUBLISHING_YEAR = 'El año no puede ser superior a 2026.';
+    }
+  }
+  if (!values.durationTime?.isValid()) {
+    errors.MOVIE_DURATION = 'Seleccione la duración.';
+  } else {
+    const totalMinutes = values.durationTime.hour() * 60 + values.durationTime.minute();
+    if (totalMinutes <= 0) {
+      errors.MOVIE_DURATION = 'La duración debe ser mayor a 0 minutos.';
+    }
+  }
   if (!values.synopsis.trim()) errors.SYNOPSIS = 'Campo obligatorio';
+  if (values.synopsis.trim().length > 1000) errors.SYNOPSIS = 'La sinopsis no puede exceder los 1000 caracteres.';
   if (values.ratingId === '') errors.ID_RATING = 'Campo obligatorio';
   if (values.genreIds.length === 0) errors.GENRE_IDS = 'Seleccione al menos un género';
   if (values.directorIds.length === 0) errors.DIRECTOR_IDS = 'Seleccione al menos un director';
   if (values.formatIds.length === 0) errors.FORMAT_IDS = 'Seleccione al menos un formato';
   if (values.originalLangs.length === 0) errors.LANGUAGES_ORIGINAL = 'Seleccione al menos un idioma original';
-  if (values.isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
-  if (!values.isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
+  if (isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
+  if (!isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
   return errors;
 }

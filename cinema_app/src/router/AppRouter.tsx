@@ -16,6 +16,8 @@ import UserCreate from '../modules/users/pages/UserCreate';
 import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
+import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
+import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 
 const router = createHashRouter([
   {
@@ -44,6 +46,21 @@ const router = createHashRouter([
         Component: ShowSeats,
       }
     ],
+  },
+  {
+    element: (
+      <DashboardLayout />
+    ),
+    children: [
+      {
+        path:'/seats/:screeningId',
+        Component: ShowSeats,
+      }
+    ],
+  },
+  {
+  path: '/password-recovery',
+    Component: PasswordRecovery,
   },
   {
     element: (
@@ -96,6 +113,10 @@ const router = createHashRouter([
       {
         path: '/purchase-history',
         Component: PurchaseHistory,
+      },
+      {
+        path: '/purchaseConfirmationEmail',
+        Component: EmailConfirmation
       },
     ],
   },

@@ -21,6 +21,7 @@ import { deactivateWorker } from '../services/userService.js';
 import { useDialogs } from '../../../hooks/useDialogs.tsx';
 import useNotifications from '../../../hooks/useNotifications.tsx';
 import useSession from '../../../hooks/useSession';
+import { FilterField } from '../../../components/crud/FilterField.jsx';
 
 function formatRole(role) {
   const roles = {
@@ -285,68 +286,74 @@ const navigate = useNavigate();
             size="small"
           />
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Rol</InputLabel>
+          {user?.role !== 'EMPLOYEE' && (
+            <>
+              <FilterField
+                label="Rol"
+                name="role"
+                value={filters.role}
+                onChange={handleChange}
+                itemList={roleOptions}
+                getValue={(role) => role.value}
+                getLabel={(role) => role.label}
+                minWidth={170}
+              />
 
-            <Select
-              label="Rol"
-              name="role"
-              value={filters.role}
-              onChange={handleChange}
-            >
-              <MenuItem value="">Todos los roles</MenuItem>
-              
-              {roleOptions.map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                {label}
-                </MenuItem>
-              ))}
-              
-            </Select>
-          </FormControl>
+              <FormControl
+                size="small"
+                sx={{ minWidth: 170 }}
+              >
+                <InputLabel>Estado</InputLabel>
 
-          <FormControl size="small" sx={{ minWidth: 170 }}>
-            <InputLabel>Estado</InputLabel>
-
-            <Select
-              label="Estado"
-              name="status"
-              value={filters.status}
-              onChange={handleChange}
-            >
-              <MenuItem value="">Todos los estados</MenuItem>
-              <MenuItem value="ACTIVE">Activo</MenuItem>
-              <MenuItem value="INACTIVE">Inactivo</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl
-            size="small"
-            sx={{ minWidth: 220 }}
-            disabled={loadingLocations}
-          >
-            <InputLabel>Sucursal</InputLabel>
-
-            <Select
-              label="Sucursal"
-              name="locationId"
-              value={filters.locationId}
-              onChange={handleChange}
-            >
-              <MenuItem value="">
-                Todas las sucursales
-              </MenuItem>
-
-              {locations.map((location) => (
-                <MenuItem
-                  key={location.ID_LOCATION}
-                  value={location.ID_LOCATION}
+                <Select
+                  label="Estado"
+                  name="status"
+                  value={filters.status}
+                  onChange={handleChange}
                 >
-                  {location.LOCATION_NAME}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                  <MenuItem value="">
+                    Todos los estados
+                  </MenuItem>
+
+                  <MenuItem value="ACTIVE">
+                    Activo
+                  </MenuItem>
+
+                  <MenuItem value="INACTIVE">
+                    Inactivo
+                  </MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl
+                size="small"
+                sx={{ minWidth: 220 }}
+                disabled={loadingLocations}
+              >
+                <InputLabel>Sucursal</InputLabel>
+
+                <Select
+                  label="Sucursal"
+                  name="locationId"
+                  value={filters.locationId}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    Todas las sucursales
+                  </MenuItem>
+
+                  {locations.map((location) => (
+                    <MenuItem
+                      key={location.ID_LOCATION}
+                      value={location.ID_LOCATION}
+                    >
+                      {location.LOCATION_NAME}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </>
+          )}
 
           <Button
             variant="outlined"
