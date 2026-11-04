@@ -18,6 +18,11 @@ export const updateFee = async ({ id, fee }) => {
   return data.data;
 };
 
+export const deactivateFee = async (id) => {
+  const { data } = await api.patch(`/management/fees/${id}/deactivate`, {}, SESSION_REQUEST_CONFIG);
+  return data;
+};
+
 export const getAudiovisualFormats = async () => {
   const { data } = await api.get('/management/audiovisual_format', SESSION_REQUEST_CONFIG);
   return data.data;
