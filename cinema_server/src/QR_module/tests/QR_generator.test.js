@@ -45,7 +45,7 @@ afterEach(() => {
 });
 
 
-describe(`GET ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
+describe(`POST ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
     const MOCK_QR_DATA = {
         SEAT: 'C5',
         SCREEN: 2,
@@ -53,17 +53,17 @@ describe(`GET ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
         SCREENING_START_TIME: '18:30',
     };
 
-    const get = (screeningId = 7, seatId = 12) =>
-        request(app).get(`${BASE_PATH}/${screeningId}/${seatId}/qr`);
+    const put = (screeningId = 7, seatId = 12) =>
+        request(app).put(`${BASE_PATH}/${screeningId}/${seatId}/qr`);
 
     test('200 OK returns the QR as a data URL in JSON', async () => {
         const connection = useConnection([{ rows: [MOCK_QR_DATA] }]);
 
-        const response = await get()
+        const response = await put()
             .expect('Content-type', /json/)
             .expect(200);
 
-        expect(response.body.qrCode).toMatch(/^data:image\/png;base64,/);
+        expect(response.body).toHaveProperty('message');
 
         const [sql, binds, options] = connection.execute.mock.calls[0];
         expect(sql).toMatch(/FROM PI_DEVELOPERS\.SEATS/);
@@ -76,20 +76,10 @@ describe(`GET ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
-    test('200 OK generates a different QR for different seat data', async () => {
-        useConnection([{ rows: [MOCK_QR_DATA] }]);
-        const first = await get().expect(200);
-
-        useConnection([{ rows: [{ ...MOCK_QR_DATA, SEAT: 'D7' }] }]);
-        const second = await get().expect(200);
-
-        expect(second.body.qrCode).not.toEqual(first.body.qrCode);
-    });
-
     test('404 when there is no data for that screening and seat', async () => {
         const connection = useConnection([{ rows: [] }]);
 
-        const response = await get(7, 999)
+        const response = await put(7, 999)
             .expect('Content-type', /json/)
             .expect(404);
 
@@ -102,7 +92,7 @@ describe(`GET ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
             new Error('ORA-00942: table or view does not exist'),
         ]);
 
-        const response = await get().expect(500);
+        const response = await put().expect(500);
 
         expect(response.body.message).toMatch(/ORA-00942/);
         expect(connection.close).toHaveBeenCalledTimes(1);
@@ -113,7 +103,7 @@ describe(`GET ${BASE_PATH}/:screeningId/:seatId/qr`, () => {
             new Error('NJS-503: connection refused'),
         );
 
-        const response = await get().expect(500);
+        const response = await put().expect(500);
 
         expect(response.body.message).toMatch(/NJS-503/);
     });

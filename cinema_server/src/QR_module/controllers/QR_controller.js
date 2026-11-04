@@ -56,7 +56,7 @@ export const QRGenerator = async (req, res, next) => {
         const qrCode = await QRCode.toDataURL(JSON.stringify(qrData));
         res.status(200).json(
             { 
-                qrCode 
+                message:"succes" 
             }
         );
     } catch (error) {

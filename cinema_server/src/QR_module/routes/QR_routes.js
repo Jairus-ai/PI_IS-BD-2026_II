@@ -5,6 +5,6 @@ import {
 
 const router = Router();
 
-router.get('/:screeningId/:seatId/qr', QRGenerator);
+router.put('/:screeningId/:seatId/qr', QRGenerator);
 
 export default router;
