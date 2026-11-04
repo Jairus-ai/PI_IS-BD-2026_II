@@ -26,7 +26,7 @@ export function CrudDialog({
   children,
   actions,
   loading = false,
-  maxWidth = 'md',
+  maxWidth = 'sm',
 }: CrudDialogProps) {
   return (
     <Dialog
