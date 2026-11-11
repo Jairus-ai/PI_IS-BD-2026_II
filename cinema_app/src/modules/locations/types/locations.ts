@@ -5,3 +5,7 @@ export interface Location {
   CLOSING_HOUR: string,
   CANTON_NAME: string
 };
+export interface Canton {
+  ID_CANTON: number;
+  CANTON_NAME: string;
+}

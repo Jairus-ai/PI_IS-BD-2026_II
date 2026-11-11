@@ -253,3 +253,133 @@ describe(`GET ${BASE_PATH}/:id`, () => {
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 });
+
+describe(`POST ${BASE_PATH}/`, () => {
+    const NEW_LOCATION = {
+        LOCATION_NAME: 'CINE SUR',
+        OPENING_HOUR: '08:30',
+        CLOSING_HOUR: '22:00',
+        CANTON_NAME: 'Cartago',
+    };
+
+    const post = (body = NEW_LOCATION) => request(app).post(`${BASE_PATH}/`).send(body);
+
+    test('201 OK looks up the canton and inserts the location', async () => {
+        const connection = useConnection([
+            { rows: [{ ID_CANTON: 3 }] },
+            { rowsAffected: 1 },
+        ]);
+
+        const response = await post()
+            .expect('Content-type', /json/)
+            .expect(201);
+
+        expect(response.body).toEqual({ message: 'success' });
+        expect(connection.execute).toHaveBeenCalledTimes(2);
+
+        const [cantonSql, cantonBinds] = connection.execute.mock.calls[0];
+        expect(cantonSql).toMatch(/PI_DEVELOPERS\.CANTONS/);
+        expect(cantonBinds).toEqual({ name: 'Cartago' });
+
+        const [sql, binds, options] = connection.execute.mock.calls[1];
+        expect(sql).toMatch(/INSERT INTO PI_DEVELOPERS\.LOCATIONS/);
+        expect(sql).toMatch(/TO_DSINTERVAL/);
+        expect(sql).not.toMatch(/;\s*$/);
+        expect(binds).toEqual({
+            name: 'CINE SUR',
+            opening: '08:30',
+            closing: '22:00',
+            idCanton: 3,
+        });
+        expect(options).toEqual({ autoCommit: true });
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('trims the name before inserting', async () => {
+        const connection = useConnection([
+            { rows: [{ ID_CANTON: 3 }] },
+            { rowsAffected: 1 },
+        ]);
+
+        await post({ ...NEW_LOCATION, LOCATION_NAME: '  CINE SUR  ' }).expect(201);
+
+        expect(connection.execute.mock.calls[1][1].name).toBe('CINE SUR');
+    });
+
+    test.each([
+        ['without name', { LOCATION_NAME: undefined }],
+        ['with an empty name', { LOCATION_NAME: '' }],
+        ['without canton', { CANTON_NAME: undefined }],
+    ])('400 when the body comes %s, without opening a connection', async (_label, override) => {
+        const getConnection = jest
+            .spyOn(oracledb, 'getConnection')
+            .mockResolvedValue(createMockConnection());
+
+        const response = await post({ ...NEW_LOCATION, ...override }).expect(400);
+
+        expect(response.body).toHaveProperty('message');
+        expect(getConnection).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        ['8:30'],
+        ['25:00'],
+        ['08:60'],
+        ['abc'],
+        [''],
+        [7],
+    ])('400 when the opening hour is %p, without opening a connection', async (hour) => {
+        const getConnection = jest
+            .spyOn(oracledb, 'getConnection')
+            .mockResolvedValue(createMockConnection());
+
+        await post({ ...NEW_LOCATION, OPENING_HOUR: hour }).expect(400);
+
+        expect(getConnection).not.toHaveBeenCalled();
+    });
+
+    test('400 when the closing hour is missing, without opening a connection', async () => {
+        const getConnection = jest
+            .spyOn(oracledb, 'getConnection')
+            .mockResolvedValue(createMockConnection());
+
+        await post({ ...NEW_LOCATION, CLOSING_HOUR: undefined }).expect(400);
+
+        expect(getConnection).not.toHaveBeenCalled();
+    });
+
+    test('500 when the canton lookup fails, and the connection is closed', async () => {
+        const connection = useConnection([
+            new Error('ORA-00942: table or view does not exist'),
+        ]);
+
+        const response = await post().expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.execute).toHaveBeenCalledTimes(1);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when the insert fails, and the connection is closed', async () => {
+        const connection = useConnection([
+            { rows: [{ ID_CANTON: 3 }] },
+            new Error('ORA-01031: insufficient privileges'),
+        ]);
+
+        const response = await post().expect(500);
+
+        expect(response.body.message).toMatch(/ORA-01031/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when the connection cannot be opened, and nothing is closed', async () => {
+        jest.spyOn(oracledb, 'getConnection').mockRejectedValue(
+            new Error('NJS-503: connection refused'),
+        );
+
+        const response = await post().expect(500);
+
+        expect(response.body.message).toMatch(/NJS-503/);
+    });
+});

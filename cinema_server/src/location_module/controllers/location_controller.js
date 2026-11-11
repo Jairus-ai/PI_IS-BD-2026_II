@@ -1,8 +1,8 @@
-import oracledb from 'oracledb';
-import {
+import oracledb from "oracledb";
+import { 
   getConnection,
-  closeDatabaseConnection,
-} from '../../database/database.js';
+  closeDatabaseConnection 
+} from "../../database/database.js";
 
 export const getLocationsList = async (req, res, next) => 
 {
@@ -138,6 +138,43 @@ export const countLocations = async (req, res, next) => {
     }
 };
 
+export const getCantonsforLocation = async(req, res, next) =>
+{
+  let connection;
+
+  try
+  {
+    connection = await getConnection();
+
+    const request = `
+      SELECT ID_CANTON, CANTON_NAME
+      FROM PI_DEVELOPERS.CANTONS
+      ORDER BY CANTON_NAME
+    `;
+
+    const result = await connection.execute(
+      request,
+      {},
+      {outFormat: oracledb.OUT_FORMAT_OBJECT}
+    );
+
+    res.status(200).json(
+    { 
+      data: result.rows 
+    });
+
+  }catch(error)
+  {
+    next(error)
+  }finally
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+}
+
 export const getLocationByID = async(req, res, next) => 
 {
   let connection;
@@ -194,3 +231,75 @@ export const getLocationByID = async(req, res, next) =>
   }
 };
 
+async function getCantonId(canton_name, connection)
+{
+  const request = `
+    SELECT ID_CANTON 
+    FROM PI_DEVELOPERS.CANTONS
+    WHERE CANTON_NAME = :name
+  `;
+
+  const result = await connection.execute(
+    request,
+    {
+      name:canton_name,
+    },
+    {
+      outFormat: oracledb.OUT_FORMAT_OBJECT
+    }
+  );
+  return result.rows[0]?.ID_CANTON ?? null;
+};
+
+export const createLocation = async(req, res, next) => 
+{
+  let connection;
+  try
+  {
+    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
+    connection = await getConnection();
+
+    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
+
+    const request = `
+      INSERT INTO PI_DEVELOPERS.LOCATIONS(LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, ID_CANTON)
+      VALUES
+      (
+        :LOCATION_NAME,
+        TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
+        TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
+        :ID_CANTON
+      )
+    `;
+    
+    await connection.execute(
+      request,
+      {
+        LOCATION_NAME: LOCATION_NAME, 
+        OPENING_HOUR: OPENING_HOUR, 
+        CLOSING_HOUR: CLOSING_HOUR,
+        ID_CANTON: ID_CANTON
+      },
+      {
+        autoCommit: true
+      }
+    );
+    
+    res.status(200).json(
+      {
+        message:'succes'
+      }
+    );
+    
+  }catch(error)
+  {
+    next(error);
+  }finally
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+
+};

@@ -21,6 +21,11 @@ export const getLocationById = async (id) => {
   return data;
 };
 
+export const getCantons = async () => {
+  const {data} = await api.get('/management/locations/c');
+  return data;
+};
+
 export const getLocationsCount = async (filters = {}) => {
     const cleanedFilters = Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== '' && value !== null && value !== undefined),

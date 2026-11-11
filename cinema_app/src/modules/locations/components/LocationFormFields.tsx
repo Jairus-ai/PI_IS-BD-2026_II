@@ -8,6 +8,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { firstError } from '../utils/locationFormUtils';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import type { LocationForm } from '../hooks/useLocationForm';
+import Autocomplete from '@mui/material/Autocomplete';
 
 interface FieldErrorProps {
     readonly show: boolean;
@@ -104,19 +105,29 @@ export default function LocationFormFields({ form, formId }: LocationFormFieldsP
                     </Stack>
                 </LocalizationProvider>
 
-                <TextField
-                    label="Cantón"
-                    value={form.canton_name}
-                    onChange={form.handleCantonChange}
-                    error={err('CANTON_NAME')}
-                    helperText={
-                        <FieldError
-                            show={err('CANTON_NAME')}
-                            message={firstError(form.fieldErrors.CANTON_NAME)}
+                <Autocomplete
+                    options={form.cantons}
+                    value={form.cantons.find((canton) => canton.CANTON_NAME === form.canton_name) ?? null}
+                    onChange={(_, selected) => form.handleCantonChange(selected)}
+                    onBlur={form.handleBlur('CANTON_NAME')}
+                    getOptionLabel={(canton) => canton.CANTON_NAME}
+                    isOptionEqualToValue={(option, selected) => option.ID_CANTON === selected.ID_CANTON}
+                    loading={form.isLoadingCantons}
+                    noOptionsText="Sin cantones"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Cantón"
+                            required
+                            error={err('CANTON_NAME')}
+                            helperText={
+                                <FieldError
+                                    show={err('CANTON_NAME')}
+                                    message={firstError(form.fieldErrors.CANTON_NAME)}
+                                />
+                            }
                         />
-                    }
-                    fullWidth
-                    required
+                    )}
                 />
 
                 <RequiredFieldsHint />

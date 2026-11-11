@@ -8,6 +8,7 @@ import { validateAll } from '../utils/locationFormValidation';
 import type { LocationFormValues } from '../utils/locationFormValidation';
 import { mapDetailToFormValues } from '../utils/locationFormHydration';
 import { buildLocationPayload } from '../utils/locationPayloadBuilder';
+import type { Canton } from '../types/locations';
 
 const initialFormValues: LocationFormValues = {
     name: '',
@@ -16,7 +17,6 @@ const initialFormValues: LocationFormValues = {
     canton_name: '',
 };
 
-// validateAll devuelve los errores con las claves del servidor, no con las del formulario
 const ERROR_KEY: Record<keyof LocationFormValues, string> = {
     name: 'LOCATION_NAME',
     opening_hour: 'OPENING_HOUR',
@@ -45,6 +45,8 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         updateLocation,
         isCreatingLocation,
         isUpdatingLocation,
+        locationCantons,
+        isLoadingCantons,
     } = useLocations(1, open && !isCreate ? locationId : null);
 
     const [values, setValues] = React.useState<LocationFormValues>(initialFormValues);
@@ -77,6 +79,10 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         validateAndSet(currentValues, nextTouched);
     };
 
+    const handleBlur = (errorKey: string) => () => {
+        touchAndValidate(errorKey, values);
+    };
+
     const setFieldValue = <K extends keyof LocationFormValues>(
         field: K,
         value: LocationFormValues[K],
@@ -90,7 +96,6 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         setFieldValue('name', event.target.value);
     };
 
-    // Los pickers de hora entregan null cuando se borra el valor
     const handleOpHourChange = (hour: Dayjs | null) => {
         setFieldValue('opening_hour', hour);
     };
@@ -99,11 +104,10 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         setFieldValue('closing_hour', hour);
     };
 
-    const handleCantonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setFieldValue('canton_name', event.target.value);
+    const handleCantonChange = (canton: Canton | null) => {
+        setFieldValue('canton_name', canton?.CANTON_NAME ?? '');
     };
 
-    // Al abrir: limpia errores y carga los valores (vacíos al crear, los de la sucursal al editar)
     React.useEffect(() => {
         if (!open) {
             return;
@@ -123,7 +127,6 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
     const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        // Al enviar se muestran todos los errores, aunque el usuario no haya tocado el campo
         const allTouched = Object.fromEntries(ALL_ERROR_KEYS.map((key) => [key, true]));
         touchedRef.current = allTouched;
         setTouched(allTouched);
@@ -189,6 +192,10 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         handleCloseHourChange,
         handleCantonChange,
         handleSubmit,
+        handleBlur,
+
+        cantons: locationCantons,
+        isLoadingCantons,
     };
 }
 

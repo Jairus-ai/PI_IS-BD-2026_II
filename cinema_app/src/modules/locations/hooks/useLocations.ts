@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Canton } from '../types/locations';
 import {
   createLocation,
   updateLocation,
   deleteLocation,
   getLocations,
   getLocationsCount,
-  getLocationById
+  getLocationById,
+  getCantons
 } from '../services/locationService';
 
 export const useLocations = (
@@ -28,6 +30,11 @@ export const useLocations = (
     queryFn: () => getLocationById(locationId),
     enabled: locationId != null,
   });
+
+  const locationCantonsQuery = useQuery({
+    queryKey: ['locationCantons'],
+    queryFn: () => getCantons(),
+  }) 
 
   const queryClient = useQueryClient();
   const createLocationMutation = useMutation({
@@ -61,7 +68,9 @@ export const useLocations = (
     LocationsError: locationsQuery.error,
 
     locationDetail: locationDetailQuery.data?.data ?? null,
+    locationCantons: (locationCantonsQuery.data?.data?? []) as Canton[],
     isLoadingDetail: locationDetailQuery.isLoading,
+    isLoadingCantons: locationCantonsQuery.isLoading,
 
     createLocation: createLocationMutation.mutateAsync,
     isCreatingLocation: createLocationMutation.isPending,
