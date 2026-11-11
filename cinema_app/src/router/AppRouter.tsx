@@ -4,6 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import MovieList from '../modules/movies/pages/MovieList';
 import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
+import LocationList from '../modules/locations/pages/LocationList.js';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import {RequireSession} from '../components/common/RequireSession';
@@ -91,6 +92,10 @@ const router = createHashRouter([
       {
         path: '/users/create',
         Component: UserCreate,
+      },
+      {
+        path: '/locations',
+        Component : LocationList,
       },
       {
         path: '/fees',
