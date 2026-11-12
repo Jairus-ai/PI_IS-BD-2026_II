@@ -1,27 +1,38 @@
-steps:
-  - name: Checkout de código
-    uses: actions/checkout@v4
-    with:
-      fetch-depth: 0
+name: CI & SonarQube Analysis
 
-  - name: Configurar Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: 20
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
 
-  - name: Run Backend Coverage
-    run: |
-      cd cinema_server
-      npm ci --ignore-scripts
-      npm run test:coverage
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  - name: Run Frontend Coverage
-    run: |
-      cd cinema_app
-      npm ci --ignore-scripts
-      npm run test:coverage
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-  - name: SonarQube Scan
-    uses: SonarSource/sonarqube-scan-action@v2
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Backend coverage
+        run: |
+          cd cinema_server
+          npm ci --ignore-scripts
+          npm run test:coverage
+
+      - name: Frontend coverage
+        run: |
+          cd cinema_app
+          npm ci --ignore-scripts
+          npm run test:coverage
+
+      - name: Escaneo de SonarQube
+        uses: SonarSource/sonarqube-scan-action@5a297ed9260d5b7bc33b2bf405e3f94a4c4ef674
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
