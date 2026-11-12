@@ -27,3 +27,6 @@ uploads/
 *.njsproj
 *.sln
 *.sw?
+
+# Test coverage
+**/coverage/

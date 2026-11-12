@@ -1,0 +1,27 @@
+steps:
+  - name: Checkout de código
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+
+  - name: Configurar Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 20
+
+  - name: Run Backend Coverage
+    run: |
+      cd cinema_server
+      npm ci
+      npm run test:coverage
+
+  - name: Run Frontend Coverage
+    run: |
+      cd cinema_app
+      npm ci
+      npm run test:coverage
+
+  - name: SonarQube Scan
+    uses: SonarSource/sonarqube-scan-action@v2
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
