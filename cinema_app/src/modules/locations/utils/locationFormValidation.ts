@@ -5,6 +5,7 @@ export interface LocationFormValues {
   name: string;
   opening_hour: Dayjs | null;
   closing_hour: Dayjs | null;
+  province_id: number | null;
   canton_name: string;
 }
 
@@ -24,6 +25,8 @@ export function validateAll(
   } 
 
   if (!values.canton_name.trim()) errors.CANTON_NAME = 'Campo obligatorio';
+
+  if (values.province_id == null) errors.PROVINCE_NAME = 'Seleccione una provincia.';
 
   return errors;
 }

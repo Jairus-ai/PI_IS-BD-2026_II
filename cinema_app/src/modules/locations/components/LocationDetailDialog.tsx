@@ -38,9 +38,14 @@ export default function LocationDetailDialog({
                 <Stack spacing={1.5}>
                     <DetailField label="Nombre" value={location.LOCATION_NAME} />
                     <DetailField
-                        label="Horario"
-                        value={`${location.OPENING_HOUR} - ${location.CLOSING_HOUR}`}
+                        label="Hora de apertura"
+                        value={`${location.OPENING_HOUR}`}
                     />
+                    <DetailField
+                        label="Hora de cierre"
+                        value={`${location.CLOSING_HOUR}`}
+                    />
+                    <DetailField label="Provincia" value={location.PROVINCE_NAME} />
                     <DetailField label="Cantón" value={location.CANTON_NAME} />
                 </Stack>
             )}

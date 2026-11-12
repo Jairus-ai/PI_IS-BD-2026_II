@@ -5,13 +5,15 @@ import {
     getLocationListForCrud,
     countLocations,
     createLocation,
-    getCantonsforLocation
+    getCantonsforLocation,
+    getProvincesforLocation
  } from '../controllers/location_controller.js';
 
 const router = Router();
 
 router.get('/', getLocationsList);
 router.get('/l/', getLocationListForCrud);
+router.get('/p', getProvincesforLocation);
 router.get('/c', getCantonsforLocation);
 router.get('/count', countLocations);
 router.get('/:id', getLocationByID);

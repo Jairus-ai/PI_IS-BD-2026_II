@@ -145,11 +145,52 @@ export const getCantonsforLocation = async(req, res, next) =>
   try
   {
     connection = await getConnection();
+    const p = req.query.provinceId
 
     const request = `
       SELECT ID_CANTON, CANTON_NAME
-      FROM PI_DEVELOPERS.CANTONS
+      FROM PI_DEVELOPERS.CANTONS c
+      JOIN PI_DEVELOPERS.PROVINCES p
+      ON p.ID_PROVINCE = c.ID_PROVINCE
+      WHERE p.ID_PROVINCE = :p
       ORDER BY CANTON_NAME
+    `;
+
+    const result = await connection.execute(
+      request,
+      {p:p},
+      {outFormat: oracledb.OUT_FORMAT_OBJECT}
+    );
+
+    res.status(200).json(
+    { 
+      data: result.rows 
+    });
+
+  }catch(error)
+  {
+    next(error)
+  }finally
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+}
+
+export const getProvincesforLocation = async(req, res, next) =>
+{
+  let connection;
+
+  try
+  {
+    connection = await getConnection();
+
+    const request = `
+      SELECT ID_PROVINCE, PROVINCE_NAME
+      FROM PI_DEVELOPERS.PROVINCES
+      ORDER BY PROVINCE_NAME
     `;
 
     const result = await connection.execute(
@@ -187,14 +228,17 @@ export const getLocationByID = async(req, res, next) =>
     const request = `
       SELECT 
         l.LOCATION_NAME,
-          TO_CHAR(EXTRACT(HOUR FROM l.OPENING_HOUR), 'FM00') || ':' ||
-          TO_CHAR(EXTRACT(MINUTE FROM l.OPENING_HOUR), 'FM00') AS OPENING_HOUR,
-          TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
-          TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
-          c.CANTON_NAME
-        FROM PI_DEVELOPERS.LOCATIONS l
-        JOIN PI_DEVELOPERS.CANTONS c 
-        ON c.ID_CANTON = l.ID_CANTON
+        TO_CHAR(EXTRACT(HOUR FROM l.OPENING_HOUR), 'FM00') || ':' ||
+        TO_CHAR(EXTRACT(MINUTE FROM l.OPENING_HOUR), 'FM00') AS OPENING_HOUR,
+        TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
+        TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
+        c.CANTON_NAME,
+        p.PROVINCE_NAME
+      FROM PI_DEVELOPERS.LOCATIONS l
+      JOIN PI_DEVELOPERS.CANTONS c 
+      ON c.ID_CANTON = l.ID_CANTON
+      JOIN PI_DEVELOPERS.PROVINCES p
+      ON p.ID_PROVINCE = c.ID_PROVINCE
       WHERE IS_DELETED = 0 AND ID_LOCATION = :id 
       ORDER BY LOCATION_NAME
     `;

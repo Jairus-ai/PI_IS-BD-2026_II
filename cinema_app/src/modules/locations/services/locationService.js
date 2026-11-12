@@ -21,8 +21,15 @@ export const getLocationById = async (id) => {
   return data;
 };
 
-export const getCantons = async () => {
-  const {data} = await api.get('/management/locations/c');
+export const getCantons = async (provinceId) => {
+    const { data } = await api.get('/management/locations/c', {
+        params: { provinceId },
+    });
+    return data;
+};
+
+export const getProvinces = async () => {
+  const {data} = await api.get('/management/locations/p');
   return data;
 };
 

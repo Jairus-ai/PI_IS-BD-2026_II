@@ -106,7 +106,33 @@ export default function LocationFormFields({ form, formId }: LocationFormFieldsP
                 </LocalizationProvider>
 
                 <Autocomplete
+                    options={form.provinces}
+                    value={form.provinces.find((province) => province.PROVINCE_NAME === form.canton_name) ?? null}
+                    onChange={(_, selected) => form.handleProvinceChange(selected)}
+                    onBlur={form.handleBlur('PROVINCE_NAME')}
+                    getOptionLabel={(province) => province.PROVINCE_NAME}
+                    isOptionEqualToValue={(option, selected) => option.ID_PROVINCE === selected.ID_PROVINCE}
+                    loading={form.isLoadingProvinces}
+                    noOptionsText="Sin provincias"
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Provincia"
+                            required
+                            error={err('PROVINCE_NAME')}
+                            helperText={
+                                <FieldError
+                                    show={err('PROVINCE_NAME')}
+                                    message={firstError(form.fieldErrors.PROVINCE_NAME)}
+                                />
+                            }
+                        />
+                    )}
+                />
+
+                <Autocomplete
                     options={form.cantons}
+                    disabled={form.province_id == null}
                     value={form.cantons.find((canton) => canton.CANTON_NAME === form.canton_name) ?? null}
                     onChange={(_, selected) => form.handleCantonChange(selected)}
                     onBlur={form.handleBlur('CANTON_NAME')}

@@ -8,13 +8,14 @@ import { validateAll } from '../utils/locationFormValidation';
 import type { LocationFormValues } from '../utils/locationFormValidation';
 import { mapDetailToFormValues } from '../utils/locationFormHydration';
 import { buildLocationPayload } from '../utils/locationPayloadBuilder';
-import type { Canton } from '../types/locations';
+import type { Canton, Province } from '../types/locations';
 
 const initialFormValues: LocationFormValues = {
     name: '',
     opening_hour: null,
     closing_hour: null,
     canton_name: '',
+    province_id:null,
 };
 
 const ERROR_KEY: Record<keyof LocationFormValues, string> = {
@@ -22,6 +23,7 @@ const ERROR_KEY: Record<keyof LocationFormValues, string> = {
     opening_hour: 'OPENING_HOUR',
     closing_hour: 'CLOSING_HOUR',
     canton_name: 'CANTON_NAME',
+    province_id: 'PROVINCE_ID',
 };
 
 const ALL_ERROR_KEYS = Object.values(ERROR_KEY);
@@ -38,6 +40,10 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
 
     const notifications = useNotifications();
 
+    const [values, setValues] = React.useState<LocationFormValues>(initialFormValues);
+    const [fieldErrors, setFieldErrors] = React.useState<ServerErrors>({});
+    const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+
     const {
         locationDetail,
         isLoadingDetail,
@@ -47,11 +53,9 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         isUpdatingLocation,
         locationCantons,
         isLoadingCantons,
-    } = useLocations(1, open && !isCreate ? locationId : null);
-
-    const [values, setValues] = React.useState<LocationFormValues>(initialFormValues);
-    const [fieldErrors, setFieldErrors] = React.useState<ServerErrors>({});
-    const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+        locationProvinces,
+        isLoadingProvinces
+    } = useLocations(1, open && !isCreate ? locationId : null, values.province_id);
 
     const touchedRef = React.useRef<Record<string, boolean>>({});
 
@@ -103,6 +107,16 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
     const handleCloseHourChange = (hour: Dayjs | null) => {
         setFieldValue('closing_hour', hour);
     };
+
+    const handleProvinceChange = (province: Province | null) => {
+        const updated = {
+            ...values,
+            province_id: province?.ID_PROVINCE ?? null,
+            canton_name: ''
+        };
+        setValues(updated);
+        touchAndValidate('PROVINCE_NAME', updated);
+};
 
     const handleCantonChange = (canton: Canton | null) => {
         setFieldValue('canton_name', canton?.CANTON_NAME ?? '');
@@ -186,16 +200,21 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         opening_hour: values.opening_hour,
         closing_hour: values.closing_hour,
         canton_name: values.canton_name,
+        province_id: values.province_id,
 
         handleNameChange,
         handleOpHourChange,
         handleCloseHourChange,
         handleCantonChange,
+        handleProvinceChange,
         handleSubmit,
         handleBlur,
 
         cantons: locationCantons,
         isLoadingCantons,
+
+        provinces:locationProvinces,
+        isLoadingProvinces,
     };
 }
 

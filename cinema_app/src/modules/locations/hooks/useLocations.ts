@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Canton } from '../types/locations';
+import type { Canton, Province } from '../types/locations';
 import {
   createLocation,
   updateLocation,
@@ -7,12 +7,14 @@ import {
   getLocations,
   getLocationsCount,
   getLocationById,
-  getCantons
+  getCantons,
+  getProvinces
 } from '../services/locationService';
 
 export const useLocations = (
   page: number = 1,
   locationId: number | null | undefined = null,
+  provinceId: number | null | undefined = null,
   filters: any = {},
 ) => {
   const locationsQuery = useQuery({
@@ -32,8 +34,14 @@ export const useLocations = (
   });
 
   const locationCantonsQuery = useQuery({
-    queryKey: ['locationCantons'],
-    queryFn: () => getCantons(),
+    queryKey: ['locationCantons', provinceId],
+    queryFn: () => getCantons(provinceId),
+    enabled: provinceId != null,
+  }) 
+
+   const locationProvincesQuery = useQuery({
+    queryKey: ['locationProvinces'],
+    queryFn: () => getProvinces(),
   }) 
 
   const queryClient = useQueryClient();
@@ -66,6 +74,9 @@ export const useLocations = (
     totalLocations: countQuery.data?.total ?? 0,
     isLoadingLocations: locationsQuery.isLoading,
     LocationsError: locationsQuery.error,
+
+    locationProvinces: (locationProvincesQuery.data?.data?? []) as Province[],
+    isLoadingProvinces: locationProvincesQuery.isLoading,
 
     locationDetail: locationDetailQuery.data?.data ?? null,
     locationCantons: (locationCantonsQuery.data?.data?? []) as Canton[],
