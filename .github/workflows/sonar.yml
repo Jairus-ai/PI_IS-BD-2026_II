@@ -12,13 +12,13 @@ steps:
   - name: Run Backend Coverage
     run: |
       cd cinema_server
-      npm ci
+      npm ci --ignore-scripts
       npm run test:coverage
 
   - name: Run Frontend Coverage
     run: |
       cd cinema_app
-      npm ci
+      npm ci --ignore-scripts
       npm run test:coverage
 
   - name: SonarQube Scan
