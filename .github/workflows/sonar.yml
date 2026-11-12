@@ -32,7 +32,7 @@ jobs:
           npm ci --ignore-scripts
           npm run test:coverage
 
-      - name: Escaneo de SonarQube
+      - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@708c7c7110995f73a80a7a0c5cfee4e9961949a0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
