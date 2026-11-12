@@ -27,6 +27,7 @@ uploads/
 *.njsproj
 *.sln
 *.sw?
+*settings.json
 
 # Test coverage
 **/coverage/
