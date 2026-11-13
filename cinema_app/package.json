@@ -14,23 +14,23 @@
   "jest": {
     "testEnvironment": "jsdom",
     "transform": {
-        "^.+\\.[jt]sx?$": "babel-jest"
+      "^.+\\.[jt]sx?$": "babel-jest"
     },
     "extensionsToTreatAsEsm": [
-        ".ts",
-        ".tsx"
+      ".ts",
+      ".tsx"
     ],
     "moduleFileExtensions": [
-        "js",
-        "jsx",
-        "ts",
-        "tsx",
-        "json"
+      "js",
+      "jsx",
+      "ts",
+      "tsx",
+      "json"
     ],
     "transformIgnorePatterns": [
-        "/node_modules/"
+      "/node_modules/"
     ]
-},
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -62,7 +62,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
-    "babel-jest": "^29.7.0",
+    "babel-jest": "^30.5.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.9.0",
     "eslint-plugin-react-hooks": "^7.1.1",
