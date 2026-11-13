@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-analyze:
     runs-on: ubuntu-latest
+
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
@@ -20,16 +21,19 @@ jobs:
         with:
           node-version: 22.22.0
           cache: npm
+          cache-dependency-path: |
+            cinema_server/package-lock.json
+            cinema_app/package-lock.json
 
       - name: Backend coverage
+        working-directory: cinema_server
         run: |
-          cd cinema_server
           npm ci --ignore-scripts
           npm run test:coverage
 
       - name: Frontend coverage
+        working-directory: cinema_app
         run: |
-          cd cinema_app
           npm ci --ignore-scripts
           npm run test:coverage
 
