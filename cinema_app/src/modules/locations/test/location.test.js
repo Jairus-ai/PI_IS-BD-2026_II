@@ -3,7 +3,7 @@ import {
     parseTime,
     readServerErrors,
     splitNames,
-} from './locationFormUtils';
+} from '../utils/locationFormUtils';
 import {describe, expect, test } from '@jest/globals';
 import '@testing-library/jest-dom/jest-globals';
 

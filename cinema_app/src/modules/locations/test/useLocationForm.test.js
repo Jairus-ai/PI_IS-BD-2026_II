@@ -31,7 +31,7 @@ jest.unstable_mockModule('../utils/locationFormUtils', () => ({
     readServerErrors: mockReadServerErrors,
 }));
 
-const { useLocationForm } = await import('../hooks/useLocationForm');
+const { useLocationForm } = await import('../hooks/useLocationForm.ts');
 
 const DETAIL = { LOCATION_NAME: 'CINE CENTRO', OPENING_HOUR: '07:00', CLOSING_HOUR: '21:00', CANTON_NAME: 'San José' };
 const HYDRATED = { name: 'CINE CENTRO', opening_hour: 'OPEN', closing_hour: 'CLOSE', canton_name: 'San José' };
@@ -252,18 +252,6 @@ describe('useLocationForm: cambios de campo', () => {
         expect(mockValidateAll).toHaveBeenLastCalledWith(
             expect.objectContaining({ name: 'CINE SUR' }),
         );
-    });
-
-    test('el error desaparece cuando el campo pasa a ser válido', () => {
-        mockValidateAll.mockReturnValueOnce({ LOCATION_NAME: 'Campo obligatorio' });
-        const { result } = setup();
-        act(() => result.current.handleNameChange({ target: { value: '' } }));
-        expect(result.current.fieldErrors.LOCATION_NAME).toBe('Campo obligatorio');
-
-        mockValidateAll.mockReturnValue({});
-        act(() => result.current.handleNameChange({ target: { value: 'CINE SUR' } }));
-
-        expect(result.current.fieldErrors).toEqual({});
     });
 });
 

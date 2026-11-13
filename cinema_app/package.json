@@ -8,12 +8,29 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "jest",
-    "test:coverage": "jest --coverage --passWithNoTests"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --passWithNoTests"
   },
   "jest": {
-    "testEnvironment": "jsdom"
-  },
+    "testEnvironment": "jsdom",
+    "transform": {
+        "^.+\\.[jt]sx?$": "babel-jest"
+    },
+    "extensionsToTreatAsEsm": [
+        ".ts",
+        ".tsx"
+    ],
+    "moduleFileExtensions": [
+        "js",
+        "jsx",
+        "ts",
+        "tsx",
+        "json"
+    ],
+    "transformIgnorePatterns": [
+        "/node_modules/"
+    ]
+},
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -37,6 +54,7 @@
     "@babel/core": "^7.29.13",
     "@babel/preset-env": "^7.29.14",
     "@babel/preset-react": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
     "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@testing-library/jest-dom": "^7.0.1",

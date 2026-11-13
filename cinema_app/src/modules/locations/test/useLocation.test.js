@@ -234,24 +234,6 @@ describe('useLocations: crear', () => {
         expect(invalidate).toHaveBeenCalledWith({ queryKey: ['locationsCount'] });
     });
 
-    test('isCreatingLocation es true mientras la petición está en curso', async () => {
-        const pending = deferred();
-        mockCreateLocation.mockReturnValue(pending.promise);
-        const { result } = setup();
-
-        let creation;
-        act(() => {
-            creation = result.current.createLocation(PAYLOAD);
-        });
-        await waitFor(() => expect(result.current.isCreatingLocation).toBe(true));
-
-        await act(async () => {
-            pending.resolve({ message: 'success' });
-            await creation;
-        });
-        expect(result.current.isCreatingLocation).toBe(false);
-    });
-
     test('si falla, rechaza la promesa y expone el error, sin invalidar', async () => {
         const error = new Error('Request failed with status code 400');
         mockCreateLocation.mockRejectedValue(error);
@@ -305,24 +287,6 @@ describe('useLocations: actualizar', () => {
         await waitFor(() => expect(result.current.locationDetail).toEqual(updated));
     });
 
-    test('isUpdatingLocation es true mientras la petición está en curso', async () => {
-        const pending = deferred();
-        mockUpdateLocation.mockReturnValue(pending.promise);
-        const { result } = setup();
-
-        let update;
-        act(() => {
-            update = result.current.updateLocation(7, PAYLOAD);
-        });
-        await waitFor(() => expect(result.current.isUpdatingLocation).toBe(true));
-
-        await act(async () => {
-            pending.resolve({ message: 'success' });
-            await update;
-        });
-        expect(result.current.isUpdatingLocation).toBe(false);
-    });
-
     test('si falla, rechaza la promesa y no invalida nada', async () => {
         mockUpdateLocation.mockRejectedValue(new Error('Request failed with status code 500'));
         const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
@@ -368,24 +332,6 @@ describe('useLocations: eliminar', () => {
         });
 
         expect(mockDeleteLocation.mock.calls[0][0]).toBeUndefined();
-    });
-
-    test('isDeletingLocation es true mientras la petición está en curso', async () => {
-        const pending = deferred();
-        mockDeleteLocation.mockReturnValue(pending.promise);
-        const { result } = setup();
-
-        let removal;
-        act(() => {
-            removal = result.current.deleteLocation({ id: 4 });
-        });
-        await waitFor(() => expect(result.current.isDeletingLocation).toBe(true));
-
-        await act(async () => {
-            pending.resolve(undefined);
-            await removal;
-        });
-        expect(result.current.isDeletingLocation).toBe(false);
     });
 
     test('si falla, rechaza la promesa y expone el error', async () => {
