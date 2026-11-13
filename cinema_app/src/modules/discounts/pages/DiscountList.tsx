@@ -36,7 +36,7 @@ export default function DiscountList() {
   const { discounts, isLoadingDiscounts, discountsError, refetchDiscounts } = useDiscounts();
 
   const handleRowDelete = React.useCallback(
-    (discount: Discount) => async () => {
+    async(discount: Discount) => {
       const confirmed = await dialogs.confirm(
         `¿Desea eliminar el descuento "${discount.DISCOUNT_NAME}"?`,
         {
@@ -140,7 +140,7 @@ export default function DiscountList() {
         getActions: Actions({
           onShow: (discount: any) => {setSelectedDiscountId(discount.ID_DISCOUNT)},
           onEdit: (discount: any) => {openModify(discount)},
-          onDelete: (discount: any) => {handleRowDelete(discount)},
+          onDelete: (discount: any) => {void handleRowDelete(discount)},
         })
       },
     ],
