@@ -55,6 +55,7 @@
     "vite": "^8.2.2"
   },
   "allowScripts": {
-    "@mui/x-telemetry@9.13.0": true
+    "@mui/x-telemetry@9.13.0": true,
+    "@parcel/watcher@2.6.0": true
   }
 }
