@@ -45,7 +45,6 @@ export default function LocationFormDialog({
                                 type="submit"
                                 form={FORM_ID}
                                 variant="contained"
-                                disabled={!form.isValid || form.saving}
                             >
                                 {form.isCreate ? 'Crear' : 'Guardar'}
                             </Button>

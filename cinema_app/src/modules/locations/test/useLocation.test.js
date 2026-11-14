@@ -8,17 +8,30 @@ const mockGetLocationById = jest.fn();
 const mockCreateLocation = jest.fn();
 const mockUpdateLocation = jest.fn();
 const mockDeleteLocation = jest.fn();
+const mockGetCantons = jest.fn();
+const mockGetProvinces = jest.fn();
 
 jest.unstable_mockModule('../services/locationService', () => ({
     getLocations: mockGetLocations,
     getLocationsCount: mockGetLocationsCount,
     getLocationById: mockGetLocationById,
+    getCantons: mockGetCantons,
+    getProvinces: mockGetProvinces,
     createLocation: mockCreateLocation,
     updateLocation: mockUpdateLocation,
     deleteLocation: mockDeleteLocation,
 }));
 
 const { useLocations } = await import('../hooks/useLocations');
+
+const PROVINCES = [
+    { ID_PROVINCE: 1, PROVINCE_NAME: 'San José' },
+    { ID_PROVINCE: 3, PROVINCE_NAME: 'Cartago' },
+];
+const CANTONS = [
+    { ID_CANTON: 9, CANTON_NAME: 'Paraíso' },
+    { ID_CANTON: 10, CANTON_NAME: 'Turrialba' },
+];
 
 const LOCATIONS = [
     { ID_LOCATION: 1, LOCATION_NAME: 'CINE CENTRO' },
@@ -60,6 +73,8 @@ beforeEach(() => {
     mockCreateLocation.mockResolvedValue({ message: 'success' });
     mockUpdateLocation.mockResolvedValue({ message: 'success' });
     mockDeleteLocation.mockResolvedValue(undefined);
+    mockGetProvinces.mockResolvedValue({ data: [] });
+    mockGetCantons.mockResolvedValue({ data: [] });
 });
 
 afterEach(() => {
@@ -97,7 +112,7 @@ describe('useLocations: lista y conteo', () => {
 
     test('pasa la página y los filtros a ambas consultas', async () => {
         const filters = { name: 'cine' };
-        const { result } = setup(3, null, filters);
+        const { result } = setup(3, null, null, filters);
 
         await waitFor(() => expect(result.current.isLoadingLocations).toBe(false));
 
@@ -107,7 +122,7 @@ describe('useLocations: lista y conteo', () => {
 
     test('al cambiar de página vuelve a pedir la lista, pero no el conteo', async () => {
         const { result, rerender } = renderHook(
-            ({ page }) => useLocations(page, null, {}),
+            ({ page }) => useLocations(page, null, null, {}),
             { wrapper, initialProps: { page: 1 } },
         );
         await waitFor(() => expect(result.current.isLoadingLocations).toBe(false));
@@ -121,7 +136,7 @@ describe('useLocations: lista y conteo', () => {
 
     test('al cambiar los filtros vuelve a pedir la lista y el conteo', async () => {
         const { result, rerender } = renderHook(
-            ({ filters }) => useLocations(1, null, filters),
+            ({ filters }) => useLocations(1, null, null, filters),
             { wrapper, initialProps: { filters: {} } },
         );
         await waitFor(() => expect(result.current.isLoadingLocations).toBe(false));
@@ -344,5 +359,103 @@ describe('useLocations: eliminar', () => {
         });
 
         await waitFor(() => expect(result.current.deleteLocationError).toBe(error));
+    });
+});
+
+describe('useLocations: provincias', () => {
+    test('antes de que lleguen devuelve una lista vacía y está cargando', () => {
+        const { result } = setup();
+
+        expect(result.current.locationProvinces).toEqual([]);
+        expect(result.current.isLoadingProvinces).toBe(true);
+    });
+
+    test('pide las provincias una vez y las desenvuelve', async () => {
+        mockGetProvinces.mockResolvedValue({ data: PROVINCES });
+        const { result } = setup();
+
+        await waitFor(() => expect(result.current.locationProvinces).toEqual(PROVINCES));
+
+        expect(mockGetProvinces).toHaveBeenCalledTimes(1);
+        expect(result.current.isLoadingProvinces).toBe(false);
+    });
+
+    test('las pide aunque no haya provincia elegida ni sucursal', async () => {
+        mockGetProvinces.mockResolvedValue({ data: PROVINCES });
+        const { result } = setup(1, null, null);
+
+        await waitFor(() => expect(result.current.locationProvinces).toHaveLength(2));
+    });
+
+    test('si falta la propiedad data, usa una lista vacía', async () => {
+        mockGetProvinces.mockResolvedValue({});
+        const { result } = setup();
+
+        await waitFor(() => expect(result.current.isLoadingProvinces).toBe(false));
+
+        expect(result.current.locationProvinces).toEqual([]);
+    });
+});
+
+describe('useLocations: cantones', () => {
+    test.each([
+        ['null', null],
+        ['undefined', undefined],
+    ])('no pide cantones cuando la provincia es %s', async (_label, provinceId) => {
+        const { result } = setup(1, null, provinceId);
+
+        await waitFor(() => expect(result.current.isLoadingProvinces).toBe(false));
+
+        expect(mockGetCantons).not.toHaveBeenCalled();
+        expect(result.current.locationCantons).toEqual([]);
+        expect(result.current.isLoadingCantons).toBe(false);
+    });
+
+    test('con una provincia, pide sus cantones y los desenvuelve', async () => {
+        mockGetCantons.mockResolvedValue({ data: CANTONS });
+        const { result } = setup(1, null, 3);
+
+        await waitFor(() => expect(result.current.locationCantons).toEqual(CANTONS));
+
+        expect(mockGetCantons).toHaveBeenCalledWith(3);
+        expect(result.current.isLoadingCantons).toBe(false);
+    });
+
+    test('al cambiar de provincia, pide los cantones de la nueva', async () => {
+        mockGetCantons.mockResolvedValueOnce({ data: [CANTONS[0]] });
+        const { result, rerender } = renderHook(
+            ({ provinceId }) => useLocations(1, null, provinceId, {}),
+            { wrapper, initialProps: { provinceId: 3 } },
+        );
+        await waitFor(() => expect(result.current.locationCantons).toEqual([CANTONS[0]]));
+
+        mockGetCantons.mockResolvedValueOnce({ data: [CANTONS[1]] });
+        rerender({ provinceId: 1 });
+
+        await waitFor(() => expect(mockGetCantons).toHaveBeenCalledWith(1));
+        await waitFor(() => expect(result.current.locationCantons).toEqual([CANTONS[1]]));
+    });
+
+    test('al pasar de "sin provincia" a una provincia, empieza a pedir cantones', async () => {
+        mockGetCantons.mockResolvedValue({ data: CANTONS });
+        const { result, rerender } = renderHook(
+            ({ provinceId }) => useLocations(1, null, provinceId, {}),
+            { wrapper, initialProps: { provinceId: null } },
+        );
+        expect(mockGetCantons).not.toHaveBeenCalled();
+
+        rerender({ provinceId: 3 });
+
+        await waitFor(() => expect(result.current.locationCantons).toEqual(CANTONS));
+    });
+
+    test('el error de cantones no rompe la lista de sucursales', async () => {
+        mockGetCantons.mockRejectedValue(new Error('boom'));
+        const { result } = setup(1, null, 3);
+
+        await waitFor(() => expect(result.current.isLoadingCantons).toBe(false));
+
+        expect(result.current.locationCantons).toEqual([]);
+        await waitFor(() => expect(result.current.locations).toEqual(LOCATIONS));
     });
 });

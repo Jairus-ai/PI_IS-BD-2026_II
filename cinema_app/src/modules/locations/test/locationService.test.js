@@ -19,6 +19,8 @@ const {
     getLocationById,
     getLocationsCount,
     createLocation,
+    getCantons,
+    getProvinces,
     updateLocation,
     deleteLocation,
 } = await import('../services/locationService');
@@ -210,5 +212,55 @@ describe('deleteLocation', () => {
         mockDelete.mockRejectedValue(new Error('Request failed with status code 409'));
 
         await expect(deleteLocation(4)).rejects.toThrow('409');
+    });
+});
+
+
+describe('getProvinces', () => {
+    test('pide la lista de provincias y devuelve el cuerpo completo', async () => {
+        const body = { data: [{ ID_PROVINCE: 1, PROVINCE_NAME: 'San José' }] };
+        mockGet.mockResolvedValue({ data: body });
+
+        const result = await getProvinces();
+
+        expect(mockGet).toHaveBeenCalledTimes(1);
+        expect(mockGet).toHaveBeenCalledWith('/management/provinces');
+        expect(result).toBe(body);
+    });
+
+    test('propaga el error de la petición', async () => {
+        mockGet.mockRejectedValue(new Error('Network Error'));
+
+        await expect(getProvinces()).rejects.toThrow('Network Error');
+    });
+});
+
+describe('getCantons', () => {
+    test('pide los cantones de la provincia indicada y devuelve el cuerpo', async () => {
+        const body = { data: [{ ID_CANTON: 9, CANTON_NAME: 'Paraíso' }] };
+        mockGet.mockResolvedValue({ data: body });
+
+        const result = await getCantons(3);
+
+        expect(mockGet).toHaveBeenCalledWith('/management/cantons', {
+            params: { provinceId: 3 },
+        });
+        expect(result).toBe(body);
+    });
+
+    test('sin provincia manda provinceId undefined (por eso el hook desactiva la consulta)', async () => {
+        mockGet.mockResolvedValue({ data: {} });
+
+        await getCantons(undefined);
+
+        expect(mockGet).toHaveBeenCalledWith('/management/cantons', {
+            params: { provinceId: undefined },
+        });
+    });
+
+    test('propaga el error de la petición', async () => {
+        mockGet.mockRejectedValue(new Error('Request failed with status code 500'));
+
+        await expect(getCantons(3)).rejects.toThrow('500');
     });
 });

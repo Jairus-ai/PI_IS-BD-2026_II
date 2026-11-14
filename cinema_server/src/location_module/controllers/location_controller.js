@@ -1,8 +1,8 @@
-import oracledb from 'oracledb';
-import {
+import oracledb from "oracledb";
+import { 
   getConnection,
-  closeDatabaseConnection,
-} from '../../database/database.js';
+  closeDatabaseConnection 
+} from "../../database/database.js";
 
 export const getLocationsList = async (req, res, next) => 
 {
@@ -138,6 +138,89 @@ export const countLocations = async (req, res, next) => {
     }
 };
 
+export const getCantonsforLocation = async(req, res, next) =>
+{
+  let connection;
+
+  try
+  {
+    const p = Number(req.query.provinceId);
+
+    if (!Number.isInteger(p) || p <= 0) {
+      return res.status(400).json({ message: 'provinceId inválido' });
+    }
+
+      connection = await getConnection();
+
+    const request = `
+      SELECT ID_CANTON, CANTON_NAME
+      FROM PI_DEVELOPERS.CANTONS c
+      JOIN PI_DEVELOPERS.PROVINCES p
+      ON p.ID_PROVINCE = c.ID_PROVINCE
+      WHERE p.ID_PROVINCE = :p
+      ORDER BY CANTON_NAME
+    `;
+
+    const result = await connection.execute(
+      request,
+      {p:p},
+      {outFormat: oracledb.OUT_FORMAT_OBJECT}
+    );
+
+    res.status(200).json(
+    { 
+      data: result.rows 
+    });
+
+  }catch(error)
+  {
+    next(error)
+  }finally
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+}
+
+export const getProvincesforLocation = async(req, res, next) =>
+{
+  let connection;
+
+  try
+  {
+    connection = await getConnection();
+
+    const request = `
+      SELECT ID_PROVINCE, PROVINCE_NAME
+      FROM PI_DEVELOPERS.PROVINCES
+      ORDER BY PROVINCE_NAME
+    `;
+
+    const result = await connection.execute(
+      request,
+      {},
+      {outFormat: oracledb.OUT_FORMAT_OBJECT}
+    );
+
+    res.status(200).json(
+    { 
+      data: result.rows 
+    });
+
+  }catch(error)
+  {
+    next(error)
+  }finally
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+}
+
 export const getLocationByID = async(req, res, next) => 
 {
   let connection;
@@ -150,14 +233,17 @@ export const getLocationByID = async(req, res, next) =>
     const request = `
       SELECT 
         l.LOCATION_NAME,
-          TO_CHAR(EXTRACT(HOUR FROM l.OPENING_HOUR), 'FM00') || ':' ||
-          TO_CHAR(EXTRACT(MINUTE FROM l.OPENING_HOUR), 'FM00') AS OPENING_HOUR,
-          TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
-          TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
-          c.CANTON_NAME
-        FROM PI_DEVELOPERS.LOCATIONS l
-        JOIN PI_DEVELOPERS.CANTONS c 
-        ON c.ID_CANTON = l.ID_CANTON
+        TO_CHAR(EXTRACT(HOUR FROM l.OPENING_HOUR), 'FM00') || ':' ||
+        TO_CHAR(EXTRACT(MINUTE FROM l.OPENING_HOUR), 'FM00') AS OPENING_HOUR,
+        TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
+        TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
+        c.CANTON_NAME,
+        p.PROVINCE_NAME
+      FROM PI_DEVELOPERS.LOCATIONS l
+      JOIN PI_DEVELOPERS.CANTONS c 
+      ON c.ID_CANTON = l.ID_CANTON
+      JOIN PI_DEVELOPERS.PROVINCES p
+      ON p.ID_PROVINCE = c.ID_PROVINCE
       WHERE IS_DELETED = 0 AND ID_LOCATION = :id 
       ORDER BY LOCATION_NAME
     `;
@@ -194,3 +280,75 @@ export const getLocationByID = async(req, res, next) =>
   }
 };
 
+async function getCantonId(canton_name, connection)
+{
+  const request = `
+    SELECT ID_CANTON 
+    FROM PI_DEVELOPERS.CANTONS
+    WHERE CANTON_NAME = :name
+  `;
+
+  const result = await connection.execute(
+    request,
+    {
+      name:canton_name,
+    },
+    {
+      outFormat: oracledb.OUT_FORMAT_OBJECT
+    }
+  );
+  return result.rows[0]?.ID_CANTON ?? null;
+};
+
+export const createLocation = async(req, res, next) => 
+{
+  let connection;
+  try
+  {
+    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
+    connection = await getConnection();
+
+    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
+
+    const request = `
+      INSERT INTO PI_DEVELOPERS.LOCATIONS(LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, ID_CANTON)
+      VALUES
+      (
+        :LOCATION_NAME,
+        TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
+        TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
+        :ID_CANTON
+      )
+    `;
+    
+    await connection.execute(
+      request,
+      {
+        LOCATION_NAME: LOCATION_NAME, 
+        OPENING_HOUR: OPENING_HOUR, 
+        CLOSING_HOUR: CLOSING_HOUR,
+        ID_CANTON: ID_CANTON
+      },
+      {
+        autoCommit: true
+      }
+    );
+    
+    res.status(201).json(
+      {
+        message:'success'
+      }
+    );
+    
+  }catch(error)
+  {
+    next(error);
+  }finally
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+
+};

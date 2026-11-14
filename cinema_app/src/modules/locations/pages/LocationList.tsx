@@ -23,7 +23,6 @@ export default function LocationList() {
     const [selectedId, setSelectedId] = React.useState<number | null>(null);
     const [formLocationId, setFormLocationId] = React.useState<number | null>(null);
     const [formOpen, setFormOpen] = React.useState(false);
-
     const dialogs = useDialogs();
     const notifications = useNotifications();
 
@@ -33,7 +32,7 @@ export default function LocationList() {
         isLoadingLocations,
         LocationsError,
         deleteLocation,
-    } = useLocations(serverPage, null, filters);
+    } = useLocations(serverPage, null,null ,filters);
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const { name, value } = event.target;
