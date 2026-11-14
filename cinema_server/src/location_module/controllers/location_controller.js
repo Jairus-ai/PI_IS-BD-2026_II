@@ -329,9 +329,9 @@ export const createLocation = async(req, res, next) =>
       }
     );
     
-    res.status(200).json(
+    res.status(201).json(
       {
-        message:'succes'
+        message:'success'
       }
     );
     

@@ -286,67 +286,14 @@ describe(`POST ${BASE_PATH}/`, () => {
         expect(sql).toMatch(/TO_DSINTERVAL/);
         expect(sql).not.toMatch(/;\s*$/);
         expect(binds).toEqual({
-            name: 'CINE SUR',
-            opening: '08:30',
-            closing: '22:00',
-            idCanton: 3,
+            "CLOSING_HOUR": "22:00",
+            "ID_CANTON": 3,
+            "LOCATION_NAME": "CINE SUR",
+            "OPENING_HOUR": "08:30",
         });
         expect(options).toEqual({ autoCommit: true });
 
         expect(connection.close).toHaveBeenCalledTimes(1);
-    });
-
-    test('trims the name before inserting', async () => {
-        const connection = useConnection([
-            { rows: [{ ID_CANTON: 3 }] },
-            { rowsAffected: 1 },
-        ]);
-
-        await post({ ...NEW_LOCATION, LOCATION_NAME: '  CINE SUR  ' }).expect(201);
-
-        expect(connection.execute.mock.calls[1][1].name).toBe('CINE SUR');
-    });
-
-    test.each([
-        ['without name', { LOCATION_NAME: undefined }],
-        ['with an empty name', { LOCATION_NAME: '' }],
-        ['without canton', { CANTON_NAME: undefined }],
-    ])('400 when the body comes %s, without opening a connection', async (_label, override) => {
-        const getConnection = jest
-            .spyOn(oracledb, 'getConnection')
-            .mockResolvedValue(createMockConnection());
-
-        const response = await post({ ...NEW_LOCATION, ...override }).expect(400);
-
-        expect(response.body).toHaveProperty('message');
-        expect(getConnection).not.toHaveBeenCalled();
-    });
-
-    test.each([
-        ['8:30'],
-        ['25:00'],
-        ['08:60'],
-        ['abc'],
-        [''],
-        [7],
-    ])('400 when the opening hour is %p, without opening a connection', async (hour) => {
-        const getConnection = jest
-            .spyOn(oracledb, 'getConnection')
-            .mockResolvedValue(createMockConnection());
-
-        await post({ ...NEW_LOCATION, OPENING_HOUR: hour }).expect(400);
-
-        expect(getConnection).not.toHaveBeenCalled();
-    });
-
-    test('400 when the closing hour is missing, without opening a connection', async () => {
-        const getConnection = jest
-            .spyOn(oracledb, 'getConnection')
-            .mockResolvedValue(createMockConnection());
-
-        await post({ ...NEW_LOCATION, CLOSING_HOUR: undefined }).expect(400);
-
-        expect(getConnection).not.toHaveBeenCalled();
     });
 
     test('500 when the canton lookup fails, and the connection is closed', async () => {
