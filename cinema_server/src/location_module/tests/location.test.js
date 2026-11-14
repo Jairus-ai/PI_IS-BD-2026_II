@@ -2,7 +2,8 @@ import { expect, jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import oracledb from 'oracledb';
-
+import cantonRoutes from '../routes/canton_routes.js';
+import provinceRoutes from '../routes/province_routes.js';
 import locationRoutes from '../routes/location_routes.js';
 import { buildLocationFilters } from '../controllers/location_controller.js';
 
@@ -20,6 +21,16 @@ const MOCK_DETAIL = {
     CLOSING_HOUR: '21:00',
     CANTON_NAME: 'San José',
 };
+
+const PROVINCES = [
+    { ID_PROVINCE: 1, PROVINCE_NAME: 'Alajuela' },
+    { ID_PROVINCE: 2, PROVINCE_NAME: 'San José' },
+];
+
+const CANTONS = [
+    { ID_CANTON: 9, CANTON_NAME: 'Paraíso' },
+    { ID_CANTON: 10, CANTON_NAME: 'Turrialba' },
+];
 
 function createMockConnection(responses = []) {
     const execute = jest.fn();
@@ -41,10 +52,11 @@ function useConnection(responses) {
     return connection;
 }
 
-
 const app = express();
 app.use(express.json());
 app.use(BASE_PATH, locationRoutes);
+app.use('/management/cantons', cantonRoutes);
+app.use('/management/provinces', provinceRoutes);
 app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message });
 });
@@ -328,5 +340,142 @@ describe(`POST ${BASE_PATH}/`, () => {
         const response = await post().expect(500);
 
         expect(response.body.message).toMatch(/NJS-503/);
+    });
+});
+
+describe('GET /management/provinces', () => {
+    test('200 OK returns the provinces', async () => {
+        const connection = useConnection([{ rows: PROVINCES }]);
+
+        const response = await request(app)
+            .get('/management/provinces')
+            .expect('Content-type', /json/)
+            .expect(200);
+
+        expect(response.body).toEqual({ data: PROVINCES });
+
+        const [sql, binds, options] = connection.execute.mock.calls[0];
+        expect(sql).toMatch(/FROM PI_DEVELOPERS\.PROVINCES/);
+        expect(sql).toMatch(/ORDER BY PROVINCE_NAME/);
+        expect(sql).not.toMatch(/;\s*$/);
+        expect(binds).toEqual({});
+        expect(options).toEqual({ outFormat: oracledb.OUT_FORMAT_OBJECT });
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('200 OK with an empty list', async () => {
+        useConnection([{ rows: [] }]);
+
+        const response = await request(app).get('/management/provinces').expect(200);
+
+        expect(response.body).toEqual({ data: [] });
+    });
+
+    test('the response does not depend on query params', async () => {
+        const connection = useConnection([{ rows: PROVINCES }]);
+
+        await request(app).get('/management/provinces?name=algo').expect(200);
+
+        expect(connection.execute.mock.calls[0][1]).toEqual({});
+    });
+
+    test('500 when the query fails, and the connection is closed', async () => {
+        const connection = useConnection([
+            new Error('ORA-00942: table or view does not exist'),
+        ]);
+
+        const response = await request(app).get('/management/provinces').expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when the connection cannot be opened, and nothing is closed', async () => {
+        const getConnection = jest
+            .spyOn(oracledb, 'getConnection')
+            .mockRejectedValue(new Error('NJS-503: connection refused'));
+
+        const response = await request(app).get('/management/provinces').expect(500);
+
+        expect(response.body.message).toMatch(/NJS-503/);
+        expect(getConnection).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('GET /management/cantons', () => {
+    test('200 OK returns the cantons of the province', async () => {
+        const connection = useConnection([{ rows: CANTONS }]);
+
+        const response = await request(app)
+            .get('/management/cantons?provinceId=3')
+            .expect('Content-type', /json/)
+            .expect(200);
+
+        expect(response.body).toEqual({ data: CANTONS });
+
+        const [sql, binds, options] = connection.execute.mock.calls[0];
+        expect(sql).toMatch(/FROM PI_DEVELOPERS\.CANTONS/);
+        expect(sql).toMatch(/JOIN PI_DEVELOPERS\.PROVINCES/);
+        expect(sql).toMatch(/WHERE p\.ID_PROVINCE = :p/);
+        expect(sql).toMatch(/ORDER BY CANTON_NAME/);
+        expect(sql).not.toMatch(/;\s*$/);
+        expect(options).toEqual({ outFormat: oracledb.OUT_FORMAT_OBJECT });
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('200 OK with an empty list when the province has no cantons', async () => {
+        useConnection([{ rows: [] }]);
+
+        const response = await request(app).get('/management/cantons?provinceId=99').expect(200);
+
+        expect(response.body).toEqual({ data: [] });
+    });
+
+    test('500 when the query fails, and the connection is closed', async () => {
+        const connection = useConnection([
+            new Error('ORA-00942: table or view does not exist'),
+        ]);
+
+        const response = await request(app).get('/management/cantons?provinceId=3').expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when the connection cannot be opened, and nothing is closed', async () => {
+        jest.spyOn(oracledb, 'getConnection').mockRejectedValue(
+            new Error('NJS-503: connection refused'),
+        );
+
+        const response = await request(app).get('/management/cantons?provinceId=3').expect(500);
+
+        expect(response.body.message).toMatch(/NJS-503/);
+    });
+
+    test.each([
+        ['falta el parámetro', '/management/cantons'],
+        ['no es un número', '/management/cantons?provinceId=abc'],
+        ['está vacío', '/management/cantons?provinceId='],
+        ['es un decimal', '/management/cantons?provinceId=1.5'],
+        ['viene repetido', '/management/cantons?provinceId=1&provinceId=2'],
+    ])('400 when provinceId %s, without opening a connection', async (_label, url) => {
+        const getConnection = jest
+            .spyOn(oracledb, 'getConnection')
+            .mockResolvedValue(createMockConnection());
+
+        const response = await request(app).get(url).expect(400);
+
+        expect(response.body).toHaveProperty('message');
+        expect(getConnection).not.toHaveBeenCalled();
+    });
+
+    test('converts provinceId to a number before running the query', async () => {
+        const connection = useConnection([{ rows: CANTONS }]);
+
+        await request(app).get('/management/cantons?provinceId=3').expect(200);
+
+        expect(connection.execute.mock.calls[0][1]).toEqual({ p: 3 });
     });
 });

@@ -144,8 +144,13 @@ export const getCantonsforLocation = async(req, res, next) =>
 
   try
   {
-    connection = await getConnection();
-    const p = req.query.provinceId
+    const p = Number(req.query.provinceId);
+
+    if (!Number.isInteger(p) || p <= 0) {
+      return res.status(400).json({ message: 'provinceId inválido' });
+    }
+
+      connection = await getConnection();
 
     const request = `
       SELECT ID_CANTON, CANTON_NAME
