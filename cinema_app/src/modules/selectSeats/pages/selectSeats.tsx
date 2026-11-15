@@ -93,13 +93,13 @@ export default function ShowSeats() {
                 await markSeatAsUnavailable(validScreeningId, seatId);
                 setSeatList((previous) => [...previous, seatId]);
             }
-            await queryClient.invalidateQueries({ queryKey: ['seats', validScreeningId] });
         } catch (error) {
             notifications.show(
                 `No se pudo actualizar el asiento. Motivo: ${(error as Error).message}`,
                 { severity: 'error', autoHideDuration: 3000 },
             );
         } finally {
+            await queryClient.invalidateQueries({ queryKey: ['seats', validScreeningId] });
             setPendingSeats((previous) => previous.filter((s) => s !== seatId));
         }
     };

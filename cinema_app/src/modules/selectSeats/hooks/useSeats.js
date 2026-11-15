@@ -7,12 +7,14 @@ export const useSeats = (screeningId = null) => {
     queryKey: ['seats', screeningId],
     queryFn: () => getSeatsList(screeningId),
     enabled: screeningId != null,
-    refetchInterval: 500,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity, 
   });
 
   return {
     seats: Array.isArray(seatsQuery.data) ? seatsQuery.data : [],
     isLoadingSeats: seatsQuery.isLoading,
     seatsError: seatsQuery.error,
+    refetchSeats: seatsQuery.refetch,
   };
 };

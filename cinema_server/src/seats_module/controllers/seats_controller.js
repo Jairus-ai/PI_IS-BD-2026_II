@@ -1,6 +1,42 @@
 import oracledb from "oracledb";
 import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
+async function checkBoughts(connection, screeningId)
+{
+    const request = `
+    SELECT ID_SEAT
+    FROM PI_DEVELOPERS.SEAT_RECEIPTS 
+    WHERE ID_SCREENING = :screeningId`;
+
+    const result = await connection.execute(
+        request,
+        [screeningId],
+        {
+            outFormat: oracledb.OUT_FORMAT_OBJECT
+        }
+    );
+
+    return result.rows;
+}
+
+async function checkReservations(connection, screeningId)
+{
+    const request = `
+    SELECT ID_SEAT
+    FROM PI_DEVELOPERS.RESERVATIONS
+    WHERE ID_SCREENING = :screeningId`;
+
+    const result = await connection.execute(
+        request,
+        [screeningId],
+        {
+            outFormat: oracledb.OUT_FORMAT_OBJECT
+        }
+    );
+
+    return result.rows;
+}
+
 export const getSeatsInfoFromScreening = async (req, res, next) => {
     let conection;
     try 
@@ -8,7 +44,7 @@ export const getSeatsInfoFromScreening = async (req, res, next) => {
         conection = await getConnection();
         const { screeningId } = req.params;
         
-        const request = `SELECT SEAT_ROW, SEAT_NUMBER, ID_SEAT, SEAT_AVAILABLE
+        const request = `SELECT SEAT_ROW, SEAT_NUMBER, ID_SEAT
             FROM PI_DEVELOPERS.SEATS 
             WHERE ID_SCREENING = :screeningId`;
             
@@ -19,6 +55,22 @@ export const getSeatsInfoFromScreening = async (req, res, next) => {
                 outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
             }
         );
+
+        const bought = new Set((await checkBoughts(conection, screeningId)).map((row) => row.ID_SEAT));
+        const reserved = new Set((await checkReservations(conection, screeningId)).map((row) => row.ID_SEAT));
+
+        for (const row of result.rows)
+        {
+            const ID = row.ID_SEAT;
+            if(bought.has(ID) || reserved.has(ID))
+            {
+                row.SEAT_AVAILABLE = 0;
+            }
+            else
+            {
+                row.SEAT_AVAILABLE = 1;
+            }
+        }
 
         res.status(200).json(
             {
