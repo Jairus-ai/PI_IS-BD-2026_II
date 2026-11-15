@@ -4,6 +4,9 @@ import {
     reserveSeat,
     releaseSeat,
     cancelOwnReservation
+    reserveSeat,
+    releaseSeat,
+    cancelOwnReservation
 } from '../controllers/seats_controller.js';
 import {
     ROLES,
@@ -25,7 +28,8 @@ function rejectWorkers(req, res, next) {
 
 router.get('/:screeningId', getSeatsInfoFromScreening);
 router.delete('/:screeningId/reservation', cancelOwnReservation);
-router.post('/:screeningId/reservation/:seatId', rejectWorkers, reserveSeat);
-router.delete('/:screeningId/reservation/:seatId', rejectWorkers, releaseSeat);
+router.post('/:screeningId/reservation/:seatId', reserveSeat);
+router.delete('/:screeningId/reservation/:seatId', releaseSeat);
 
 export default router;
+

@@ -9,6 +9,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
+import { isAxiosError } from 'axios';
 import { useNavigate, useParams } from 'react-router';
 import useNotifications from '../../../hooks/useNotifications';
 import { useSeats } from '../hooks/useSeats';
@@ -17,7 +18,6 @@ import {
     releaseSeat,
     reserveSeat
 } from '../services/seatsService';
-import { getErrorMessage } from '../../../services/errorMessage';
 
 //temporal values while the functions for screenings are not implemented, these values should be obtained from the screening data
 const ROWS = 10;
@@ -51,6 +51,12 @@ const RESERVATION_EXPIRED_MESSAGE = 'Tu reserva de asientos expiró. Selecciona 
 
 function isReservationExpired(error: unknown): boolean {
     return isAxiosError<{ code?: string }>(error) && error.response?.data?.code === RESERVATION_EXPIRED_CODE;
+}
+
+function getErrorMessage(error: unknown): string {
+    return isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message ?? error.message
+        : (error as Error).message;
 }
 
 function formatRemainingTime(milliseconds: number): string {
@@ -91,7 +97,9 @@ export default function ShowSeats() {
     const validScreeningId = Number.isInteger(idScreeningNumber) ? idScreeningNumber : null;
 
     const { seats: rawSeats, reservation: rawReservation, isLoadingSeats } = useSeats(validScreeningId);
+    const { seats: rawSeats, reservation: rawReservation, isLoadingSeats } = useSeats(validScreeningId);
     const seats = rawSeats as Seat[];
+    const reservation = rawReservation as Reservation | null;
     const reservation = rawReservation as Reservation | null;
 
     const queryClient = useQueryClient();
@@ -99,6 +107,47 @@ export default function ShowSeats() {
 
     const [seatList, setSeatList] = React.useState<number[]>([]);
     const [pendingSeats, setPendingSeats] = React.useState<number[]>([]);
+    const [reservedUntil, setReservedUntil] = React.useState<number | null>(null);
+    const [now, setNow] = React.useState(() => Date.now());
+
+    React.useEffect(() => {
+        setSeatList(reservation?.seats ?? []);
+        setReservedUntil(reservation
+            ? Date.parse(reservation.reservedUntil)
+            : null);
+    }, [reservation]);
+
+    const handleExpiredReservation = React.useCallback(() => {
+        setSeatList([]);
+        setReservedUntil(null);
+        notifications.show(RESERVATION_EXPIRED_MESSAGE, {
+            severity: 'warning',
+            autoHideDuration: 5000,
+        });
+        void queryClient.invalidateQueries({ queryKey: ['seats', validScreeningId] });
+    }, [notifications, queryClient, validScreeningId]);
+
+    React.useEffect(() => {
+        if (reservedUntil === null)
+            return;
+
+        setNow(Date.now());
+
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [reservedUntil]);
+
+    const remainingTime = reservedUntil === null
+        ? null
+        : reservedUntil - now;
+
+    React.useEffect(() => {
+        if (remainingTime !== null && remainingTime <= 0)
+            handleExpiredReservation();
+    }, [remainingTime, handleExpiredReservation]);
     const [reservedUntil, setReservedUntil] = React.useState<number | null>(null);
     const [now, setNow] = React.useState(() => Date.now());
 
@@ -173,13 +222,18 @@ export default function ShowSeats() {
                     autoHideDuration: 3000,
                 });
             } else if (isSelected) {
-                await markSeatAsAvailable(validScreeningId, seatId);
+                const result = await releaseSeat(validScreeningId, seatId) as ReservationResponse;
+
                 setSeatList((previous) => previous.filter((s) => s !== seatId));
+                setReservedUntil(Date.parse(result.reservedUntil));
                 setReservedUntil(Date.parse(result.reservedUntil));
             } else {
                 const result = await reserveSeat(validScreeningId, seatId) as ReservationResponse;
 
+                const result = await reserveSeat(validScreeningId, seatId) as ReservationResponse;
+
                 setSeatList((previous) => [...previous, seatId]);
+                setReservedUntil(Date.parse(result.reservedUntil));
                 setReservedUntil(Date.parse(result.reservedUntil));
             }
         } catch (error) {
@@ -187,7 +241,7 @@ export default function ShowSeats() {
                 handleExpiredReservation();
             } else {
                 notifications.show(
-                    getErrorMessage(error, 'No se pudo actualizar el asiento'),
+                    `No se pudo actualizar el asiento. Motivo: ${getErrorMessage(error)}`,
                     {
                         severity: 'error',
                         autoHideDuration: 3000,
@@ -202,6 +256,7 @@ export default function ShowSeats() {
 
     const handleBack = async () => {
         if (validScreeningId !== null) {
+            await cancelReservation(validScreeningId).catch(() => undefined);
             await cancelReservation(validScreeningId).catch(() => undefined);
         }
         void navigate('/');
@@ -330,6 +385,12 @@ export default function ShowSeats() {
                 </Stack>
             </Paper>
 
+            {remainingTime !== null && (
+                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
+                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
+                </Typography>
+            )}
+
             <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
                 <Button
                     variant="contained"
@@ -346,7 +407,12 @@ export default function ShowSeats() {
                     disableElevation
                     disabled={seatList.length === 0}
                     onClick={() => {
-                        void navigate('/payment');
+                        void navigate('/purchaseConfirmationEmail', {
+                            state: {
+                                seatList,
+                                screeningId: validScreeningId,
+                            },
+                        });
                     }}
                 >
                     Continuar

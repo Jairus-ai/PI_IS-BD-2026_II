@@ -1,4 +1,4 @@
-import oracledb, { autoCommit, outFormat } from "oracledb";
+import oracledb from "oracledb";
 import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 import {
     RESERVATION_DURATION_MINUTES,
@@ -14,18 +14,13 @@ const SEAT_UNAVAILABLE_CODE = 'SEAT_UNAVAILABLE';
 const SEAT_UNAVAILABLE_MESSAGE = 'Este asiento ya no está disponible';
 const SEAT_NOT_FOUND_MESSAGE = 'El asiento no existe en esta función';
 const ACTIVE_RESERVATION_CONDITION = 'r.RESERVED_UNTIL > SYSTIMESTAMP';
-const VALID_RECEIPT_CONDITION = `NOT EXISTS (
-        SELECT 1
-        FROM PI_DEVELOPERS.REFUNDS rf
-        WHERE rf.ID_RECEIPT = sr.ID_RECEIPT)`;
 
 async function checkBoughts(connection, screeningId)
 {
     const request = `
-    SELECT sr.ID_SEAT
-    FROM PI_DEVELOPERS.SEAT_RECEIPTS sr
-    WHERE sr.ID_SCREENING = :screeningId
-    AND ${VALID_RECEIPT_CONDITION}`;
+    SELECT ID_SEAT
+    FROM PI_DEVELOPERS.SEAT_RECEIPTS
+    WHERE ID_SCREENING = :screeningId`;
 
     const result = await connection.execute(
         request,
@@ -132,18 +127,17 @@ async function isSeatTaken(connection, screeningId, seatId)
     const request = `
     SELECT
         (SELECT COUNT(*)
-        FROM PI_DEVELOPERS.SEAT_RECEIPTS sr
-        WHERE sr.ID_SCREENING = :screeningId
-            AND sr.ID_SEAT = :seatId
-            AND ${VALID_RECEIPT_CONDITION})
+        FROM PI_DEVELOPERS.SEAT_RECEIPTS
+        WHERE ID_SCREENING = :screeningId
+        AND ID_SEAT = :seatId)
         +
         (SELECT COUNT(*)
         FROM PI_DEVELOPERS.RESERVATIONS_SEATS rs
-            JOIN PI_DEVELOPERS.RESERVATIONS r
-                ON r.ID_RESERVATION = rs.ID_RESERVATION
+        JOIN PI_DEVELOPERS.RESERVATIONS r
+        ON r.ID_RESERVATION = rs.ID_RESERVATION
         WHERE rs.ID_SCREENING = :screeningId
-            AND rs.ID_SEAT = :seatId
-            AND ${ACTIVE_RESERVATION_CONDITION}) AS TAKEN
+        AND rs.ID_SEAT = :seatId
+        AND ${ACTIVE_RESERVATION_CONDITION}) AS TAKEN
     FROM DUAL`;
 
     const result = await connection.execute(
@@ -165,7 +159,7 @@ async function createReservation(connection)
     const request = `
     INSERT INTO PI_DEVELOPERS.RESERVATIONS (RESERVED_UNTIL)
     VALUES (SYSTIMESTAMP + NUMTODSINTERVAL(:minutes, 'MINUTE'))
-    RETURNING ID_RESERVATION, RESERVED_UNTIL INTO :reservationId, :reservedUntil`;
+    RETURNING ID_RESERVATION INTO :reservationId`;
 
     const result = await connection.execute(
         request,
@@ -174,18 +168,11 @@ async function createReservation(connection)
             reservationId: {
                 dir: oracledb.BIND_OUT,
                 type: oracledb.NUMBER
-            },
-            reservedUntil: {
-                dir: oracledb.BIND_OUT,
-                type: oracledb.DB_TYPE_TIMESTAMP_TZ
             }
         }
     );
 
-    return {
-        ID_RESERVATION: result.outBinds.reservationId[0],
-        RESERVED_UNTIL: result.outBinds.reservedUntil[0]
-    };
+    return result.outBinds.reservationId[0];
 }
 
 async function cancelReservation(connection, reservationId)
@@ -202,6 +189,29 @@ async function cancelReservation(connection, reservationId)
     );
 }
 
+async function refreshReservation(connection, reservationId)
+{
+    const request = `
+    UPDATE PI_DEVELOPERS.RESERVATIONS
+    SET RESERVED_UNTIL = SYSTIMESTAMP + NUMTODSINTERVAL(:minutes, 'MINUTE')
+    WHERE ID_RESERVATION = :reservationId
+    RETURNING RESERVED_UNTIL INTO :reservedUntil`;
+
+    const result = await connection.execute(
+        request,
+        {
+            minutes: RESERVATION_DURATION_MINUTES,
+            reservationId,
+            reservedUntil: {
+                dir: oracledb.BIND_OUT,
+                type: oracledb.DB_TYPE_TIMESTAMP_TZ
+            }
+        }
+    );
+
+    return result.outBinds.reservedUntil[0];
+}
+
 function rejectExpiredReservation(res)
 {
     clearReservationCookie(res);
@@ -214,59 +224,25 @@ function rejectExpiredReservation(res)
     );
 }
 
-async function checkBoughts(connection, screeningId)
-{
-    const request = `
-    SELECT ID_SEAT
-    FROM PI_DEVELOPERS.SEAT_RECEIPTS 
-    WHERE ID_SCREENING = :screeningId`;
-
-    const result = await connection.execute(
-        request,
-        [screeningId],
-        {
-            outFormat: oracledb.OUT_FORMAT_OBJECT
-        }
-    );
-
-    return result.rows;
-}
-
-async function checkReservations(connection, screeningId)
-{
-    const request = `
-    SELECT ID_SEAT
-    FROM PI_DEVELOPERS.RESERVATIONS_SEATS rs
-    JOIN PI_DEVELOPERS.RESERVATIONS r
-    ON r.ID_RESERVATION = rs.ID_RESERVATION
-    WHERE ID_SCREENING = :screeningId 
-    AND (SYSTIMESTAMP - TRUNC(SYSTIMESTAMP)) < r.RESERVED_UNTIL `;
-
-    const result = await connection.execute(
-        request,
-        [screeningId],
-        {
-            outFormat: oracledb.OUT_FORMAT_OBJECT
-        }
-    );
-
-    return result.rows;
-}
-
 export const getSeatsInfoFromScreening = async (req, res, next) => {
     let conection;
+    try
     try
     {
         conection = await getConnection();
         const { screeningId } = req.params;
 
+
         const request = `SELECT SEAT_ROW, SEAT_NUMBER, ID_SEAT
             FROM PI_DEVELOPERS.SEATS
+            FROM PI_DEVELOPERS.SEATS
             WHERE ID_SCREENING = :screeningId`;
+
 
         const result = await conection.execute(
             request,
             [screeningId],
+            {
             {
                 outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
             }
@@ -304,8 +280,26 @@ export const getSeatsInfoFromScreening = async (req, res, next) => {
             clearReservationCookie(res);
         }
 
+        const token = readReservationToken(req);
+        const ownReservation = await findOwnReservation(conection, token, screeningId, false);
+        let reservation = null;
+
+        if (ownReservation)
+        {
+            reservation = {
+                reservedUntil: ownReservation.RESERVED_UNTIL,
+                seats: await getOwnReservationSeats(conection, ownReservation.ID_RESERVATION)
+            };
+        }
+        else if (token?.screeningId === Number(screeningId))
+        {
+            clearReservationCookie(res);
+        }
+
         res.status(200).json(
             {
+                data: result.rows,
+                reservation
                 data: result.rows,
                 reservation
             }
@@ -320,12 +314,13 @@ export const getSeatsInfoFromScreening = async (req, res, next) => {
     }
 };
 
-
-export const markSeatAsUnavailable = async (req, res, next) => 
+export const reserveSeat = async (req, res, next) =>
 {
-    let conection;
+    let connection;
+
     try
     {
+        connection = await getConnection();
         connection = await getConnection();
 
         const { screeningId, seatId } = req.params;
@@ -354,9 +349,9 @@ export const markSeatAsUnavailable = async (req, res, next) =>
         if (token && !isSameScreening)
             await cancelReservation(connection, token.reservationId);
 
-        const activeReservation = reservation
-            ?? await createReservation(connection);
-        const reservationId = activeReservation.ID_RESERVATION;
+        const reservationId = reservation
+            ? reservation.ID_RESERVATION
+            : await createReservation(connection);
 
         await connection.execute(
             `INSERT INTO PI_DEVELOPERS.RESERVATIONS_SEATS (ID_SEAT, ID_SCREEN, ID_SCREENING, ID_RESERVATION)
@@ -369,6 +364,8 @@ export const markSeatAsUnavailable = async (req, res, next) =>
             }
         );
 
+        const reservedUntil = await refreshReservation(connection, reservationId);
+
         await connection.commit();
 
         setReservationCookie(res, createReservationToken({
@@ -379,16 +376,18 @@ export const markSeatAsUnavailable = async (req, res, next) =>
         res.status(200).json(
             {
                 data: {
-                    reservedUntil: activeReservation.RESERVED_UNTIL
+                    reservedUntil
                 }
             }
         );
 
     } catch (error)
+    } catch (error)
     {
         next(error);
     } finally
     {
+        await closeDatabaseConnection(connection);
         await closeDatabaseConnection(connection);
     }
 };
@@ -397,8 +396,13 @@ export const releaseSeat = async (req, res, next) =>
 {
     let connection;
 
+export const releaseSeat = async (req, res, next) =>
+{
+    let connection;
+
     try
     {
+        connection = await getConnection();
         connection = await getConnection();
 
         const { screeningId, seatId } = req.params;
@@ -420,6 +424,8 @@ export const releaseSeat = async (req, res, next) =>
             }
         );
 
+        const reservedUntil = await refreshReservation(connection, reservation.ID_RESERVATION);
+
         await connection.commit();
 
         setReservationCookie(res, createReservationToken(token));
@@ -427,11 +433,12 @@ export const releaseSeat = async (req, res, next) =>
         res.status(200).json(
             {
                 data: {
-                    reservedUntil: reservation.RESERVED_UNTIL
+                    reservedUntil
                 }
             }
         );
 
+    } catch (error)
     } catch (error)
     {
         next(error);
@@ -471,5 +478,40 @@ export const cancelOwnReservation = async (req, res, next) =>
     } finally
     {
         await closeDatabaseConnection(connection);
+        await closeDatabaseConnection(connection);
     }
 };
+
+export const cancelOwnReservation = async (req, res, next) =>
+{
+    let connection;
+
+    try
+    {
+        const token = readReservationToken(req);
+
+        if (token)
+        {
+            connection = await getConnection();
+
+            await cancelReservation(connection, token.reservationId);
+            await connection.commit();
+        }
+
+        clearReservationCookie(res);
+
+        res.status(200).json(
+            {
+                message: "Reservation cancelled"
+            }
+        );
+
+    } catch (error)
+    {
+        next(error);
+    } finally
+    {
+        await closeDatabaseConnection(connection);
+    }
+};
+
