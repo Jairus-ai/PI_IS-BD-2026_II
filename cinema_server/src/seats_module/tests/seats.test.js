@@ -2,7 +2,7 @@ import { expect, jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import oracledb from 'oracledb';
-
+import seatsRoutes from '../routes/seats_routes.js'; 
 
 const mockGetConnection = jest.fn();
 const mockCloseDatabaseConnection = jest.fn();
@@ -12,14 +12,35 @@ jest.unstable_mockModule('../../database/database.js', () => ({
   closeDatabaseConnection: mockCloseDatabaseConnection,
 }));
 
-const { default: seatsRoutes } = await import('../routes/seats_routes.js');
-
 
 const MOCK_SEATS = [
-  { ROW_NUMBER: 'A', SEAT_NUMBER: 1, ID_SEAT: 10, SEAT_AVAILABLE: 1 },
-  { ROW_NUMBER: 'A', SEAT_NUMBER: 2, ID_SEAT: 11, SEAT_AVAILABLE: 0 },
+    { SEAT_ROW: '3', SEAT_NUMBER: 5, ID_SEAT: 10 },
+    { SEAT_ROW: '3', SEAT_NUMBER: 6, ID_SEAT: 11 },
 ];
 
+function useDatabase({ seats = MOCK_SEATS, boughts = [], reservations = [], errors = {} } = {}) {
+    const execute = jest.fn(async (sql) => {
+        if (/SEAT_RECEIPTS/.test(sql)) {
+            if (errors.boughts) throw errors.boughts;
+            return { rows: boughts };
+        }
+        if (/\bRESERVATIONS\b/.test(sql)) {
+            if (errors.reservations) throw errors.reservations;
+            return { rows: reservations };
+        }
+        if (/PI_DEVELOPERS\.SEATS\b/.test(sql)) {
+            if (errors.seats) throw errors.seats;
+            return { rows: seats.map((seat) => ({ ...seat })) };
+        }
+        throw new Error(`SQL inesperado en el test: ${sql}`);
+    });
+
+    const close = jest.fn().mockResolvedValue();
+    const connection = { execute, close, release: close };
+
+    jest.spyOn(oracledb, 'getConnection').mockResolvedValue(connection);
+    return connection;
+}
 
 function createMockConnection(responses = []) {
   const execute = jest.fn();
@@ -54,54 +75,87 @@ beforeEach(() => {
 
 
 describe('GET /seats/:screeningId', () => {
-  test('200 OK returns the seats of the screening', async () => {
-    const connection = useConnection([{ rows: MOCK_SEATS }]);
+    test('200 OK: sin compras ni reservas, todos disponibles', async () => {
+        const connection = useDatabase();
 
-    const response = await request(app)
-      .get('/seats/7')
-      .expect('Content-type', /json/)
-      .expect(200);
+        const response = await request(app)
+            .get('/seats/7')
+            .expect('Content-type', /json/)
+            .expect(200);
 
-    expect(response.body.data).toEqual(MOCK_SEATS);
-    expect(response.body.data).toHaveLength(2);
+        expect(response.body.data).toEqual([
+            { SEAT_ROW: '3', SEAT_NUMBER: 5, ID_SEAT: 10, SEAT_AVAILABLE: 1 },
+            { SEAT_ROW: '3', SEAT_NUMBER: 6, ID_SEAT: 11, SEAT_AVAILABLE: 1 },
+        ]);
 
-    const [sql, binds, options] = connection.execute.mock.calls[0];
-    expect(sql).toMatch(/FROM PI_DEVELOPERS\.SEATS/);
-    expect(sql).toMatch(/WHERE ID_SCREENING = :screeningId/);
-    expect(binds).toEqual(['7']); 
-    expect(options).toEqual({ outFormat: oracledb.OUT_FORMAT_OBJECT });
+        const calls = connection.execute.mock.calls;
+        expect(calls).toHaveLength(3);
+        for (const [, binds] of calls) {
+            expect(binds).toEqual(['7']);
+        }
+    });
 
-    expect(mockCloseDatabaseConnection).toHaveBeenCalledTimes(1);
-    expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(connection);
-  });
+    test('una sola conexión para las tres consultas, y se cierra una vez', async () => {
+        const connection = useDatabase();
 
-  test('200 OK with an empty list when the screening has no seats', async () => {
-    useConnection([{ rows: [] }]);
+        await request(app).get('/seats/7').expect(200);
 
-    const response = await request(app).get('/seats/999').expect(200);
+        expect(oracledb.getConnection).toHaveBeenCalledTimes(1);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
 
-    expect(response.body.data).toEqual([]);
-  });
+    test('un asiento comprado sale como no disponible', async () => {
+        useDatabase({ boughts: [{ ID_SEAT: 11 }] });
 
-  test('500 when the query fails, and the connection is still closed', async () => {
-    const connection = useConnection([
-      new Error('ORA-00942: table or view does not exist'),
-    ]);
+        const response = await request(app).get('/seats/7').expect(200);
 
-    const response = await request(app).get('/seats/7').expect(500);
+        const byId = Object.fromEntries(response.body.data.map((s) => [s.ID_SEAT, s]));
+        expect(byId[11].SEAT_AVAILABLE).toBe(0);
+        expect(byId[10].SEAT_AVAILABLE).toBe(1);
+    });
 
-    expect(response.body.message).toMatch(/ORA-00942/);
-    expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(connection);
-  });
+    test('un asiento reservado sale como no disponible', async () => {
+        useDatabase({ reservations: [{ ID_SEAT: 10 }] });
 
-  test('500 when the connection cannot be opened, and nothing is closed', async () => {
-    mockGetConnection.mockRejectedValue(new Error('NJS-503: connection refused'));
+        const response = await request(app).get('/seats/7').expect(200);
 
-    const response = await request(app).get('/seats/7').expect(500);
+        const byId = Object.fromEntries(response.body.data.map((s) => [s.ID_SEAT, s]));
+        expect(byId[10].SEAT_AVAILABLE).toBe(0);
+        expect(byId[11].SEAT_AVAILABLE).toBe(1);
+    });
 
-    expect(response.body.message).toMatch(/NJS-503/);
-    expect(mockCloseDatabaseConnection).not.toHaveBeenCalled();
-  });
+    test('un asiento comprado Y reservado sale una sola vez, no disponible', async () => {
+        useDatabase({ boughts: [{ ID_SEAT: 10 }], reservations: [{ ID_SEAT: 10 }] });
+
+        const response = await request(app).get('/seats/7').expect(200);
+
+        expect(response.body.data).toHaveLength(2);
+        expect(response.body.data.find((s) => s.ID_SEAT === 10).SEAT_AVAILABLE).toBe(0);
+    });
+
+
+    test('200 OK con lista vacía cuando la función no tiene asientos', async () => {
+        useDatabase({ seats: [] });
+
+        const response = await request(app).get('/seats/999').expect(200);
+
+        expect(response.body.data).toEqual([]);
+    });
+
+    test.each([
+        ['asientos', 'seats'],
+        ['compras', 'boughts'],
+        ['reservas', 'reservations'],
+    ])('500 cuando falla la consulta de %s, y la conexión se cierra', async (_label, key) => {
+        const connection = useDatabase({
+            errors: { [key]: new Error('ORA-00942: table or view does not exist') },
+        });
+
+        const response = await request(app).get('/seats/7').expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe.each([
