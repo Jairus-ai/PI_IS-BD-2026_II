@@ -1,4 +1,4 @@
-const makeValidator = (source, target, code, message) => (schema) => (req, res, next) => {
+const makeValidator = (source, target, code, defaultMessage) => (schema, message = defaultMessage) => (req, res, next) => {
   const result = schema.safeParse(req[source]);
 
   if (!result.success) {
@@ -22,4 +22,4 @@ export const validateQuery = makeValidator('query', 'validatedQuery', 'INVALID_Q
 
 export const validateParams = makeValidator('params', 'validatedParams', 'INVALID_PATH_PARAMS', 'El ID no es valido.');
 
-export const validateBody = makeValidator('body', 'validatedBody', 'INVALID_BODY', 'Los datos de la película no son validos.');
+export const validateBody = makeValidator('body', 'validatedBody', 'INVALID_BODY', 'Los datos enviados no son validos.');
