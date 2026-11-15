@@ -352,3 +352,57 @@ export const createLocation = async(req, res, next) =>
   }
 
 };
+
+export const editLocation = async(req, res, next) =>
+{
+  let conection;
+
+  try
+  {
+    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
+    conection = await getConnection();
+
+    const ID_CANTON = await getCantonId(CANTON_NAME, conection);
+    const {id} = req.params;
+
+    const request = `
+      UPDATE PI_DEVELOPERS.LOCATIONS
+      SET
+      LOCATION_NAME = :LOCATION_NAME,
+      OPENING_HOUR = TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
+      CLOSING_HOUR = TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
+      ID_CANTON = :ID_CANTON
+      WHERE ID_LOCATION = :id
+    `;
+
+    await conection.execute(
+      request,
+      [
+        LOCATION_NAME,
+        OPENING_HOUR,
+        CLOSING_HOUR,
+        ID_CANTON,
+        id,
+      ],
+      {
+        autoCommit: true
+      }
+    );
+
+    res.status(200).json(
+      {
+        message:'succes'
+      }
+    );    
+
+  }catch(error)
+  {
+    next(error);
+  }finally
+  {
+    if (conection)
+    {
+      await closeDatabaseConnection(conection);
+    }
+  }
+};

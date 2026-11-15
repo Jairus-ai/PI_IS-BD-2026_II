@@ -107,7 +107,7 @@ export default function LocationFormFields({ form, formId }: LocationFormFieldsP
 
                 <Autocomplete
                     options={form.provinces}
-                    value={form.provinces.find((province) => province.PROVINCE_NAME === form.canton_name) ?? null}
+                    value={form.provinces.find((province) => province.PROVINCE_NAME === form.province_name) ?? null}
                     onChange={(_, selected) => form.handleProvinceChange(selected)}
                     onBlur={form.handleBlur('PROVINCE_NAME')}
                     getOptionLabel={(province) => province.PROVINCE_NAME}

@@ -7,6 +7,7 @@ export interface LocationFormValues {
   closing_hour: Dayjs | null;
   province_id: number | null;
   canton_name: string;
+  province_name:string|null;
 }
 
 export function validateAll(
