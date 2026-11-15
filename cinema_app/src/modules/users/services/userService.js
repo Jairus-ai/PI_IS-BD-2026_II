@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000/management';
+import { API_BASE_URL } from '../../../services/api'
+const API_URL = `${API_BASE_URL}/management`;
 
 export async function getUsers(filters = {}) {
   const params = new URLSearchParams();
