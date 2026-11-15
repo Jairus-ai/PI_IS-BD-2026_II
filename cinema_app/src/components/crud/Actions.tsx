@@ -11,21 +11,23 @@ export function Actions({
 
 }) {
 
-  return ({ row } : { row: any }) => [
-    <ActionButton
-      key="show"
-      label="Mostrar"
-      onClick={() => {onShow?.(row)}}
-    />,
-    <ActionButton
-      key="edit"
-      label="Modificar"
-      onClick={() => {onEdit?.(row)}}
-    />,
-    <ActionButton
-      key="delete"
-      label="Eliminar"
-      onClick={() => {onDelete?.(row)}}
-    />,
-  ];
+    return (
+      { row } : { row: any }) => [
+      <ActionButton
+
+        key="show"
+        label="Mostrar"
+        onClick={() => {onShow?.(row)}}
+      />,
+      <ActionButton
+        key="edit"
+        label="Modificar"
+        onClick={() => {onEdit?.(row)}}
+      />,
+      <ActionButton
+        key="delete"
+        label="Eliminar"
+        onClick={() => {onDelete?.(row)}}
+      />,
+    ];
 }

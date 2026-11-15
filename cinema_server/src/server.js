@@ -17,6 +17,8 @@ import billboardRoutes from './billboard_module/routes/billboard_routes.js';
 import purchaseRoutes from './purchase_module/routes/purchase_routes.js';
 import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
+import cantonRoutes from './location_module/routes/canton_routes.js';
+import provinceRoutes from './location_module/routes/provinces_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
@@ -63,6 +65,8 @@ app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
 app.use('/seats', seatsRoutes);
 app.use('/purchase', QR_routes);
+app.use('/management/cantons', cantonRoutes);
+app.use('/management/provinces', provinceRoutes);
 
 // Route not found
 app.use((req, res, next) => {

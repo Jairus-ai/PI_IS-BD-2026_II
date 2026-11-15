@@ -1,14 +1,14 @@
-import type { Dayjs } from 'dayjs';
 import type { LocationFormValues } from './locationFormValidation';
 
 export function buildLocationPayload(values: LocationFormValues) {
-  const hourOP = values.opening_hour ? (values.opening_hour as Dayjs).hour() :0;
-  const hourCL = values.closing_hour ? (values.closing_hour as Dayjs).hour() :0;
-  
-  return {
-    LOCATION_NAME: values.name.trim(),
-    OPENING_HOUR: hourOP,
-    CLOSING_HOUR: hourCL,
-    CANTON_NAME: values.canton_name.trim(),
-  };
+    const { opening_hour, closing_hour } = values;
+    const canton = values.canton_name.trim();
+
+    return {
+        LOCATION_NAME: values.name.trim(),
+        OPENING_HOUR: opening_hour?.isValid() ? opening_hour.format('HH:mm') : null,
+        CLOSING_HOUR: closing_hour?.isValid() ? closing_hour.format('HH:mm') : null,
+        ID_PROVINCE: values.province_id,
+        CANTON_NAME: canton === '' ? null : canton,
+    };
 }

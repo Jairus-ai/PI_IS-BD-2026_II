@@ -148,7 +148,7 @@ describe('LocationList: filtros y paginación', () => {
     test('consulta la página 1 y sin filtros al iniciar', () => {
         renderList();
 
-        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, { name: '' });
+        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, null, { name: '' });
     });
 
     test('escribir en el buscador actualiza el filtro', () => {
@@ -157,7 +157,7 @@ describe('LocationList: filtros y paginación', () => {
         fireEvent.change(searchInput(), { target: { value: 'cine' } });
 
         expect(searchInput()).toHaveValue('cine');
-        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, { name: 'cine' });
+        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, null, { name: 'cine' });
     });
 
     test('cambiar de página consulta la página del servidor (base 1)', () => {
@@ -165,7 +165,7 @@ describe('LocationList: filtros y paginación', () => {
 
         act(() => crudPageProps.onPaginationModelChange({ page: 2, pageSize: 10 }));
 
-        expect(mockUseLocations).toHaveBeenLastCalledWith(3, null, { name: '' });
+        expect(mockUseLocations).toHaveBeenLastCalledWith(3, null, null, { name: '' });
     });
 
     test('cambiar el filtro vuelve a la primera página', () => {
@@ -175,7 +175,7 @@ describe('LocationList: filtros y paginación', () => {
         fireEvent.change(searchInput(), { target: { value: 'cine' } });
 
         expect(crudPageProps.paginationModel.page).toBe(0);
-        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, { name: 'cine' });
+        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, null, { name: 'cine' });
     });
 
     test('"Limpiar filtros" borra el texto y vuelve a la primera página', () => {
@@ -188,7 +188,7 @@ describe('LocationList: filtros y paginación', () => {
 
         expect(searchInput()).toHaveValue('');
         expect(crudPageProps.paginationModel.page).toBe(0);
-        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, { name: '' });
+        expect(mockUseLocations).toHaveBeenLastCalledWith(1, null, null, { name: '' });
     });
 });
 
