@@ -152,11 +152,16 @@ export default function ShowSeats() {
     const changeSeatDisponibility = async (seat: Seat) => {
         const seatId = seat.ID_SEAT;
 
+    const changeSeatDisponibility = async (seat: Seat) => {
+        const seatId = seat.ID_SEAT;
+
         if (validScreeningId === null || pendingSeats.includes(seatId)) {
             return;
         }
 
         const isSelected = seatList.includes(seatId);
+        const isOccupied = Number(seat.SEAT_AVAILABLE) !== 1 && !isSelected;
+
         const isOccupied = Number(seat.SEAT_AVAILABLE) !== 1 && !isSelected;
 
         setPendingSeats((previous) => [...previous, seatId]);
@@ -168,8 +173,7 @@ export default function ShowSeats() {
                     autoHideDuration: 3000,
                 });
             } else if (isSelected) {
-                const result = await releaseSeat(validScreeningId, seatId) as ReservationResponse;
-
+                await markSeatAsAvailable(validScreeningId, seatId);
                 setSeatList((previous) => previous.filter((s) => s !== seatId));
                 setReservedUntil(Date.parse(result.reservedUntil));
             } else {
@@ -295,7 +299,9 @@ export default function ShowSeats() {
                                 <ButtonBase
                                     key={`${row}-${col}`}
                                     disabled={isPending}
+                                    disabled={isPending}
                                     onClick={() => {
+                                        void changeSeatDisponibility(seat);
                                         void changeSeatDisponibility(seat);
                                     }}
                                     aria-label={`Asiento ${rowLabel(row)}${col + 1}`}
