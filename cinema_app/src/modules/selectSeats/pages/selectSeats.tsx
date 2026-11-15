@@ -77,16 +77,25 @@ export default function ShowSeats() {
         return map;
     }, [seats]);
 
-    const changeSeatDisponibility = async (seatId: number) => {
+    const changeSeatDisponibility = async (seat: Seat) => {
+        const seatId = seat.ID_SEAT;
+
         if (validScreeningId === null || pendingSeats.includes(seatId)) {
             return;
         }
 
         const isSelected = seatList.includes(seatId);
+        const isOccupied = Number(seat.SEAT_AVAILABLE) !== 1 && !isSelected;
+
         setPendingSeats((previous) => [...previous, seatId]);
 
         try {
-            if (isSelected) {
+            if (isOccupied) {
+                notifications.show('Este asiento está bloqueado.', {
+                    severity: 'warning',
+                    autoHideDuration: 3000,
+                });
+            } else if (isSelected) {
                 await markSeatAsAvailable(validScreeningId, seatId);
                 setSeatList((previous) => previous.filter((s) => s !== seatId));
             } else {
@@ -197,9 +206,9 @@ export default function ShowSeats() {
                             return (
                                 <ButtonBase
                                     key={`${row}-${col}`}
-                                    disabled={!(isAvailable || isSelected) || isPending}
+                                    disabled={isPending}
                                     onClick={() => {
-                                        void changeSeatDisponibility(seat.ID_SEAT);
+                                        void changeSeatDisponibility(seat);
                                     }}
                                     aria-label={`Asiento ${rowLabel(row)}${col + 1}`}
                                     aria-pressed={isSelected}
