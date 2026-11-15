@@ -1,4 +1,4 @@
-import oracledb from "oracledb";
+import oracledb, { autoCommit, outFormat } from "oracledb";
 import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
 async function checkBoughts(connection, screeningId)
@@ -23,8 +23,11 @@ async function checkReservations(connection, screeningId)
 {
     const request = `
     SELECT ID_SEAT
-    FROM PI_DEVELOPERS.RESERVATIONS
-    WHERE ID_SCREENING = :screeningId`;
+    FROM PI_DEVELOPERS.RESERVATIONS_SEATS rs
+    JOIN PI_DEVELOPERS.RESERVATIONS r
+    ON r.ID_RESERVATION = rs.ID_RESERVATION
+    WHERE ID_SCREENING = :screeningId 
+    AND (SYSTIMESTAMP - TRUNC(SYSTIMESTAMP)) < r.RESERVED_UNTIL `;
 
     const result = await connection.execute(
         request,
@@ -87,7 +90,9 @@ export const getSeatsInfoFromScreening = async (req, res, next) => {
     }
 };
 
-export const markSeatAsUnavailable = async (req, res, next) => {
+
+export const markSeatAsUnavailable = async (req, res, next) => 
+{
     let conection;
     try
     {
