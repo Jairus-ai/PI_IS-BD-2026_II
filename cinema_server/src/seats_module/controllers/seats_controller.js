@@ -214,6 +214,42 @@ function rejectExpiredReservation(res)
     );
 }
 
+async function checkBoughts(connection, screeningId)
+{
+    const request = `
+    SELECT ID_SEAT
+    FROM PI_DEVELOPERS.SEAT_RECEIPTS 
+    WHERE ID_SCREENING = :screeningId`;
+
+    const result = await connection.execute(
+        request,
+        [screeningId],
+        {
+            outFormat: oracledb.OUT_FORMAT_OBJECT
+        }
+    );
+
+    return result.rows;
+}
+
+async function checkReservations(connection, screeningId)
+{
+    const request = `
+    SELECT ID_SEAT
+    FROM PI_DEVELOPERS.RESERVATIONS
+    WHERE ID_SCREENING = :screeningId`;
+
+    const result = await connection.execute(
+        request,
+        [screeningId],
+        {
+            outFormat: oracledb.OUT_FORMAT_OBJECT
+        }
+    );
+
+    return result.rows;
+}
+
 export const getSeatsInfoFromScreening = async (req, res, next) => {
     let conection;
     try

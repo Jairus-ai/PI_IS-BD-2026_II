@@ -8,8 +8,7 @@ export const useSeats = (screeningId = null) => {
     queryFn: () => getSeatsList(screeningId),
     enabled: screeningId != null,
     refetchOnWindowFocus: false,
-    staleTime: Infinity,
-    gcTime: 0,
+    staleTime: Infinity, 
   });
 
   return {
