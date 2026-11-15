@@ -8,11 +8,13 @@ export const useSeats = (screeningId = null) => {
     queryFn: () => getSeatsList(screeningId),
     enabled: screeningId != null,
     refetchOnWindowFocus: false,
-    staleTime: Infinity, 
+    staleTime: Infinity,
+    gcTime: 0,
   });
 
   return {
-    seats: Array.isArray(seatsQuery.data) ? seatsQuery.data : [],
+    seats: Array.isArray(seatsQuery.data?.data) ? seatsQuery.data.data : [],
+    reservation: seatsQuery.data?.reservation ?? null,
     isLoadingSeats: seatsQuery.isLoading,
     seatsError: seatsQuery.error,
     refetchSeats: seatsQuery.refetch,
