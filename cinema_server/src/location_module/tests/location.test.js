@@ -601,44 +601,6 @@ describe(`DELETE ${BASE_PATH}/DD/:id`, () => {
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
-    test('404 when the location does not exist', async () => {
-        const connection = useConnection([
-            { rowsAffected: 0 },
-        ]);
-
-        const response = await request(app)
-            .delete(`${BASE_PATH}/DD/999`)
-            .expect(404);
-
-        expect(response.body).toEqual({
-            message: 'Location not found',
-        });
-
-        expect(connection.close).toHaveBeenCalledTimes(1);
-    });
-
-    test('409 when the location is referenced by other records', async () => {
-        const error = new Error(
-            'ORA-02292: integrity constraint violated - child record found'
-        );
-
-        error.errorNum = 2292;
-
-        const connection = useConnection([
-            error,
-        ]);
-
-        const response = await request(app)
-            .delete(`${BASE_PATH}/DD/1`)
-            .expect(409);
-
-        expect(response.body).toEqual({
-            message: 'Location is in use and cannot be deleted',
-        });
-
-        expect(connection.close).toHaveBeenCalledTimes(1);
-    });
-
     test('500 when the query fails, and the connection is closed', async () => {
         const connection = useConnection([
             new Error('ORA-01031: insufficient privileges'),
