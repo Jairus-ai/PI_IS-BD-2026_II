@@ -407,12 +407,7 @@ export default function ShowSeats() {
                     disableElevation
                     disabled={seatList.length === 0}
                     onClick={() => {
-                        void navigate('/purchaseConfirmationEmail', {
-                            state: {
-                                seatList,
-                                screeningId: validScreeningId,
-                            },
-                        });
+                        void navigate('/payment');
                     }}
                 >
                     Continuar
