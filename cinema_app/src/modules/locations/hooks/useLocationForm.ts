@@ -16,7 +16,6 @@ const initialFormValues: LocationFormValues = {
     opening_hour: null,
     closing_hour: null,
     canton_name: '',
-    canton_id:null,
     province_id:null,
     province_name:'',
 };
@@ -26,7 +25,6 @@ const ERROR_KEY: Record<keyof LocationFormValues, string> = {
     opening_hour: 'OPENING_HOUR',
     closing_hour: 'CLOSING_HOUR',
     canton_name: 'CANTON_NAME',
-    canton_id: 'CANTON_ID',
     province_id: 'PROVINCE_ID',
     province_name: 'PROVINCE_NAME',
 };
@@ -206,7 +204,6 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         opening_hour: values.opening_hour,
         closing_hour: values.closing_hour,
         canton_name: values.canton_name,
-        canton_id: values.canton_id,
         province_id: values.province_id,
         province_name: values.province_name,
 

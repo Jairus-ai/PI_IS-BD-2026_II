@@ -132,7 +132,7 @@ export default function LocationFormFields({ form, formId }: LocationFormFieldsP
 
                 <Autocomplete
                     options={form.cantons}
-                    //disabled={form.province_id == null}
+                    disabled={form.province_id == null}
                     value={form.cantons.find((canton) => canton.CANTON_NAME === form.canton_name) ?? null}
                     onChange={(_, selected) => form.handleCantonChange(selected)}
                     onBlur={form.handleBlur('CANTON_NAME')}
