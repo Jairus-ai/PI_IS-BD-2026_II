@@ -1,11 +1,11 @@
 import oracledb from 'oracledb';
-
 import {
   getConnection,
   closeDatabaseConnection,
 } from '../../database/database.js';
 
-export const getLocationsList = async (req, res, next) => {
+export const getLocationsList = async (req, res, next) => 
+{
   let connection;
 
   try {
@@ -33,3 +33,164 @@ export const getLocationsList = async (req, res, next) => {
     await closeDatabaseConnection(connection);
   }
 };
+
+export function buildLocationFilters({ name } = {}) {
+    const conditions = ['l.IS_DELETED = 0'];
+    const binds = {};
+
+    if (typeof name === 'string' && name.trim() !== '') 
+    {
+      conditions.push('LOWER(l.LOCATION_NAME) LIKE LOWER(:name)');
+      binds.name = `%${name.trim()}%`;
+    }
+
+    return { whereClause: `WHERE ${conditions.join(' AND ')}`, binds };
+}
+
+export const getLocationListForCrud = async (req, res, next) => {
+    let connection;
+
+    try 
+    {
+      const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+      const limit = 10;
+      const offset = (page - 1) * limit;
+
+      const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
+  
+      connection = await getConnection();
+
+      const request = `
+        SELECT l.ID_LOCATION,
+          l.LOCATION_NAME,
+          TO_CHAR(EXTRACT(HOUR FROM l.OPENING_HOUR), 'FM00') || ':' ||
+          TO_CHAR(EXTRACT(MINUTE FROM l.OPENING_HOUR), 'FM00') AS OPENING_HOUR,
+          TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
+          TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
+          c.CANTON_NAME
+        FROM PI_DEVELOPERS.LOCATIONS l
+        JOIN PI_DEVELOPERS.CANTONS c 
+        ON c.ID_CANTON = l.ID_CANTON
+        ${whereClause}
+        ORDER BY l.LOCATION_NAME, l.ID_LOCATION
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
+
+      const result = await connection.execute(
+        request,
+        { ...binds, 
+          offset, 
+          limit 
+        },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT },
+      );
+
+      res.status(200).json(
+        { 
+          data: result.rows   
+        }
+      );
+
+    }catch (error) 
+    {
+      next(error);
+    } finally 
+    {
+      if (connection) 
+      {
+        await closeDatabaseConnection(connection);
+      }
+    }
+};
+
+export const countLocations = async (req, res, next) => {
+    let connection;
+
+    try
+    {
+        const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
+
+        connection = await getConnection();
+
+        const request = 
+        `SELECT COUNT(l.ID_LOCATION) AS TOTAL
+               FROM PI_DEVELOPERS.LOCATIONS l
+               ${whereClause}`;
+
+        const result = await connection.execute(
+          request,
+          binds,
+          { outFormat: oracledb.OUT_FORMAT_OBJECT },
+        );
+
+        res.status(200).json(
+        { 
+          total: result.rows[0].TOTAL 
+        });
+
+    } catch (error) 
+    {
+      next(error);
+    } finally
+    {
+      if (connection) {
+        await closeDatabaseConnection(connection);
+      }
+    }
+};
+
+export const getLocationByID = async(req, res, next) => 
+{
+  let connection;
+
+  try{
+    connection = await getConnection();
+    
+    const {id} = req.params;
+
+    const request = `
+      SELECT 
+        l.LOCATION_NAME,
+          TO_CHAR(EXTRACT(HOUR FROM l.OPENING_HOUR), 'FM00') || ':' ||
+          TO_CHAR(EXTRACT(MINUTE FROM l.OPENING_HOUR), 'FM00') AS OPENING_HOUR,
+          TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
+          TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
+          c.CANTON_NAME
+        FROM PI_DEVELOPERS.LOCATIONS l
+        JOIN PI_DEVELOPERS.CANTONS c 
+        ON c.ID_CANTON = l.ID_CANTON
+      WHERE IS_DELETED = 0 AND ID_LOCATION = :id 
+      ORDER BY LOCATION_NAME
+    `;
+
+    const result = await connection.execute(
+      request, 
+      {id:Number(id)},
+      {
+        outFormat: oracledb.OUT_FORMAT_OBJECT
+      }
+    );
+
+    const location = result.rows[0];
+
+    if (!location) 
+    {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+
+    res.status(200).json(
+    { 
+      data: location 
+    });
+
+  }catch(error)
+  {
+    next(error);
+  }finally 
+  {
+    if(connection)
+    {
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
+

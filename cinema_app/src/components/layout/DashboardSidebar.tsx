@@ -177,6 +177,14 @@ export default function DashboardSidebar({
               href="/movies"
               selected={!!matchPath('/movies/*', pathname) || pathname === '/'}
             />
+            <DashboardSidebarPageItem
+              id="locations"
+              title="Sucursales"
+              icon={<MovieIcon />}
+              href="/locations"
+              selected={!!matchPath('/locations/*', pathname) || pathname === '/'}
+            />
+            
           </List>
         </Box>
       </React.Fragment>

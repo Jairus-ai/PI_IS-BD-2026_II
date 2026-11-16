@@ -1,0 +1,43 @@
+name: CI & SonarQube Analysis
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+          cache-dependency-path: |
+            cinema_server/package-lock.json
+            cinema_app/package-lock.json
+
+      - name: Backend coverage
+        working-directory: cinema_server
+        run: |
+          npm ci --ignore-scripts
+          npm run test:coverage
+
+      - name: Frontend coverage
+        working-directory: cinema_app
+        run: |
+          npm ci --ignore-scripts
+          npm run test:coverage
+
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@708c7c7110995f73a80a7a0c5cfee4e9961949a0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
