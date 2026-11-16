@@ -182,12 +182,12 @@ async function sendQREmail(email, QR_list, purchase = null)
     });
 };
 
-export async function sendTicketsEmail(clientId, receiptId, seats) {
+export async function sendTicketsEmail(clientId, seats)
+{
     const QR_list = await Promise.all(seats.map(({ screeningId, seatId }) => QRGenerator(screeningId, seatId)));
     const email = await getUserEmail(clientId);
-    const purchase = await getPurchaseEmailData(receiptId);
 
-    await sendQREmail(email, QR_list, purchase);
+    await sendQREmail(email, QR_list);
 }
 
 export const QRController = async (req, res, next) => {
