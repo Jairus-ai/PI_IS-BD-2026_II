@@ -238,7 +238,9 @@ export const getLocationByID = async(req, res, next) =>
         TO_CHAR(EXTRACT(HOUR FROM l.CLOSING_HOUR), 'FM00') || ':' ||
         TO_CHAR(EXTRACT(MINUTE FROM l.CLOSING_HOUR), 'FM00') AS CLOSING_HOUR,
         c.CANTON_NAME,
-        p.PROVINCE_NAME
+        c.ID_CANTON,
+        p.PROVINCE_NAME,
+        p.ID_PROVINCE
       FROM PI_DEVELOPERS.LOCATIONS l
       JOIN PI_DEVELOPERS.CANTONS c 
       ON c.ID_CANTON = l.ID_CANTON

@@ -5,14 +5,15 @@ export interface Location {
   CLOSING_HOUR: string,
   CANTON_NAME: string,
   PROVINCE_NAME: string,
-  ID_PROVINCE: number;
+  ID_PROVINCE: number,
+  ID_CANTON: number;
 };
 export interface Canton {
-  ID_CANTON: number;
+  ID_CANTON: number,
   CANTON_NAME: string;
 }
 
 export interface Province {
-  ID_PROVINCE:number;
-  PROVINCE_NAME: string
+  ID_PROVINCE:number,
+  PROVINCE_NAME: string;
 }
