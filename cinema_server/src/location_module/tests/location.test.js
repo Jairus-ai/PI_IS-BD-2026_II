@@ -579,7 +579,7 @@ describe(`DELETE ${BASE_PATH}/DD/:id`, () => {
         ]);
 
         await request(app)
-            .delete(`${BASE_PATH}/DD/1`)
+            .delete(`${BASE_PATH}/DELETE/1`)
             .expect(204);
 
         expect(connection.execute).toHaveBeenCalledTimes(1);
@@ -607,7 +607,7 @@ describe(`DELETE ${BASE_PATH}/DD/:id`, () => {
         ]);
 
         const response = await request(app)
-            .delete(`${BASE_PATH}/DD/1`)
+            .delete(`${BASE_PATH}/DELETE/1`)
             .expect(500);
 
         expect(response.body.message).toMatch(/ORA-01031/);
@@ -622,7 +622,7 @@ describe(`DELETE ${BASE_PATH}/DD/:id`, () => {
             );
 
         const response = await request(app)
-            .delete(`${BASE_PATH}/DD/1`)
+            .delete(`${BASE_PATH}/DELETE/1`)
             .expect(500);
 
         expect(response.body.message).toMatch(/NJS-503/);

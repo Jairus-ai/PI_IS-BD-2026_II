@@ -204,7 +204,7 @@ describe('deleteLocation', () => {
 
         const result = await deleteLocation(4);
 
-        expect(mockDelete).toHaveBeenCalledWith('/management/locations/DD/4');
+        expect(mockDelete).toHaveBeenCalledWith('/management/locations/DELETE/4');
         expect(result).toBeUndefined();
     });
 

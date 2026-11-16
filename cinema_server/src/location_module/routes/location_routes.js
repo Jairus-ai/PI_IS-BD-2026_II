@@ -17,6 +17,6 @@ router.get('/count', countLocations);
 router.get('/:id', getLocationByID);
 router.post('/', createLocation);
 router.put('/:id', editLocation);
-router.delete('/DD/:id', deleteLocation);
+router.delete('/DELETE/:id', deleteLocation);
 
 export default router;

@@ -6,12 +6,12 @@ import {
 
 export const getLocationsList = async (req, res, next) => 
 {
-  let conection;
+  let connection;
 
   try {
-    conection = await getConnection();
+    connection = await getConnection();
 
-    const result = await conection.execute(
+    const result = await connection.execute(
       `
         SELECT
           ID_LOCATION,
@@ -30,7 +30,7 @@ export const getLocationsList = async (req, res, next) =>
   } catch (error) {
     next(error);
   } finally {
-    await closeDatabaseConnection(conection);
+    await closeDatabaseConnection(connection);
   }
 };
 
@@ -48,7 +48,7 @@ export function buildLocationFilters({ name } = {}) {
 }
 
 export const getLocationListForCrud = async (req, res, next) => {
-    let conection;
+    let connection;
 
     try 
     {
@@ -58,7 +58,7 @@ export const getLocationListForCrud = async (req, res, next) => {
 
       const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
   
-      conection = await getConnection();
+      connection = await getConnection();
 
       const request = `
         SELECT l.ID_LOCATION,
@@ -75,7 +75,7 @@ export const getLocationListForCrud = async (req, res, next) => {
         ORDER BY l.LOCATION_NAME, l.ID_LOCATION
         OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
 
-      const result = await conection.execute(
+      const result = await connection.execute(
         request,
         { ...binds, 
           offset, 
@@ -95,28 +95,28 @@ export const getLocationListForCrud = async (req, res, next) => {
       next(error);
     } finally 
     {
-      if (conection) 
+      if (connection) 
       {
-        await closeDatabaseConnection(conection);
+        await closeDatabaseConnection(connection);
       }
     }
 };
 
 export const countLocations = async (req, res, next) => {
-    let conection;
+    let connection;
 
     try
     {
         const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
 
-        conection = await getConnection();
+        connection = await getConnection();
 
         const request = 
         `SELECT COUNT(l.ID_LOCATION) AS TOTAL
                FROM PI_DEVELOPERS.LOCATIONS l
                ${whereClause}`;
 
-        const result = await conection.execute(
+        const result = await connection.execute(
           request,
           binds,
           { outFormat: oracledb.OUT_FORMAT_OBJECT },
@@ -132,15 +132,15 @@ export const countLocations = async (req, res, next) => {
       next(error);
     } finally
     {
-      if (conection) {
-        await closeDatabaseConnection(conection);
+      if (connection) {
+        await closeDatabaseConnection(connection);
       }
     }
 };
 
 export const getCantonsforLocation = async(req, res, next) =>
 {
-  let conection;
+  let connection;
 
   try
   {
@@ -150,7 +150,7 @@ export const getCantonsforLocation = async(req, res, next) =>
       return res.status(400).json({ message: 'provinceId inválido' });
     }
 
-      conection = await getConnection();
+      connection = await getConnection();
 
     const request = `
       SELECT ID_CANTON, CANTON_NAME
@@ -161,7 +161,7 @@ export const getCantonsforLocation = async(req, res, next) =>
       ORDER BY CANTON_NAME
     `;
 
-    const result = await conection.execute(
+    const result = await connection.execute(
       request,
       {p:p},
       {outFormat: oracledb.OUT_FORMAT_OBJECT}
@@ -177,20 +177,20 @@ export const getCantonsforLocation = async(req, res, next) =>
     next(error)
   }finally
   {
-    if(conection)
+    if(connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
     }
   }
 }
 
 export const getProvincesforLocation = async(req, res, next) =>
 {
-  let conection;
+  let connection;
 
   try
   {
-    conection = await getConnection();
+    connection = await getConnection();
 
     const request = `
       SELECT ID_PROVINCE, PROVINCE_NAME
@@ -198,7 +198,7 @@ export const getProvincesforLocation = async(req, res, next) =>
       ORDER BY PROVINCE_NAME
     `;
 
-    const result = await conection.execute(
+    const result = await connection.execute(
       request,
       {},
       {outFormat: oracledb.OUT_FORMAT_OBJECT}
@@ -214,19 +214,19 @@ export const getProvincesforLocation = async(req, res, next) =>
     next(error)
   }finally
   {
-    if(conection)
+    if(connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
     }
   }
 }
 
 export const getLocationByID = async(req, res, next) => 
 {
-  let conection;
+  let connection;
 
   try{
-    conection = await getConnection();
+    connection = await getConnection();
     
     const {id} = req.params;
 
@@ -250,7 +250,7 @@ export const getLocationByID = async(req, res, next) =>
       ORDER BY LOCATION_NAME
     `;
 
-    const result = await conection.execute(
+    const result = await connection.execute(
       request, 
       {id:Number(id)},
       {
@@ -275,14 +275,14 @@ export const getLocationByID = async(req, res, next) =>
     next(error);
   }finally 
   {
-    if(conection)
+    if(connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
     }
   }
 };
 
-async function getCantonId(canton_name, conection)
+async function getCantonId(canton_name, connection)
 {
   const request = `
     SELECT ID_CANTON 
@@ -290,7 +290,7 @@ async function getCantonId(canton_name, conection)
     WHERE CANTON_NAME = :name
   `;
 
-  const result = await conection.execute(
+  const result = await connection.execute(
     request,
     {
       name:canton_name,
@@ -304,13 +304,13 @@ async function getCantonId(canton_name, conection)
 
 export const createLocation = async(req, res, next) => 
 {
-  let conection;
+  let connection;
   try
   {
     const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
-    conection = await getConnection();
+    connection = await getConnection();
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, conection);
+    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
 
     const request = `
       INSERT INTO PI_DEVELOPERS.LOCATIONS(LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, ID_CANTON)
@@ -323,7 +323,7 @@ export const createLocation = async(req, res, next) =>
       )
     `;
     
-    await conection.execute(
+    await connection.execute(
       request,
       {
         LOCATION_NAME: LOCATION_NAME, 
@@ -347,9 +347,9 @@ export const createLocation = async(req, res, next) =>
     next(error);
   }finally
   {
-    if(conection)
+    if(connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
     }
   }
 
@@ -357,14 +357,14 @@ export const createLocation = async(req, res, next) =>
 
 export const editLocation = async(req, res, next) =>
 {
-  let conection;
+  let connection;
 
   try
   {
     const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
-    conection = await getConnection();
+    connection = await getConnection();
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, conection);
+    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
     const {id} = req.params;
 
     const request = `
@@ -377,7 +377,7 @@ export const editLocation = async(req, res, next) =>
       WHERE ID_LOCATION = :id
     `;
 
-    await conection.execute(
+    await connection.execute(
       request,
       [
         LOCATION_NAME,
@@ -402,20 +402,20 @@ export const editLocation = async(req, res, next) =>
     next(error);
   }finally
   {
-    if (conection)
+    if (connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
     }
   }
 };
 
 export const deleteLocation = async (req,res,next) =>
 {
-  let conection;
+  let connection;
   try{
     const { id } = req.params;
 
-    conection = await oracledb.getConnection();
+    connection = await oracledb.getConnection();
     
     const request = `
       UPDATE PI_DEVELOPERS.LOCATIONS
@@ -423,7 +423,7 @@ export const deleteLocation = async (req,res,next) =>
       WHERE ID_LOCATION = :id
       `;
 
-      await conection.execute(
+      const result = await connection.execute(
       request,
       {id: Number(id)},
       { 
@@ -431,6 +431,10 @@ export const deleteLocation = async (req,res,next) =>
       }
     );
   
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Discount not found' });
+    }
+
     res.status(204).json(
       {
         message: 'success'
@@ -441,8 +445,8 @@ export const deleteLocation = async (req,res,next) =>
   }catch (error) {
     next(error);
   }finally {
-    if (conection) {
-      await closeDatabaseConnection(conection);
+    if (connection) {
+      await closeDatabaseConnection(connection);
     }
   }
 };
