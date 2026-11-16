@@ -124,6 +124,14 @@ async function sendQREmail(email, QR_list)
     await emailService.sendQREmail({ email, pdfBuffer: pdf });
 };
 
+export async function sendTicketsEmail(clientId, seats)
+{
+    const QR_list = await Promise.all(seats.map(({ screeningId, seatId }) => QRGenerator(screeningId, seatId)));
+    const email = await getUserEmail(clientId);
+
+    await sendQREmail(email, QR_list);
+}
+
 export const QRController = async (req, res, next) => {
     try {
         const {data} = req.body;
