@@ -21,6 +21,18 @@ export const getLocationById = async (id) => {
   return data;
 };
 
+export const getCantons = async (provinceId) => {
+    const { data } = await api.get('/management/cantons', {
+        params: { provinceId },
+    });
+    return data;
+};
+
+export const getProvinces = async () => {
+  const {data} = await api.get('/management/provinces');
+  return data;
+};
+
 export const getLocationsCount = async (filters = {}) => {
     const cleanedFilters = Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== '' && value !== null && value !== undefined),
