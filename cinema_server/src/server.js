@@ -1,5 +1,5 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
@@ -25,8 +25,8 @@ import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
 import seatsRoutes from './seats_module/routes/seats_routes.js';
 import QR_routes from './QR_module/routes/QR_routes.js';
-
-dotenv.config();
+import paymentRoutes from './payment_module/routes/payment_routes.js';
+import { handleWebhook } from './payment_module/controllers/payment_controller.js';
 
 const port = 3000;
 const ip = '0.0.0.0';
@@ -35,6 +35,9 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 const app = express();
 app.disable('x-powered-by');
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+
+app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -50,6 +53,7 @@ app.use('/posters', (req, res, next) => {
 });
 
 //Mount routes in the app
+app.use('/payments', paymentRoutes);
 app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
 app.use('/billboard', billboardRoutes);
@@ -91,6 +95,7 @@ app.use((error, req, res, next) => {
       status === 500
         ? 'No fue posible completar la operación.'
         : error.message,
+    ...(error.details && { details: error.details }),
   });
 });
 app.use(globalErrorHandler);
