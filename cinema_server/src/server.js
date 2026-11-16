@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -31,8 +32,6 @@ import QR_routes from './QR_module/routes/QR_routes.js';
 import paymentRoutes from './payment_module/routes/payment_routes.js';
 import { handleWebhook } from './payment_module/controllers/payment_controller.js';
 
-process.env.TZ = CINEMA_TIME_ZONE;
-
 const port = 3000;
 const ip = '0.0.0.0';
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
@@ -40,6 +39,9 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 const app = express();
 app.disable('x-powered-by');
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+
+app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 
 app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
@@ -58,6 +60,7 @@ app.use('/posters', (req, res, next) => {
 });
 
 //Mount routes in the app
+app.use('/payments', paymentRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
@@ -99,6 +102,7 @@ app.use((error, req, res, next) => {
       status === 500
         ? 'No fue posible completar la operación.'
         : error.message,
+    ...(error.details && { details: error.details }),
     ...(error.details && { details: error.details }),
   });
 });

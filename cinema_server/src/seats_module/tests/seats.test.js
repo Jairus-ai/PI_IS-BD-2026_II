@@ -9,6 +9,11 @@ import {
     RESERVATION_COOKIE_NAME,
     createReservationToken
 } from '../services/reservation_cookie.js';
+import {
+    ROLES,
+    SESSION_COOKIE_NAME,
+    createSessionToken
+} from '../../session/session.js';
 
 process.env.JWT_SECRET = 'test-secret';
 
@@ -483,3 +488,45 @@ describe('DELETE /seats/:screeningId/reservation', () => {
         expect(oracledb.getConnection).not.toHaveBeenCalled();
     });
 });
+
+describe('Only guests and clients can reserve seats', () => {
+    function sessionCookie(role) {
+        const token = createSessionToken({
+            id: 3,
+            role,
+            sessionVersion: 0
+        });
+
+        return `${SESSION_COOKIE_NAME}=${token}`;
+    }
+
+    test.each([
+        ROLES.EMPLOYEE,
+        ROLES.ADMINISTRATOR,
+        ROLES.SUPERUSER
+    ])('403 for %s when reserving or releasing', async (role) => {
+        const connection = useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .set('Cookie', sessionCookie(role))
+            .expect(403);
+
+        await request(app)
+            .delete('/seats/7/reservation/10')
+            .set('Cookie', sessionCookie(role))
+            .expect(403);
+
+        expect(connection.execute).not.toHaveBeenCalled();
+    });
+
+    test('a client can reserve', async () => {
+        useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .set('Cookie', sessionCookie(ROLES.CLIENT))
+            .expect(200);
+    });
+});
+
