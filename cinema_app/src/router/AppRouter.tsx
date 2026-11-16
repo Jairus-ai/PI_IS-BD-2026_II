@@ -18,6 +18,8 @@ import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
+import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
+import PaymentResult from '../modules/payments/pages/PaymentResult';
 
 const router = createHashRouter([
   {
@@ -38,22 +40,13 @@ const router = createHashRouter([
   },
   {
     element: (
-      <DashboardLayout />
+      <RequireSession allowedRoles={CLIENT_ROLES} allowGuests>
+        <ClientLayout />
+      </RequireSession>
     ),
     children: [
       {
-        path:'/seats/:screeningId',
-        Component: ShowSeats,
-      }
-    ],
-  },
-  {
-    element: (
-      <DashboardLayout />
-    ),
-    children: [
-      {
-        path:'/seats/:screeningId',
+        path: '/seats/:screeningId',
         Component: ShowSeats,
       }
     ],
@@ -121,6 +114,18 @@ const router = createHashRouter([
       {
         path: '/purchaseConfirmationEmail',
         Component: EmailConfirmation
+      },
+      {
+        path: '/payment',
+        Component: PaymentCheckout
+      },
+      {
+        path: '/payment/success',
+        element: <PaymentResult success />
+      },
+      {
+        path: '/payment/cancel',
+        element: <PaymentResult success={false} />
       },
     ],
   },
