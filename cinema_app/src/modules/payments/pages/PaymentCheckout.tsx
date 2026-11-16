@@ -19,7 +19,6 @@ import type {
   PaymentRequest,
   PaymentReservation
 } from '../types/payments';
-import { getErrorMessage } from '../../../services/errorMessage';
 
 // TODO(Adrián Arias): Once the endpoint are set, replace with data with the actual data.
 const PLACEHOLDER_PAYMENT: PaymentRequest = {
@@ -29,7 +28,7 @@ const PLACEHOLDER_PAYMENT: PaymentRequest = {
 
 const RESERVATION_EXPIRED_CODE = 'RESERVATION_EXPIRED';
 const RESERVATION_EXPIRED_MESSAGE = 'Tu reserva de asientos expiró. Selecciona tus asientos de nuevo.';
-const PAYMENT_ERROR_MESSAGE = 'No se pudo iniciar el pago';
+const PAYMENT_ERROR_MESSAGE = 'No se pudo iniciar el pago.';
 const RESERVATION_ERROR_MESSAGE = 'No se pudo cargar la reserva.';
 
 function getErrorResponse(error: unknown): { code?: string; message?: string } | undefined {
@@ -103,7 +102,7 @@ export default function PaymentCheckout() {
       }
 
       notifications.show(
-        getErrorMessage(error, PAYMENT_ERROR_MESSAGE),
+        `${PAYMENT_ERROR_MESSAGE} Motivo: ${errorResponse?.message ?? (error as Error).message}`,
         {
           severity: 'error',
           autoHideDuration: 3000

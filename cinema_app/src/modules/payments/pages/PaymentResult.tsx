@@ -81,12 +81,11 @@ export default function PaymentResult({ success }: Readonly<PaymentResultProps>)
   const iconColor = isPaid
     ? 'success'
     : 'error';
-  const NotPaidIcon = success && !hasError
-    ? HighlightOffIcon
-    : ErrorOutlineIcon;
   const ResultIcon = isPaid
     ? CheckCircleOutlineIcon
-    : NotPaidIcon;
+    : success && !hasError
+      ? HighlightOffIcon
+      : ErrorOutlineIcon;
 
   return (
     <Box
