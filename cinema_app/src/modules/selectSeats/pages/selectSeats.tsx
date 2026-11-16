@@ -8,10 +8,15 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { useNavigate, useParams } from 'react-router';
 import useNotifications from '../../../hooks/useNotifications';
 import { useSeats } from '../hooks/useSeats';
-import { markSeatAsAvailable, markSeatAsUnavailable } from '../services/seatsService';
+import {
+    cancelReservation,
+    releaseSeat,
+    reserveSeat
+} from '../services/seatsService';
 
 //temporal values while the functions for screenings are not implemented, these values should be obtained from the screening data
 const ROWS = 10;
@@ -29,6 +34,36 @@ interface Seat {
     SEAT_NUMBER: number;
     ID_SEAT: number;
     SEAT_AVAILABLE: number;
+}
+
+interface Reservation {
+    reservedUntil: string;
+    seats: number[];
+}
+
+interface ReservationResponse {
+    reservedUntil: string;
+}
+
+const RESERVATION_EXPIRED_CODE = 'RESERVATION_EXPIRED';
+const RESERVATION_EXPIRED_MESSAGE = 'Tu reserva de asientos expiró. Selecciona tus asientos de nuevo.';
+
+function isReservationExpired(error: unknown): boolean {
+    return isAxiosError<{ code?: string }>(error) && error.response?.data?.code === RESERVATION_EXPIRED_CODE;
+}
+
+function getErrorMessage(error: unknown): string {
+    return isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message ?? error.message
+        : (error as Error).message;
+}
+
+function formatRemainingTime(milliseconds: number): string {
+    const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+    return `${minutes}:${seconds}`;
 }
 
 function rowToIndex(row: string | number): number {
@@ -60,14 +95,56 @@ export default function ShowSeats() {
     const idScreeningNumber = Number(screeningId);
     const validScreeningId = Number.isInteger(idScreeningNumber) ? idScreeningNumber : null;
 
-    const { seats: rawSeats, isLoadingSeats } = useSeats(validScreeningId);
+    const { seats: rawSeats, reservation: rawReservation, isLoadingSeats } = useSeats(validScreeningId);
     const seats = rawSeats as Seat[];
+    const reservation = rawReservation as Reservation | null;
 
     const queryClient = useQueryClient();
     const notifications = useNotifications();
 
     const [seatList, setSeatList] = React.useState<number[]>([]);
     const [pendingSeats, setPendingSeats] = React.useState<number[]>([]);
+    const [reservedUntil, setReservedUntil] = React.useState<number | null>(null);
+    const [now, setNow] = React.useState(() => Date.now());
+
+    React.useEffect(() => {
+        setSeatList(reservation?.seats ?? []);
+        setReservedUntil(reservation
+            ? Date.parse(reservation.reservedUntil)
+            : null);
+    }, [reservation]);
+
+    const handleExpiredReservation = React.useCallback(() => {
+        setSeatList([]);
+        setReservedUntil(null);
+        notifications.show(RESERVATION_EXPIRED_MESSAGE, {
+            severity: 'warning',
+            autoHideDuration: 5000,
+        });
+        void queryClient.invalidateQueries({ queryKey: ['seats', validScreeningId] });
+    }, [notifications, queryClient, validScreeningId]);
+
+    React.useEffect(() => {
+        if (reservedUntil === null)
+            return;
+
+        setNow(Date.now());
+
+        const interval = setInterval(() => {
+            setNow(Date.now());
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [reservedUntil]);
+
+    const remainingTime = reservedUntil === null
+        ? null
+        : reservedUntil - now;
+
+    React.useEffect(() => {
+        if (remainingTime !== null && remainingTime <= 0)
+            handleExpiredReservation();
+    }, [remainingTime, handleExpiredReservation]);
 
     const seatByPosition = React.useMemo(() => {
         const map = new Map<string, Seat>();
@@ -77,38 +154,56 @@ export default function ShowSeats() {
         return map;
     }, [seats]);
 
-    const changeSeatDisponibility = async (seatId: number) => {
+    const changeSeatDisponibility = async (seat: Seat) => {
+        const seatId = seat.ID_SEAT;
+
         if (validScreeningId === null || pendingSeats.includes(seatId)) {
             return;
         }
 
         const isSelected = seatList.includes(seatId);
+        const isOccupied = Number(seat.SEAT_AVAILABLE) !== 1 && !isSelected;
+
         setPendingSeats((previous) => [...previous, seatId]);
 
         try {
-            if (isSelected) {
-                await markSeatAsAvailable(validScreeningId, seatId);
+            if (isOccupied) {
+                notifications.show('Este asiento está bloqueado.', {
+                    severity: 'warning',
+                    autoHideDuration: 3000,
+                });
+            } else if (isSelected) {
+                const result = await releaseSeat(validScreeningId, seatId) as ReservationResponse;
+
                 setSeatList((previous) => previous.filter((s) => s !== seatId));
+                setReservedUntil(Date.parse(result.reservedUntil));
             } else {
-                await markSeatAsUnavailable(validScreeningId, seatId);
+                const result = await reserveSeat(validScreeningId, seatId) as ReservationResponse;
+
                 setSeatList((previous) => [...previous, seatId]);
+                setReservedUntil(Date.parse(result.reservedUntil));
             }
-            await queryClient.invalidateQueries({ queryKey: ['seats', validScreeningId] });
         } catch (error) {
-            notifications.show(
-                `No se pudo actualizar el asiento. Motivo: ${(error as Error).message}`,
-                { severity: 'error', autoHideDuration: 3000 },
-            );
+            if (isReservationExpired(error)) {
+                handleExpiredReservation();
+            } else {
+                notifications.show(
+                    `No se pudo actualizar el asiento. Motivo: ${getErrorMessage(error)}`,
+                    {
+                        severity: 'error',
+                        autoHideDuration: 3000,
+                    },
+                );
+            }
         } finally {
+            await queryClient.invalidateQueries({ queryKey: ['seats', validScreeningId] });
             setPendingSeats((previous) => previous.filter((s) => s !== seatId));
         }
     };
 
     const handleBack = async () => {
         if (validScreeningId !== null) {
-            await Promise.allSettled(
-                seatList.map((seatId) => markSeatAsAvailable(validScreeningId, seatId)),
-            );
+            await cancelReservation(validScreeningId).catch(() => undefined);
         }
         void navigate('/');
     };
@@ -197,9 +292,9 @@ export default function ShowSeats() {
                             return (
                                 <ButtonBase
                                     key={`${row}-${col}`}
-                                    disabled={!(isAvailable || isSelected) || isPending}
+                                    disabled={isPending}
                                     onClick={() => {
-                                        void changeSeatDisponibility(seat.ID_SEAT);
+                                        void changeSeatDisponibility(seat);
                                     }}
                                     aria-label={`Asiento ${rowLabel(row)}${col + 1}`}
                                     aria-pressed={isSelected}
@@ -226,7 +321,13 @@ export default function ShowSeats() {
                     <DisponibilityChartItem color={COLORS.selected} label="Seleccionado" />
                 </Stack>
             </Paper>
-            
+
+            {remainingTime !== null && (
+                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
+                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
+                </Typography>
+            )}
+
             <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
                 <Button
                     variant="contained"
@@ -242,7 +343,14 @@ export default function ShowSeats() {
                     variant="contained"
                     disableElevation
                     disabled={seatList.length === 0}
-                    onClick={() => navigate('/purchaseConfirmationEmail', {state:{seatList, screeningId: validScreeningId}})}
+                    onClick={() => {
+                        void navigate('/purchaseConfirmationEmail', {
+                            state: {
+                                seatList,
+                                screeningId: validScreeningId,
+                            },
+                        });
+                    }}
                 >
                     Continuar
                 </Button>
