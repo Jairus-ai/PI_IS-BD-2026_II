@@ -7,7 +7,6 @@ export interface LocationFormValues {
   closing_hour: Dayjs | null;
   province_id: number | null;
   canton_name: string;
-  canton_id: number | null;
   province_name:string|null;
 }
 

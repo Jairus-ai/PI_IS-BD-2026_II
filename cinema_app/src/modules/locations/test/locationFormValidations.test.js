@@ -104,6 +104,7 @@ describe('mapDetailToFormValues', () => {
             'name',
             'opening_hour',
             'province_id',
+            'province_name',
         ]);
     });
 
@@ -119,6 +120,7 @@ describe('mapDetailToFormValues', () => {
             OPENING_HOUR: null,
             CLOSING_HOUR: null,
             CANTON_NAME: null,
+            PROVINCE_NAME: null,
         });
 
         expect(values).toEqual({
@@ -127,6 +129,7 @@ describe('mapDetailToFormValues', () => {
             closing_hour: null,
             province_id: null,
             canton_name: '',
+            province_name:'',
         });
     });
 
@@ -145,6 +148,7 @@ describe('buildLocationPayload', () => {
             CLOSING_HOUR: '22:00',
             ID_PROVINCE: 3,
             CANTON_NAME: 'Paraíso',
+            PROVINCE_NAME: null,
         });
     });
 
