@@ -406,3 +406,38 @@ export const editLocation = async(req, res, next) =>
     }
   }
 };
+
+export const deleteLocation = async (req,res,next) =>
+{
+  let connection;
+  try{
+    const { id } = req.params;
+
+    connection = await oracledb.getConnection();
+    const request = `
+      UPDATE PI_DEVELOPERS.LOCATIONS
+      SET IS_DELETED = 1
+      WHERE ID_LOCATION = :id`;
+
+    const result = await connection.execute(
+      request,
+      {id: Number(id)}, 
+      { autoCommit: true }  // Convert output to JSON
+    );
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+  
+    res.status(204).send();
+  }catch (error) {
+    if (error.errorNum === 2292) {
+      return res.status(409).json({ message: 'Location is in use and cannot be deleted' });
+    }
+    next(error);
+  }finally {
+    if (connection) {
+      await closeDatabaseConnection(connection);
+    }
+  }
+};

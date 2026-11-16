@@ -570,3 +570,100 @@ describe(`PUT ${BASE_PATH}/:id`, () => {
         expect(response.body.message).toMatch(/NJS-503/);
     });
 });
+
+describe(`DELETE ${BASE_PATH}/DD/:id`, () => {
+
+    test('204 No Content deletes the location', async () => {
+        const connection = useConnection([
+            { rowsAffected: 1 },
+        ]);
+
+        await request(app)
+            .delete(`${BASE_PATH}/DD/1`)
+            .expect(204);
+
+        expect(connection.execute).toHaveBeenCalledTimes(1);
+
+        const [sql, binds, options] = connection.execute.mock.calls[0];
+
+        expect(sql).toMatch(/UPDATE PI_DEVELOPERS\.LOCATIONS/);
+        expect(sql).toMatch(/SET IS_DELETED = 1/);
+        expect(sql).toMatch(/WHERE ID_LOCATION = :id/);
+
+        expect(binds).toEqual({
+            id: 1,
+        });
+
+        expect(options).toEqual({
+            autoCommit: true,
+        });
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('404 when the location does not exist', async () => {
+        const connection = useConnection([
+            { rowsAffected: 0 },
+        ]);
+
+        const response = await request(app)
+            .delete(`${BASE_PATH}/DD/999`)
+            .expect(404);
+
+        expect(response.body).toEqual({
+            message: 'Location not found',
+        });
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('409 when the location is referenced by other records', async () => {
+        const error = new Error(
+            'ORA-02292: integrity constraint violated - child record found'
+        );
+
+        error.errorNum = 2292;
+
+        const connection = useConnection([
+            error,
+        ]);
+
+        const response = await request(app)
+            .delete(`${BASE_PATH}/DD/1`)
+            .expect(409);
+
+        expect(response.body).toEqual({
+            message: 'Location is in use and cannot be deleted',
+        });
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when the query fails, and the connection is closed', async () => {
+        const connection = useConnection([
+            new Error('ORA-01031: insufficient privileges'),
+        ]);
+
+        const response = await request(app)
+            .delete(`${BASE_PATH}/DD/1`)
+            .expect(500);
+
+        expect(response.body.message).toMatch(/ORA-01031/);
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when the connection cannot be opened', async () => {
+        jest.spyOn(oracledb, 'getConnection')
+            .mockRejectedValue(
+                new Error('NJS-503: connection refused')
+            );
+
+        const response = await request(app)
+            .delete(`${BASE_PATH}/DD/1`)
+            .expect(500);
+
+        expect(response.body.message).toMatch(/NJS-503/);
+    });
+
+});
