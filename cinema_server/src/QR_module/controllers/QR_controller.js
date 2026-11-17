@@ -8,25 +8,24 @@ async function getQRData(screeningId, seatId) {
     let connection;
     try {
         connection = await getConnection();
-        const request =
-            `SELECT sr.ID_SEAT_RECEIPT AS TICKET,
-                s.SEAT_ROW || s.SEAT_NUMBER AS SEAT,
-                scr.ID_SCREEN AS SCREEN,
-                TO_CHAR(sc.SCREENING_DATE, 'YYYY-MM-DD') AS SCREENING_DATE,
-                sc.SCREENING_START_TIME
-            FROM PI_DEVELOPERS.SEATS s
-                JOIN PI_DEVELOPERS.SCREENINGS sc ON s.ID_SCREENING = sc.ID_SCREENING
-                JOIN PI_DEVELOPERS.SCREENS scr ON sc.ID_SCREEN = scr.ID_SCREEN
-                LEFT JOIN PI_DEVELOPERS.SEAT_RECEIPTS sr
-                    ON sr.ID_SEAT = s.ID_SEAT
-                    AND sr.ID_SCREEN = s.ID_SCREEN
-                    AND sr.ID_SCREENING = s.ID_SCREENING
-                    AND NOT EXISTS (
-                        SELECT 1
-                        FROM PI_DEVELOPERS.REFUNDS rf
-                        WHERE rf.ID_RECEIPT = sr.ID_RECEIPT)
-            WHERE s.ID_SCREENING = :screeningId
-            AND s.ID_SEAT = :seatId`;
+        const request = `SELECT sr.ID_SEAT_RECEIPT AS TICKET,
+                    s.SEAT_ROW || s.SEAT_NUMBER AS SEAT,
+                    scr.ID_SCREEN AS SCREEN,
+                    TO_CHAR(sc.SCREENING_DATE, 'YYYY-MM-DD') AS SCREENING_DATE,
+                    sc.SCREENING_START_TIME
+                FROM PI_DEVELOPERS.SEATS s
+                    JOIN PI_DEVELOPERS.SCREENINGS sc ON s.ID_SCREENING = sc.ID_SCREENING
+                    JOIN PI_DEVELOPERS.SCREENS scr ON sc.ID_SCREEN = scr.ID_SCREEN
+                    LEFT JOIN PI_DEVELOPERS.SEAT_RECEIPTS sr
+                        ON sr.ID_SEAT = s.ID_SEAT
+                        AND sr.ID_SCREEN = s.ID_SCREEN
+                        AND sr.ID_SCREENING = s.ID_SCREENING
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM PI_DEVELOPERS.REFUNDS rf
+                            WHERE rf.ID_RECEIPT = sr.ID_RECEIPT)
+                WHERE s.ID_SCREENING = :screeningId
+                AND s.ID_SEAT = :seatId`;
 
         const result = await connection.execute(
             request,
