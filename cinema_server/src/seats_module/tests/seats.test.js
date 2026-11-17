@@ -214,6 +214,16 @@ describe('GET /seats/:screeningId', () => {
         expect(sql).toMatch(/rs\.ID_SCREENING = :screeningId/);
     });
 
+    test('las compras reembolsadas no bloquean el asiento', async () => {
+        const connection = useDatabase();
+
+        await request(app).get('/seats/7').expect(200);
+
+        const [sql] = findCall(connection, /SEAT_RECEIPTS/);
+
+        expect(sql).toMatch(/NOT EXISTS \(\s*SELECT 1\s*FROM PI_DEVELOPERS\.REFUNDS rf\s*WHERE rf\.ID_RECEIPT = sr\.ID_RECEIPT\)/);
+    });
+
     test('un asiento comprado Y reservado sale una sola vez, no disponible', async () => {
         useDatabase({
             boughts: [{ ID_SEAT: 10 }],
@@ -379,6 +389,19 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
 
         expect(response.body.code).toBe('SEAT_UNAVAILABLE');
         expect(connection.commit).not.toHaveBeenCalled();
+    });
+
+    test('un asiento de una compra reembolsada se puede volver a reservar', async () => {
+        const connection = useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .expect(200);
+
+        const [sql] = findCall(connection, /FROM DUAL/);
+
+        expect(sql).toMatch(/FROM PI_DEVELOPERS\.REFUNDS rf/);
+        expect(connection.commit).toHaveBeenCalledTimes(1);
     });
 
     test('404 cuando el asiento no existe en la función', async () => {
