@@ -14,13 +14,18 @@ const SEAT_UNAVAILABLE_CODE = 'SEAT_UNAVAILABLE';
 const SEAT_UNAVAILABLE_MESSAGE = 'Este asiento ya no está disponible';
 const SEAT_NOT_FOUND_MESSAGE = 'El asiento no existe en esta función';
 const ACTIVE_RESERVATION_CONDITION = 'r.RESERVED_UNTIL > SYSTIMESTAMP';
+const VALID_RECEIPT_CONDITION = `NOT EXISTS (
+        SELECT 1
+        FROM PI_DEVELOPERS.REFUNDS rf
+        WHERE rf.ID_RECEIPT = sr.ID_RECEIPT)`;
 
 async function checkBoughts(connection, screeningId)
 {
     const request = `
-    SELECT ID_SEAT
-    FROM PI_DEVELOPERS.SEAT_RECEIPTS
-    WHERE ID_SCREENING = :screeningId`;
+    SELECT sr.ID_SEAT
+    FROM PI_DEVELOPERS.SEAT_RECEIPTS sr
+    WHERE sr.ID_SCREENING = :screeningId
+    AND ${VALID_RECEIPT_CONDITION}`;
 
     const result = await connection.execute(
         request,
@@ -127,17 +132,18 @@ async function isSeatTaken(connection, screeningId, seatId)
     const request = `
     SELECT
         (SELECT COUNT(*)
-        FROM PI_DEVELOPERS.SEAT_RECEIPTS
-        WHERE ID_SCREENING = :screeningId
-        AND ID_SEAT = :seatId)
+        FROM PI_DEVELOPERS.SEAT_RECEIPTS sr
+        WHERE sr.ID_SCREENING = :screeningId
+            AND sr.ID_SEAT = :seatId
+            AND ${VALID_RECEIPT_CONDITION})
         +
         (SELECT COUNT(*)
         FROM PI_DEVELOPERS.RESERVATIONS_SEATS rs
-        JOIN PI_DEVELOPERS.RESERVATIONS r
-        ON r.ID_RESERVATION = rs.ID_RESERVATION
+            JOIN PI_DEVELOPERS.RESERVATIONS r
+                ON r.ID_RESERVATION = rs.ID_RESERVATION
         WHERE rs.ID_SCREENING = :screeningId
-        AND rs.ID_SEAT = :seatId
-        AND ${ACTIVE_RESERVATION_CONDITION}) AS TAKEN
+            AND rs.ID_SEAT = :seatId
+            AND ${ACTIVE_RESERVATION_CONDITION}) AS TAKEN
     FROM DUAL`;
 
     const result = await connection.execute(
