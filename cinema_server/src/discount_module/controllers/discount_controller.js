@@ -1,24 +1,50 @@
 import oracledb from "oracledb";
 import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
+function buildLocationFilters({ name } = {}) {
+    const conditions = ['d.IS_DELETED = 0'];
+    const binds = {};
+
+    if (typeof name === 'string' && name.trim() !== '') 
+    {
+      conditions.push('LOWER(d.DISCOUNT_NAME) LIKE LOWER(:name)');
+      binds.name = `%${name.trim()}%`;
+    }
+
+    return { whereClause: `WHERE ${conditions.join(' AND ')}`, binds };
+}
+
 export const getDiscountList = async (req, res, next) => 
   {
   let connection;
   
   try 
   {
+
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = 10;
+    const offset = (page - 1) * limit;
+    
+    const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
+
     connection = await getConnection();
 
     const request = 
-    `SELECT ID_DISCOUNT, DISCOUNT_NAME, 
-      DISCOUNT_PORCENTAGE,  
-      TO_CHAR(DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE, 
-      TO_CHAR(DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE
-      FROM PI_DEVELOPERS.DISCOUNTS
-      WHERE IS_DELETED=0`;
+    `SELECT d.ID_DISCOUNT, d.DISCOUNT_NAME,
+      d.DISCOUNT_PORCENTAGE,  
+      TO_CHAR(d.DISCOUNT_START_DATE,  'YYYY-MM-DD') AS DISCOUNT_START_DATE, 
+      TO_CHAR(d.DISCOUNT_FINISH_DATE, 'YYYY-MM-DD') AS DISCOUNT_FINISH_DATE
+      FROM PI_DEVELOPERS.DISCOUNTS d
+      ${whereClause}
+      ORDER BY d.DISCOUNT_NAME, d.ID_DISCOUNT
+      OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
 
     const result = await connection.execute(
-      request, [], 
+      request,
+      { ...binds, 
+        offset, 
+        limit 
+      },
       { 
         outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
       }
@@ -93,6 +119,42 @@ async function MovieName(connection, idMovieInBillboard) {
 
   return result.rows[0]?.Movie ?? null;
 }
+
+export const countDiscounts = async (req, res, next) => {
+    let connection;
+
+    try
+    {
+        const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
+
+        connection = await getConnection();
+
+        const request = 
+        `SELECT COUNT(d.ID_DISCOUNT) AS TOTAL
+               FROM PI_DEVELOPERS.DISCOUNTS d
+               ${whereClause}`;
+
+        const result = await connection.execute(
+          request,
+          binds,
+          { outFormat: oracledb.OUT_FORMAT_OBJECT },
+        );
+
+        res.status(200).json(
+        { 
+          total: result.rows[0].TOTAL 
+        });
+
+    } catch (error) 
+    {
+      next(error);
+    } finally
+    {
+      if (connection) {
+        await closeDatabaseConnection(connection);
+      }
+    }
+};
 
 export const getDiscountByID = async (req, res, next) => 
   {
