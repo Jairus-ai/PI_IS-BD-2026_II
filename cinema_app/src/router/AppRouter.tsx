@@ -20,6 +20,7 @@ import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
+import MovieScreeningsPage from '../modules/screenings/pages/MovieScreeningsPage';
 
 const router = createHashRouter([
   {
@@ -46,14 +47,14 @@ const router = createHashRouter([
     ),
     children: [
       {
-        path: '/seats/:screeningId',
+        path:'/seats/:screeningId',
         Component: ShowSeats,
-      }
+      },
+      {
+        path: '/movies/:idMovie',
+        Component: MovieScreeningsPage,
+      },
     ],
-  },
-  {
-  path: '/password-recovery',
-    Component: PasswordRecovery,
   },
   {
     element: (
