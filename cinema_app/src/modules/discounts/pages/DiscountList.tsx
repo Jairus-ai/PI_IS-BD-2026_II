@@ -9,8 +9,8 @@ import type { Discount } from '../types/discounts';
 import DiscountDetailDialog from '../components/DiscountDetailDialog';
 import DiscountFormDialog from '../components/DiscountFormDialog';
 import { Actions } from '../../../components/crud/Actions';
-import { CrudPage } from '../../../components/crud/CrudPage';
 import { getErrorMessage } from '../../../services/errorMessage';
+import { CrudPage } from '../../../components/crud/CrudPage';
 
 const emptyFilters = {
     name: '',
@@ -81,7 +81,7 @@ export default function DiscountList() {
                 });
             } catch (error) {
                 notifications.show(
-                    `Error al eliminar el descuento: ${(error as Error).message}`,
+                    getErrorMessage(error, 'Error al eliminar la descuento'),
                     {
                         severity: 'error',
                         autoHideDuration: 5000,
@@ -91,6 +91,7 @@ export default function DiscountList() {
         },
         [dialogs, deleteDiscount, notifications],
     );
+
 
     const columns = React.useMemo<GridColDef[]>(
         () => [
