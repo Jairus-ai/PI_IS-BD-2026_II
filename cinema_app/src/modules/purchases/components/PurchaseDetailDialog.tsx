@@ -59,7 +59,7 @@ function PurchaseFields({ purchase }: { readonly purchase: PurchaseDetail }) {
       <DetailField label="Snacks" value={listOrDefault(purchase.SNACKS.map(getSnackLine))} />
       <DetailField label="Descuento" value={listOrDefault(purchase.DISCOUNTS.map(getDiscountLine))} />
       {purchase.IS_REFUNDED && <DetailField label="Reembolsada" value="Sí" />}
-    </Box>
+    </Stack>
   );
 }
 
