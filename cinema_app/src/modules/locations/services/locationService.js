@@ -53,6 +53,6 @@ export const updateLocation = async (id, location) => {
 };
 
 export const deleteLocation = async (id) => {
-  const { data } = await api.delete(`/management/locations/${id}`);
+  const { data } = await api.delete(`/management/locations/DELETE/${id}`);
   return data;
 };

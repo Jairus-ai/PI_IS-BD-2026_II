@@ -357,14 +357,14 @@ export const createLocation = async(req, res, next) =>
 
 export const editLocation = async(req, res, next) =>
 {
-  let conection;
+  let connection;
 
   try
   {
     const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
-    conection = await getConnection();
+    connection = await getConnection();
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, conection);
+    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
     const {id} = req.params;
 
     const request = `
@@ -377,7 +377,7 @@ export const editLocation = async(req, res, next) =>
       WHERE ID_LOCATION = :id
     `;
 
-    await conection.execute(
+    await connection.execute(
       request,
       [
         LOCATION_NAME,
@@ -402,9 +402,51 @@ export const editLocation = async(req, res, next) =>
     next(error);
   }finally
   {
-    if (conection)
+    if (connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
+
+export const deleteLocation = async (req,res,next) =>
+{
+  let connection;
+  try{
+    const { id } = req.params;
+
+    connection = await oracledb.getConnection();
+    
+    const request = `
+      UPDATE PI_DEVELOPERS.LOCATIONS
+      SET IS_DELETED = 1
+      WHERE ID_LOCATION = :id
+      `;
+
+      const result = await connection.execute(
+      request,
+      {id: Number(id)},
+      { 
+        autoCommit: true
+      }
+    );
+  
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Discount not found' });
+    }
+
+    res.status(204).json(
+      {
+        message: 'success'
+      }
+    );
+
+    
+  }catch (error) {
+    next(error);
+  }finally {
+    if (connection) {
+      await closeDatabaseConnection(connection);
     }
   }
 };
