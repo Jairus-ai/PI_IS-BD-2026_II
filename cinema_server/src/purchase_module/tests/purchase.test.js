@@ -26,8 +26,24 @@ const SESSION_VERSION = 0;
 const CLIENT_ID = 7;
 
 const MOCK_HISTORY = [
-  { ID_RECEIPT: 12, TOTAL_AMOUNT: 9000, RECEIPT_DATE: '2026-11-02T19:30', MOVIE_TITLE: 'Dune' },
-  { ID_RECEIPT: 11, TOTAL_AMOUNT: 4500, RECEIPT_DATE: '2026-11-01T18:00', MOVIE_TITLE: 'Alien' }
+  {
+    ID_RECEIPT: 12,
+    TOTAL_AMOUNT: 9000,
+    RECEIPT_DATE: '2026-11-02T19:30',
+    MOVIE_TITLE: 'Dune',
+    SCREENING_DATE: '2026-11-30T20:00',
+    IS_REFUNDED: 0,
+    IS_REFUND_ON_TIME: 1
+  },
+  {
+    ID_RECEIPT: 11,
+    TOTAL_AMOUNT: 4500,
+    RECEIPT_DATE: '2026-11-01T18:00',
+    MOVIE_TITLE: 'Alien',
+    SCREENING_DATE: '2026-11-03T18:00',
+    IS_REFUNDED: 1,
+    IS_REFUND_ON_TIME: 0
+  }
 ];
 
 const MOCK_SUMMARY = {
@@ -88,10 +104,24 @@ describe('GET /purchases', () => {
       .expect('Content-Type', /json/)
       .expect(200);
 
-    expect(response.body.data).toEqual(MOCK_HISTORY);
+    expect(response.body.data).toEqual([
+      {
+        ...MOCK_HISTORY[0],
+        IS_REFUNDED: false,
+        IS_REFUND_ON_TIME: true
+      },
+      {
+        ...MOCK_HISTORY[1],
+        IS_REFUNDED: true,
+        IS_REFUND_ON_TIME: false
+      }
+    ]);
     const [sql, binds] = connection.execute.mock.calls[1];
     expect(sql).toMatch(/r\.ID_CLIENT = :clientId/);
-    expect(binds).toEqual({ clientId: CLIENT_ID });
+    expect(binds).toEqual({
+      clientId: CLIENT_ID,
+      minimumDays: 5
+    });
     expect(connection.close).toHaveBeenCalledTimes(2);
   });
 
