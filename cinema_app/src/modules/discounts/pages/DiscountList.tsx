@@ -92,7 +92,6 @@ export default function DiscountList() {
         [dialogs, deleteDiscount, notifications],
     );
 
-
     const columns = React.useMemo<GridColDef[]>(
         () => [
             {
