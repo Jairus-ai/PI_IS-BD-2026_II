@@ -29,7 +29,7 @@ const PAYMENT_NOT_FOUND_MESSAGE = 'El pago no existe';
 
 let stripeClient = null;
 
-function getStripe() {
+export function getStripe() {
   if (!stripeClient) {
     const secretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -86,18 +86,19 @@ async function getSeatsOnTime(connection, reservationId) {
   return result.rows;
 }
 
-async function registerPurchase(connection, session, seats) {
+async function registerPurchase(connection, session, paymentIntentId, seats) {
   const reservationId = Number(session.metadata.reservationId);
   const feeId = Number(session.metadata.feeId);
   const seatPrice = Number(session.metadata.seatPrice);
 
   const receiptResult = await connection.execute(
-    `INSERT INTO PI_DEVELOPERS.RECEIPTS (TOTAL_AMOUNT, STATUS, PAYMENT_TYPE, ID_CLIENT)
-    VALUES (:totalAmount, 'PAID', :paymentType, :clientId)
+    `INSERT INTO PI_DEVELOPERS.RECEIPTS (TOTAL_AMOUNT, PAYMENT_TYPE, ID_STRIPE_PAYMENT_INTENT, ID_CLIENT)
+    VALUES (:totalAmount, :paymentType, :paymentIntentId, :clientId)
     RETURNING ID_RECEIPT INTO :receiptId`,
     {
       totalAmount: session.amount_total / CENTS_PER_COLON,
       paymentType: session.payment_method_types?.[0]?.toUpperCase() ?? null,
+      paymentIntentId,
       clientId: Number(session.metadata.clientId),
       receiptId: {
         dir: oracledb.BIND_OUT,
@@ -178,7 +179,7 @@ async function confirmPayment(session) {
       return PAYMENT_STATUS.REJECTED;
     }
 
-    await registerPurchase(connection, session, seats);
+    await registerPurchase(connection, session, paymentIntentId, seats);
     await getStripe().paymentIntents.capture(paymentIntentId);
     await connection.commit();
 
