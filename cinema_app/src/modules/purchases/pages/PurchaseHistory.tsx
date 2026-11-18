@@ -159,7 +159,7 @@ export default function PurchaseHistory() {
   };
 
   return (
-    <PageContainer title="Historial de pagos">
+    <PageContainer title="Historial de compras">
       <Stack spacing={2} sx={{ flex: 1, width: '100%' }}>
         <TextField
           label="Buscar por película"

@@ -65,7 +65,7 @@ export default function UserOptions({ anchorEl, onClose }: UserOptionsProps) {
             onClick={onClose}
             sx={{ justifyContent: 'flex-start' }}
           >
-            Historial de pagos
+            Historial de compras
           </Button>
         )}
 
