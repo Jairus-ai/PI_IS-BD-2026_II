@@ -210,11 +210,17 @@ export const getDiscountByID = async (req, res, next) =>
       delete row.ID_MOVIE_IN_BILLBOARD;
     }
 
+    const discount = result.rows[0];
+
+    if (!discount) 
+    {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+
     res.status(200).json(
-      {
-        data: result.rows
-      }
-    );
+    { 
+      data: discount 
+    });
 
   } catch (error) 
   {

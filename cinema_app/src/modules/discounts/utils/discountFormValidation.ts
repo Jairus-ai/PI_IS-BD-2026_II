@@ -8,6 +8,7 @@ export interface DiscountFormValues {
     name: string;
     prod_name: string;
     id_prod: number | null;
+    type: string | null;
 }
 
 export function validateAll(values: DiscountFormValues): ServerErrors {

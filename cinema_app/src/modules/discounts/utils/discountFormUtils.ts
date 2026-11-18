@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 export type ServerErrors = Partial<Record<string, string | string[]>>
 
@@ -19,23 +20,16 @@ export function readServerErrors(error: any): ServerErrors {
   return serverErrors;
 }
 
-export function parseTime(value: string | null | undefined): Dayjs | null {
+dayjs.extend(customParseFormat);
+
+export function parseDate(value: string | null | undefined): Dayjs | null {
     if (!value) {
         return null;
     }
 
-    const match = /^(\d{1,2}):(\d{2})/.exec(value.trim());
-    if (!match) {
-        return null;
-    }
+    const parsed = dayjs(value.trim(), ['YYYY-MM-DD', 'DD/MM/YYYY'], true);
 
-    const hours = Number(match[1]);
-    const minutes = Number(match[2]);
-    if (hours > 23 || minutes > 59) {
-        return null;
-    }
-
-    return dayjs().startOf('day').hour(hours).minute(minutes);
+    return parsed.isValid() ? parsed : null;
 }
 
 export function firstError(value: string | string[] | undefined): string {
