@@ -5,19 +5,22 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 export type ServerErrors = Partial<Record<string, string | string[]>>
 
 export function readServerErrors(error: any): ServerErrors {
-  const responseData = error?.response?.data;
-  const serverErrors: ServerErrors = {};
+  const Errors: ServerErrors = {};
+  const response = error?.response?.data;
 
-  if (responseData?.details && Array.isArray(responseData.details)) {
-    for (const detail of responseData.details) {
-      const fieldName = detail.path?.[0];
-      if (fieldName) {
-        serverErrors[fieldName] = detail.message;
-      }
+  if (response?.details && Array.isArray(response.details)) 
+    {
+    for (const detail of response.details)
+      {
+        const fieldName = detail.path?.[0];
+        if (fieldName)
+        {
+          Errors[fieldName] = detail.message;
+        }
     }
   }
 
-  return serverErrors;
+  return Errors;
 }
 
 dayjs.extend(customParseFormat);

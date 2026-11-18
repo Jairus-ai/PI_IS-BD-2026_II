@@ -48,12 +48,12 @@ export default function DiscountFormFields({ form, formId }: DiscountFormFieldsP
                     label="Nombre"
                     value={form.name}
                     onChange={form.handleNameChange}
-                    slotProps={{ htmlInput: { maxLength: 31 } }}
-                    error={err('LOCATION_NAME')}
+                    slotProps={{ htmlInput: { maxLength: 51 } }}
+                    error={err('DISCOUNT_NAME')}
                     helperText={
                         <FieldError
-                            show={err('LOCATION_NAME')}
-                            message={firstError(form.fieldErrors.LOCATION_NAME)}
+                            show={err('DISCOUNT_NAME')}
+                            message={firstError(form.fieldErrors.DISCOUNT_NAME)}
                         />
                     }
                     fullWidth

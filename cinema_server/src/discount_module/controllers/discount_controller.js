@@ -1,7 +1,7 @@
 import oracledb from "oracledb";
 import { getConnection, closeDatabaseConnection } from "../../database/database.js";
 
-function buildLocationFilters({ name } = {}) {
+function buildDiscountFilters({ name } = {}) {
     const conditions = ['d.IS_DELETED = 0'];
     const binds = {};
 
@@ -20,12 +20,18 @@ export const getDiscountList = async (req, res, next) =>
   
   try 
   {
-
-    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const limit = 10;
-    const offset = (page - 1) * limit;
+
+    const currentPage = Number.parseInt(req.query.page, 10);
+
+    const page =
+      Number.isInteger(currentPage) && currentPage > 0
+        ? currentPage
+        : 1;
+
+    const offset = limit * (page - 1);
     
-    const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
+    const { whereClause, binds } = buildDiscountFilters({ name: req.query.name });
 
     connection = await getConnection();
 
@@ -125,7 +131,7 @@ export const countDiscounts = async (req, res, next) => {
 
     try
     {
-        const { whereClause, binds } = buildLocationFilters({ name: req.query.name });
+        const { whereClause, binds } = buildDiscountFilters({ name: req.query.name });
 
         connection = await getConnection();
 
