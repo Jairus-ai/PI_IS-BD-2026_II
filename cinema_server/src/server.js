@@ -32,6 +32,8 @@ import QR_routes from './QR_module/routes/QR_routes.js';
 import paymentRoutes from './payment_module/routes/payment_routes.js';
 import { handleWebhook } from './payment_module/controllers/payment_controller.js';
 
+process.env.TZ = CINEMA_TIME_ZONE;
+
 const port = 3000;
 const ip = '0.0.0.0';
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
