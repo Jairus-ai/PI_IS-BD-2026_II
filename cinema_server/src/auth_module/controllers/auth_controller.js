@@ -14,6 +14,7 @@ import {
   readSessionToken,
   setSessionCookie
 } from '../../session/session.js';
+import { discardReservation } from '../../seats_module/services/reservation_service.js';
 
 const WRONG_CREDENTIALS_MESSAGE = 'Correo o contraseña incorrectos';
 const LOGGED_OUT_MESSAGE = 'Sesión cerrada correctamente';
@@ -130,6 +131,9 @@ export const logIn = async (req, res, next) => {
     }
 
     const role = toRole(account.ROLE_CODE);
+
+    if (role !== ROLES.CLIENT)
+      await discardReservation(connection, req, res);
 
     if (account.IS_TEMPORARY_PASSWORD === 1) {
       const expiration = new Date(account.TEMPORARY_PASSWORD_EXPIRATION);

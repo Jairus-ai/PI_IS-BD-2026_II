@@ -8,6 +8,11 @@ import {
     RESERVATION_COOKIE_NAME,
     createReservationToken
 } from '../services/reservation_cookie.js';
+import {
+    ROLES,
+    SESSION_COOKIE_NAME,
+    createSessionToken
+} from '../../session/session.js';
 
 process.env.JWT_SECRET = 'test-secret';
 
@@ -209,6 +214,16 @@ describe('GET /seats/:screeningId', () => {
         expect(sql).toMatch(/rs\.ID_SCREENING = :screeningId/);
     });
 
+    test('las compras reembolsadas no bloquean el asiento', async () => {
+        const connection = useDatabase();
+
+        await request(app).get('/seats/7').expect(200);
+
+        const [sql] = findCall(connection, /SEAT_RECEIPTS/);
+
+        expect(sql).toMatch(/NOT EXISTS \(\s*SELECT 1\s*FROM PI_DEVELOPERS\.REFUNDS rf\s*WHERE rf\.ID_RECEIPT = sr\.ID_RECEIPT\)/);
+    });
+
     test('un asiento comprado Y reservado sale una sola vez, no disponible', async () => {
         useDatabase({
             boughts: [{ ID_SEAT: 10 }],
@@ -376,6 +391,19 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
         expect(connection.commit).not.toHaveBeenCalled();
     });
 
+    test('un asiento de una compra reembolsada se puede volver a reservar', async () => {
+        const connection = useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .expect(200);
+
+        const [sql] = findCall(connection, /FROM DUAL/);
+
+        expect(sql).toMatch(/FROM PI_DEVELOPERS\.REFUNDS rf/);
+        expect(connection.commit).toHaveBeenCalledTimes(1);
+    });
+
     test('404 cuando el asiento no existe en la función', async () => {
         useDatabase({ lockedSeat: null });
 
@@ -468,3 +496,45 @@ describe('DELETE /seats/:screeningId/reservation', () => {
         expect(oracledb.getConnection).not.toHaveBeenCalled();
     });
 });
+
+describe('Only guests and clients can reserve seats', () => {
+    function sessionCookie(role) {
+        const token = createSessionToken({
+            id: 3,
+            role,
+            sessionVersion: 0
+        });
+
+        return `${SESSION_COOKIE_NAME}=${token}`;
+    }
+
+    test.each([
+        ROLES.EMPLOYEE,
+        ROLES.ADMINISTRATOR,
+        ROLES.SUPERUSER
+    ])('403 for %s when reserving or releasing', async (role) => {
+        const connection = useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .set('Cookie', sessionCookie(role))
+            .expect(403);
+
+        await request(app)
+            .delete('/seats/7/reservation/10')
+            .set('Cookie', sessionCookie(role))
+            .expect(403);
+
+        expect(connection.execute).not.toHaveBeenCalled();
+    });
+
+    test('a client can reserve', async () => {
+        useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .set('Cookie', sessionCookie(ROLES.CLIENT))
+            .expect(200);
+    });
+});
+

@@ -1,10 +1,14 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
-import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
+import {
+  CINEMA_TIME_ZONE,
+  initializeDatabasePool,
+  closeDatabasePool
+} from './database/database.js';
 import movieRoutes from './movie_module/routes/movie_routes.js';
 import genreRoutes from './movie_module/routes/genre_routes.js';
 import languageRoutes from './movie_module/routes/language_routes.js';
@@ -24,8 +28,10 @@ import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
 import seatsRoutes from './seats_module/routes/seats_routes.js';
 import QR_routes from './QR_module/routes/QR_routes.js';
+import paymentRoutes from './payment_module/routes/payment_routes.js';
+import { handleWebhook } from './payment_module/controllers/payment_controller.js';
 
-dotenv.config();
+process.env.TZ = CINEMA_TIME_ZONE;
 
 const port = 3000;
 const ip = '0.0.0.0';
@@ -34,6 +40,9 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 const app = express();
 app.disable('x-powered-by');
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+
+app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -49,6 +58,7 @@ app.use('/posters', (req, res, next) => {
 });
 
 //Mount routes in the app
+app.use('/payments', paymentRoutes);
 app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
 app.use('/billboard', billboardRoutes);
@@ -89,6 +99,7 @@ app.use((error, req, res, next) => {
       status === 500
         ? 'No fue posible completar la operación.'
         : error.message,
+    ...(error.details && { details: error.details }),
   });
 });
 app.use(globalErrorHandler);
