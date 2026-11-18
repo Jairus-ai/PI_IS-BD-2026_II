@@ -115,6 +115,8 @@ describe('GET /screenings/movie/:idMovie', () => {
       const response = await request(app).get(`/screenings/movie/5?idLocation=${idLocation}`);
 
       expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.code).toBe('BAD_REQUEST');
       expect(getConnectionSpy).not.toHaveBeenCalled();
     }
   );
@@ -127,6 +129,8 @@ describe('GET /screenings/movie/:idMovie', () => {
     const response = await request(app).get('/screenings/movie/5');
 
     expect(response.status).toBe(500);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error.code).toBe('DATABASE_ERROR');
     expect(connection.close).toHaveBeenCalledTimes(1);
   });
 });
