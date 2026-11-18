@@ -64,7 +64,7 @@ function PurchaseFields({ purchase }: { readonly purchase: PurchaseDetail }) {
       <DetailField label="Tarifa" value={listOrDefault(purchase.SEATS.map(getSeatFee))} />
       <DetailField label="Snacks" value={listOrDefault(purchase.SNACKS.map(getSnackLine))} />
       <DetailField label="Descuento" value={listOrDefault(purchase.DISCOUNTS.map(getDiscountLine))} />
-      <DetailField label="Reembolsada" value={purchase.IS_REFUNDED ? 'Sí' : 'No'} />
+      {purchase.IS_REFUNDED && <DetailField label="Reembolsada" value="Sí" />}
     </Box>
   );
 }
