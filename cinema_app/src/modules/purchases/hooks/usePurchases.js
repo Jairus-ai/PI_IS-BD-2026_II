@@ -1,5 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { getPurchaseDetail, getPurchaseHistory } from '../services/purchaseService';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
+import {
+  getPurchaseDetail,
+  getPurchaseHistory,
+  refundPurchase
+} from '../services/purchaseService';
 
 export const PURCHASES_QUERY_KEY = ['purchases'];
 
@@ -29,5 +37,18 @@ export const usePurchaseDetail = (purchaseId) => {
     isLoadingPurchase: detailQuery.isLoading,
     purchaseError: detailQuery.error,
     refetchPurchase: detailQuery.refetch
+  };
+};
+
+export const useRefundPurchase = () => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: refundPurchase,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PURCHASES_QUERY_KEY })
+  });
+
+  return {
+    refundPurchase: mutation.mutateAsync,
+    isRefundingPurchase: mutation.isPending
   };
 };

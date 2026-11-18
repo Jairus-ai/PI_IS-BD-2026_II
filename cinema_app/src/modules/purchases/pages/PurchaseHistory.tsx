@@ -9,7 +9,8 @@ import { esES } from '@mui/x-data-grid/locales';
 import PageContainer from '../../../components/common/PageContainer';
 import { usePurchaseHistory } from '../hooks/usePurchases';
 import PurchaseDetailDialog from '../components/PurchaseDetailDialog';
-import { formatAmount, getMovieTitle, type Purchase } from '../types/purchases';
+import PurchaseRefundDialog from '../components/PurchaseRefundDialog';
+import { formatAmount, getMovieTitle, type PurchaseHistoryEntry } from '../types/purchases';
 
 const PAGE_SIZE = 10;
 const NO_PURCHASES_MESSAGE = 'Aún no has realizado compras';
@@ -43,16 +44,17 @@ export default function PurchaseHistory() {
   const { purchases, isLoadingPurchases, purchasesError, refetchPurchases } = usePurchaseHistory();
   const [search, setSearch] = useState('');
   const [selectedPurchaseId, setSelectedPurchaseId] = useState<number | null>(null);
+  const [refundPurchase, setRefundPurchase] = useState<PurchaseHistoryEntry | null>(null);
 
   const trimmedSearch = search.trim();
   const filteredPurchases = useMemo(() => {
     const normalizedSearch = normalizeText(trimmedSearch);
-    return purchases.filter((purchase: Purchase) =>
+    return purchases.filter((purchase: PurchaseHistoryEntry) =>
       normalizeText(getMovieTitle(purchase)).includes(normalizedSearch)
     );
   }, [purchases, trimmedSearch]);
 
-  const columns: GridColDef<Purchase>[] = [
+  const columns: GridColDef<PurchaseHistoryEntry>[] = [
     {
       field: 'ID_RECEIPT',
       headerName: 'Número de compra',
@@ -82,16 +84,36 @@ export default function PurchaseHistory() {
       headerName: 'Acciones',
       align: 'left',
       headerAlign: 'left',
-      flex: 1,
-      minWidth: 140,
-      getActions: ({ row }) => [
-        <GridActionsCellItem
-          key="show"
-          icon={<Box component="span" sx={ACTION_BUTTON_SX}>Mostrar</Box>}
-          label="Mostrar"
-          onClick={() => setSelectedPurchaseId(row.ID_RECEIPT)}
-        />
-      ]
+      flex: 1.5,
+      minWidth: 240,
+      getActions: ({ row }) => {
+        const refundLabel = row.IS_REFUNDED ? 'Reembolsada' : 'Reembolsar';
+        const isRefundAvailable = row.IS_REFUND_ON_TIME && !row.IS_REFUNDED;
+        const refundSx = [
+          ACTION_BUTTON_SX,
+          { width: '6.5rem' },
+          !isRefundAvailable && { color: 'text.disabled', borderColor: 'text.disabled' }
+        ];
+
+        return [
+          <GridActionsCellItem
+            key="show"
+            icon={<Box component="span" sx={ACTION_BUTTON_SX}>Mostrar</Box>}
+            label="Mostrar"
+            onClick={() => setSelectedPurchaseId(row.ID_RECEIPT)}
+          />,
+          <GridActionsCellItem
+            key="refund"
+            icon={<Box component="span" sx={refundSx}>{refundLabel}</Box>}
+            label={refundLabel}
+            disabled={row.IS_REFUNDED}
+            onClick={(event) => {
+              event.stopPropagation();
+              setRefundPurchase(row);
+            }}
+          />
+        ];
+      }
     }
   ];
 
@@ -118,7 +140,7 @@ export default function PurchaseHistory() {
     return (
       <DataGrid
         rows={filteredPurchases}
-        getRowId={(row: Purchase) => row.ID_RECEIPT}
+        getRowId={(row: PurchaseHistoryEntry) => row.ID_RECEIPT}
         columns={columns}
         loading={isLoadingPurchases}
         onRowClick={({ row }) => setSelectedPurchaseId(row.ID_RECEIPT)}
@@ -149,6 +171,7 @@ export default function PurchaseHistory() {
         {renderContent()}
       </Stack>
       <PurchaseDetailDialog purchaseId={selectedPurchaseId} onClose={() => setSelectedPurchaseId(null)} />
+      <PurchaseRefundDialog purchase={refundPurchase} onClose={() => setRefundPurchase(null)} />
     </PageContainer>
   );
 }
