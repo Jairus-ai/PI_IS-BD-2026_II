@@ -5,20 +5,30 @@ import { getStripe } from '../../payment_module/controllers/payment_controller.j
 const PURCHASE_NOT_FOUND_MESSAGE = 'No se encontró la compra';
 const OBJECT_FORMAT = { outFormat: oracledb.OUT_FORMAT_OBJECT };
 
-//seat-screening-billboard-movie, the movie of a purchase comes from its seats
 const PURCHASE_HISTORY_QUERY = `
   SELECT
     r.ID_RECEIPT,
     r.TOTAL_AMOUNT,
     TO_CHAR(r.RECEIPT_DATE, 'YYYY-MM-DD"T"HH24:MI') AS RECEIPT_DATE,
-    MIN(m.MOVIE_TITLE) AS MOVIE_TITLE
+    MIN(m.MOVIE_TITLE) AS MOVIE_TITLE,
+    TO_CHAR(MIN(s.SCREENING_DATE + s.SCREENING_START_TIME), 'YYYY-MM-DD"T"HH24:MI') AS SCREENING_DATE,
+    CASE WHEN rf.ID_REFUND IS NULL
+      THEN 0
+      ELSE 1
+    END AS IS_REFUNDED,
+    CASE
+      WHEN MIN(s.SCREENING_DATE + s.SCREENING_START_TIME) >= LOCALTIMESTAMP + :minimumDays
+      THEN 1
+      ELSE 0
+    END AS IS_REFUND_ON_TIME
   FROM PI_DEVELOPERS.RECEIPTS r
     LEFT JOIN PI_DEVELOPERS.SEAT_RECEIPTS sr ON sr.ID_RECEIPT = r.ID_RECEIPT
     LEFT JOIN PI_DEVELOPERS.SCREENINGS s ON s.ID_SCREENING = sr.ID_SCREENING
     LEFT JOIN PI_DEVELOPERS.MOVIES_IN_BILLBOARDS mib ON mib.ID_MOVIE_IN_BILLBOARD = s.ID_MOVIE_IN_BILLBOARD
     LEFT JOIN PI_DEVELOPERS.MOVIES m ON m.ID_MOVIE = mib.ID_MOVIE
+    LEFT JOIN PI_DEVELOPERS.REFUNDS rf ON rf.ID_RECEIPT = r.ID_RECEIPT
   WHERE r.ID_CLIENT = :clientId
-  GROUP BY r.ID_RECEIPT, r.TOTAL_AMOUNT, r.RECEIPT_DATE
+  GROUP BY r.ID_RECEIPT, r.TOTAL_AMOUNT, r.RECEIPT_DATE, rf.ID_REFUND
   ORDER BY r.RECEIPT_DATE DESC
 `;
 
@@ -125,10 +135,19 @@ export const getPurchaseHistory = async (req, res, next) => {
     connection = await getConnection();
     const result = await connection.execute(
       PURCHASE_HISTORY_QUERY,
-      { clientId: req.user.id },
+      {
+        clientId: req.user.id,
+        minimumDays: REFUND_MINIMUM_DAYS
+      },
       OBJECT_FORMAT
     );
-    res.status(200).json({ data: result.rows });
+    const purchases = result.rows.map((purchase) => ({
+      ...purchase,
+      IS_REFUNDED: purchase.IS_REFUNDED === 1,
+      IS_REFUND_ON_TIME: purchase.IS_REFUND_ON_TIME === 1
+    }));
+
+    res.status(200).json({ data: purchases });
   } catch (error) {
     next(error);
   } finally {
