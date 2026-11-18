@@ -392,6 +392,7 @@ describe('POST /payments/webhook', () => {
     expect(receiptBinds.totalAmount).toBe(9000);
     expect(receiptBinds.clientId).toBe(7);
     expect(receiptBinds.paymentType).toBe('CARD');
+    expect(receiptBinds.paymentIntentId).toBe('pi_1');
 
     const [seatSql, seatRows] = connection.executeMany.mock.calls[0];
 
