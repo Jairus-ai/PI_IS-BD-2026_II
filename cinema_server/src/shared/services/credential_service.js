@@ -66,7 +66,7 @@ export async function createTemporaryCredential(connection, role, id, passwordHa
       )
       VALUES (
         :passwordHash,
-        SYSDATE,
+        CURRENT_DATE,
         :id,
         0,
         1,

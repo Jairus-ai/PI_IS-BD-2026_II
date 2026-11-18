@@ -4,7 +4,11 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
-import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
+import {
+  CINEMA_TIME_ZONE,
+  initializeDatabasePool,
+  closeDatabasePool
+} from './database/database.js';
 import movieRoutes from './movie_module/routes/movie_routes.js';
 import genreRoutes from './movie_module/routes/genre_routes.js';
 import languageRoutes from './movie_module/routes/language_routes.js';
@@ -26,6 +30,8 @@ import seatsRoutes from './seats_module/routes/seats_routes.js';
 import QR_routes from './QR_module/routes/QR_routes.js';
 import paymentRoutes from './payment_module/routes/payment_routes.js';
 import { handleWebhook } from './payment_module/controllers/payment_controller.js';
+
+process.env.TZ = CINEMA_TIME_ZONE;
 
 const port = 3000;
 const ip = '0.0.0.0';
