@@ -18,6 +18,7 @@ import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
+import MovieScreeningsPage from '../modules/screenings/pages/MovieScreeningsPage';
 
 const router = createHashRouter([
   {
@@ -44,23 +45,12 @@ const router = createHashRouter([
       {
         path:'/seats/:screeningId',
         Component: ShowSeats,
-      }
-    ],
-  },
-  {
-    element: (
-      <DashboardLayout />
-    ),
-    children: [
+      },
       {
-        path:'/seats/:screeningId',
-        Component: ShowSeats,
-      }
+        path: '/movies/:idMovie',
+        Component: MovieScreeningsPage,
+      },
     ],
-  },
-  {
-  path: '/password-recovery',
-    Component: PasswordRecovery,
   },
   {
     element: (
