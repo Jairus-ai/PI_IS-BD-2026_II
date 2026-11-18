@@ -161,36 +161,53 @@ export function useDiscountForm({ discountId, open, onClose, onSaved }: UseDisco
         }
 
         try {
-            const payload = buildDiscountPayload(values);
             const type = values.type as DiscountType;
 
-            if (discountId == null) {
+            const payload = buildDiscountPayload(values);
+
+            const isCreating = discountId == null;
+
+            if (isCreating) {
                 await createDiscount(payload, type);
-                notifications.show('Descuento creado correctamente.', {
-                    severity: 'success',
-                    autoHideDuration: 5000,
-                });
             } else {
                 await updateDiscount(discountId, payload, type);
-                notifications.show('Descuento actualizado correctamente.', {
-                    severity: 'success',
-                    autoHideDuration: 5000,
-                });
             }
 
+            notifications.show(
+                isCreating
+                    ? 'Descuento creado correctamente.'
+                    : 'Descuento actualizado correctamente.',
+                {
+                    severity: 'success',
+                    autoHideDuration: 5000,
+                },
+            );
+
             setFieldErrors({});
-            onClose();
+
             onSaved?.();
+
+            onClose();
         } catch (submitError) {
-            const serverErrors = readServerErrors(submitError);
-            if (Object.keys(serverErrors).length > 0) {
-                setFieldErrors(serverErrors);
-            } else {
-                notifications.show(
-                    `Error al guardar el descuento: ${(submitError as Error).message}`,
-                    { severity: 'error', autoHideDuration: 5000 },
-                );
+            const errors = readServerErrors(submitError);
+
+            if (Object.keys(errors).length) {
+                setFieldErrors(errors);
+                return;
             }
+
+            const message =
+                submitError instanceof Error
+                    ? submitError.message
+                    : 'Error desconocido';
+
+            notifications.show(
+                `Error al guardar el descuento: ${message}`,
+                {
+                    severity: 'error',
+                    autoHideDuration: 5000,
+                },
+            );
         }
     };
 
