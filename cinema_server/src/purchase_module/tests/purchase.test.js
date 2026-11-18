@@ -140,7 +140,10 @@ describe('GET /purchases', () => {
     ]);
     const [sql, binds] = connection.execute.mock.calls[1];
     expect(sql).toMatch(/r\.ID_CLIENT = :clientId/);
-    expect(binds).toEqual({ clientId: CLIENT_ID });
+    expect(binds).toEqual({
+      clientId: CLIENT_ID,
+      minimumDays: 5
+    });
     expect(connection.close).toHaveBeenCalledTimes(2);
   });
 
