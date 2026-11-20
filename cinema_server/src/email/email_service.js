@@ -151,6 +151,7 @@ async function sendQREmail({
   email,
   pdfBuffer,
   seats = [],
+  purchase = null,
   filename = 'entradas.pdf',
 }) {
   const transporter = await getTransporter();
