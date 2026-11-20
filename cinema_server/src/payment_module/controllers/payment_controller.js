@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import oracledb from 'oracledb';
 import {
   getConnection,
@@ -9,6 +8,7 @@ import {
   readReservationToken
 } from '../../seats_module/services/reservation_cookie.js';
 import { sendTicketsEmail } from '../../QR_module/controllers/QR_controller.js';
+import { getStripe } from '../services/stripe_client.js';
 
 const PAYMENT_CURRENCY = 'crc';
 const CENTS_PER_COLON = 100;
@@ -133,6 +133,8 @@ async function registerPurchase(connection, session, seats) {
     WHERE ID_RESERVATION = :reservationId`,
     [reservationId]
   );
+
+  return receiptId;
 }
 
 async function confirmPayment(session) {
@@ -147,6 +149,7 @@ async function confirmPayment(session) {
     : session.payment_intent.id;
   let connection;
   let purchasedSeats;
+  let receiptId;
 
   try {
     connection = await getConnection();
@@ -191,6 +194,7 @@ async function confirmPayment(session) {
   try {
     await sendTicketsEmail(
       Number(session.metadata.clientId),
+      receiptId,
       purchasedSeats.map((seat) => ({
         screeningId: seat.ID_SCREENING,
         seatId: seat.ID_SEAT
