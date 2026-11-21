@@ -5,6 +5,7 @@ import DiscountForm, {
   type FormFieldValue,
   type DiscountFormState,
 } from './DiscountForm';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 type FormValues = Partial<DiscountFormState['values']>;
 
@@ -63,7 +64,7 @@ export default function DiscountFormContainer({
       onSuccess?.();
       onClose();
     } catch (error) {
-      notifications.show(`${errorMessage} Motivo: ${(error as Error).message}`, {
+      notifications.show(getErrorMessage(error, errorMessage), {
         severity: 'error',
         autoHideDuration: 3000,
       });

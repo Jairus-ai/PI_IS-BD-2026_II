@@ -2,10 +2,10 @@ import { useState } from 'react';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { isAxiosError } from 'axios';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
 import useNotifications from '../../../hooks/useNotifications';
 import { useRefundPurchase } from '../hooks/usePurchases';
+import { getErrorMessage } from '../../../services/errorMessage';
 import {
   formatDateTime,
   getMovieTitle,
@@ -23,14 +23,6 @@ const CONFIRMATION_WARNING = `Una vez aceptado el reembolso los asientos quedar�
 const SUCCESS_MESSAGE = 'El reembolso se realizó correctamente';
 const ERROR_MESSAGE = 'No se pudo realizar el reembolso';
 
-const REASON_STATUSES = new Set([
-  401,
-  403,
-  404,
-  409,
-  422
-]);
-
 interface PurchaseRefundDialogProps {
   readonly purchase: PurchaseHistoryEntry | null;
   readonly onClose: () => void;
@@ -39,18 +31,6 @@ interface PurchaseRefundDialogProps {
 function getConfirmationMessage(purchase: PurchaseHistoryEntry): string {
   return `¿Desea solicitar un reembolso para la proyección de
   ${getMovieTitle(purchase)} en la fecha ${formatDateTime(purchase.SCREENING_DATE)}?`;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (!isAxiosError<{ message?: string }>(error))
-    return ERROR_MESSAGE;
-
-  const reason = error.response?.data?.message;
-  const hasServerReason = REASON_STATUSES.has(error.response?.status ?? 0) && Boolean(reason);
-
-  return hasServerReason
-    ? `${ERROR_MESSAGE}. Motivo: ${reason}`
-    : ERROR_MESSAGE;
 }
 
 export default function PurchaseRefundDialog({ purchase, onClose }: PurchaseRefundDialogProps) {
@@ -81,7 +61,7 @@ export default function PurchaseRefundDialog({ purchase, onClose }: PurchaseRefu
       onClose();
 
     } catch (error) {
-      notifications.show(getErrorMessage(error), {
+      notifications.show(getErrorMessage(error, ERROR_MESSAGE), {
         severity: 'error',
         autoHideDuration: 5000
       });

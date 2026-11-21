@@ -7,7 +7,7 @@ import { Outlet } from 'react-router';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
 import logo from '../../assets/logo.png';
-import {CheckUserSession} from '../common/RequireSession';
+import { CheckUserSession } from '../common/RequireSession';
 import { WORKER_ROLES } from '../../context/SessionContext';
 
 

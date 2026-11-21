@@ -21,6 +21,7 @@ import {deleteDiscount} from '../services/discountService';
 import DiscountEdit from '../components/DiscountEdit';
 import { Actions } from '../../../components/crud/Actions';
 import TextField from '@mui/material/TextField';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 interface DiscountFilters {
   name: string;
@@ -57,7 +58,7 @@ export default function DiscountList() {
           await refetchDiscounts();
         } catch (error) {
           notifications.show(
-            `Error al eliminar el descuento: ${(error as Error).message}`,
+            getErrorMessage(error, 'Error al eliminar el descuento'),
             {
               severity: 'error',
               autoHideDuration: 3000,

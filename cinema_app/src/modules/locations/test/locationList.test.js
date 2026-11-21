@@ -300,7 +300,7 @@ describe('LocationList: eliminar', () => {
         expect(mockShow).not.toHaveBeenCalled();
     });
 
-    test('si falla el borrado, avisa del error con el motivo', async () => {
+    test('si falla el borrado sin mensaje del servidor, avisa del error sin motivo', async () => {
         mockDeleteLocation.mockRejectedValue(new Error('ORA-02292: child record found'));
         renderList();
 
@@ -308,7 +308,7 @@ describe('LocationList: eliminar', () => {
 
         await waitFor(() =>
             expect(mockShow).toHaveBeenCalledWith(
-                'Error al eliminar la sucursal: ORA-02292: child record found',
+                'Error al eliminar la sucursal',
                 { severity: 'error', autoHideDuration: 5000 },
             ),
         );
