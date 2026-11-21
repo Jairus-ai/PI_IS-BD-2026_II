@@ -421,7 +421,7 @@ describe('POST /payments/webhook', () => {
     expect(mockCancelPaymentIntent).not.toHaveBeenCalled();
     expect(connection.commit).toHaveBeenCalledTimes(1);
     expect(connection.close).toHaveBeenCalledTimes(1);
-    expect(mockSendTicketsEmail).toHaveBeenCalledWith(7, [
+    expect(mockSendTicketsEmail).toHaveBeenCalledWith(7, 50, [
       {
         screeningId: 2,
         seatId: 21
