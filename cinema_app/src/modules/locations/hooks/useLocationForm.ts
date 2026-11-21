@@ -9,6 +9,7 @@ import type { LocationFormValues } from '../utils/locationFormValidation';
 import { mapDetailToFormValues } from '../utils/locationFormHydration';
 import { buildLocationPayload } from '../utils/locationPayloadBuilder';
 import type { Canton, Province } from '../types/locations';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 const initialFormValues: LocationFormValues = {
     name: '',
@@ -177,7 +178,7 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
                 setFieldErrors(serverErrors);
             } else {
                 notifications.show(
-                    `Error al guardar la sucursal: ${(submitError as Error).message}`,
+                    getErrorMessage(submitError, 'Error al guardar la sucursal'),
                     { severity: 'error', autoHideDuration: 5000 },
                 );
             }

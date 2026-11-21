@@ -6,6 +6,7 @@ import useNotifications from '../../../hooks/useNotifications';
 import { generateAndSendQR } from '../services/TicketBillingService'
 import { useLocation, Navigate, useNavigate } from 'react-router';
 import useSession from '../../../hooks/useSession';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 interface PurchaseState{
     seatList:number[];
@@ -57,7 +58,7 @@ export default function EmailConfirmation()
             await generateAndSendQR(userId, payload);
         } catch (error) {
             notifications.show(
-                `No se pudo obtener los códigos. Motivo: ${(error as Error).message}`,
+                getErrorMessage(error, 'No se pudo obtener los códigos'),
                 { severity: 'error', autoHideDuration: 3000 },
             );
         }

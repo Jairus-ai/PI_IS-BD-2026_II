@@ -50,7 +50,7 @@ export default function DiscountEdit({
           }
           submitLabel="Guardar"
           successMessage="Descuento editado correctamente."
-          errorMessage="No se pudo editar el descuento."
+          errorMessage="No se pudo editar el descuento"
           onSuccess={() => {
             void queryClient.invalidateQueries({ queryKey: ['discount'] });
             onEdited?.();

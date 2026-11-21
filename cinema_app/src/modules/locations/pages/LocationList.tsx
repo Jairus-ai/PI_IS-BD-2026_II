@@ -10,6 +10,7 @@ import LocationDetailDialog from '../components/LocationDetailDialog';
 import LocationFormDialog from '../components/LocationFormDialog';
 import { Actions } from '../../../components/crud/Actions';
 import { CrudPage } from '../../../components/crud/CrudPage';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 const emptyFilters = {
     name: '',
@@ -79,7 +80,7 @@ export default function LocationList() {
                 });
             } catch (error) {
                 notifications.show(
-                    `Error al eliminar la sucursal: ${(error as Error).message}`,
+                    getErrorMessage(error, 'Error al eliminar la sucursal'),
                     {
                         severity: 'error',
                         autoHideDuration: 5000,

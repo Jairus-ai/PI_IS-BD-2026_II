@@ -15,6 +15,7 @@ import { validateAll, MovieFormValues } from '../utils/movieFormValidation';
 import type { ServerErrors } from '../utils/movieFormUtils';
 import { mapDetailToFormValues } from '../utils/movieFormHydration';
 import { buildMoviePayload } from '../utils/moviePayloadBuilder';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 const initialFormValues: MovieFormValues = {
   title: '',
@@ -258,8 +259,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
         setFieldErrors(serverErrors);
       } else {
         notifications.show(
-          `Error al guardar la película:
-          ${(submitError as Error).message}`,
+          getErrorMessage(submitError, 'Error al guardar la película'),
           { severity: 'error',
             autoHideDuration: 5000, }
         );

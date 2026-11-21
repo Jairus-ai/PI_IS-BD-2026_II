@@ -17,6 +17,7 @@ import {
     releaseSeat,
     reserveSeat
 } from '../services/seatsService';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 //temporal values while the functions for screenings are not implemented, these values should be obtained from the screening data
 const ROWS = 10;
@@ -50,12 +51,6 @@ const RESERVATION_EXPIRED_MESSAGE = 'Tu reserva de asientos expiró. Selecciona 
 
 function isReservationExpired(error: unknown): boolean {
     return isAxiosError<{ code?: string }>(error) && error.response?.data?.code === RESERVATION_EXPIRED_CODE;
-}
-
-function getErrorMessage(error: unknown): string {
-    return isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message ?? error.message
-        : (error as Error).message;
 }
 
 function formatRemainingTime(milliseconds: number): string {
@@ -188,7 +183,7 @@ export default function ShowSeats() {
                 handleExpiredReservation();
             } else {
                 notifications.show(
-                    `No se pudo actualizar el asiento. Motivo: ${getErrorMessage(error)}`,
+                    getErrorMessage(error, 'No se pudo actualizar el asiento'),
                     {
                         severity: 'error',
                         autoHideDuration: 3000,
