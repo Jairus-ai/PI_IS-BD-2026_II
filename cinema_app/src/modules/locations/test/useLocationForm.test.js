@@ -549,21 +549,24 @@ describe('useLocationForm: handleSubmit', () => {
         expect(onSaved).not.toHaveBeenCalled();
     });
 
-    test('si el error no trae detalle por campo, notifica el motivo', async () => {
-        mockCreateLocation.mockRejectedValue(new Error('Network Error'));
+    test('si el error no trae detalle por campo, notifica el motivo del servidor', async () => {
+        mockCreateLocation.mockRejectedValue({
+            isAxiosError: true,
+            response: { status: 409, data: { message: 'La sucursal ya existe' } },
+        });
         const { result } = setup();
 
         await submit(result);
 
         expect(mockShow).toHaveBeenCalledWith(
-            'Error al guardar la sucursal: Network Error',
+            'Error al guardar la sucursal. Motivo: La sucursal ya existe',
             { severity: 'error', autoHideDuration: 5000 },
         );
         expect(onClose).not.toHaveBeenCalled();
         expect(onSaved).not.toHaveBeenCalled();
     });
 
-    test('el error de la actualización se trata igual que el de la creación', async () => {
+    test('el error de la actualización sin mensaje del servidor no muestra motivo', async () => {
         mockUpdateLocation.mockRejectedValue(new Error('boom'));
         locationsState.locationDetail = DETAIL;
         const { result } = setup({ locationId: 7 });
@@ -571,7 +574,7 @@ describe('useLocationForm: handleSubmit', () => {
         await submit(result);
 
         expect(mockShow).toHaveBeenCalledWith(
-            'Error al guardar la sucursal: boom',
+            'Error al guardar la sucursal',
             { severity: 'error', autoHideDuration: 5000 },
         );
     });
