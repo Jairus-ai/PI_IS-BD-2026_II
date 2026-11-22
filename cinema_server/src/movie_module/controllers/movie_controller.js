@@ -8,7 +8,7 @@ import {
   createMovieWithRelations,
   updateMovieWithRelations,
   softDeleteMovie
-} from '../repositories/movieRepository.js';
+} from '../repositories/movie_repository.js';
 
 export const getMoviesCount = async (req, res, next) => {
   let connection;

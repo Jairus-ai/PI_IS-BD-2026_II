@@ -18,7 +18,7 @@ jest.unstable_mockModule('../../database/database.js', () => ({
   closeDatabaseConnection: jest.fn(),
 }));
 
-jest.unstable_mockModule('../repositories/movieRepository.js', () => ({
+jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   rollback: jest.fn(),
   countMovies: jest.fn(),
   listMovies: jest.fn(),
