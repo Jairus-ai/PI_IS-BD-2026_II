@@ -134,6 +134,8 @@ describe('useLocationForm: estado inicial', () => {
             closing_hour: null,
             province_id: null,
             canton_name: '',
+            province_id: null,
+            province_name: "",
         });
         expect(result.current.province_id).toBeNull();
         expect(result.current.fieldErrors).toEqual({});
@@ -482,6 +484,7 @@ describe('useLocationForm: handleSubmit', () => {
             CLOSING_HOUR: true,
             PROVINCE_ID: true,
             CANTON_NAME: true,
+            PROVINCE_NAME:true,
         });
         expect(mockCreateLocation).not.toHaveBeenCalled();
         expect(mockUpdateLocation).not.toHaveBeenCalled();

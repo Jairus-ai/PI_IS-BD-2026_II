@@ -479,3 +479,161 @@ describe('GET /management/cantons', () => {
         expect(connection.execute.mock.calls[0][1]).toEqual({ p: 3 });
     });
 });
+
+
+describe(`PUT ${BASE_PATH}/:id`, () => {
+    const UPDATED_LOCATION = {
+        LOCATION_NAME: 'CINE ACTUALIZADO',
+        OPENING_HOUR: '09:00',
+        CLOSING_HOUR: '23:00',
+        CANTON_NAME: 'Cartago',
+    };
+
+    test('200 OK updates the location', async () => {
+        const connection = useConnection([
+            { rows: [{ ID_CANTON: 3 }] },
+            { rowsAffected: 1 },
+        ]);
+
+        const response = await request(app)
+            .put(`${BASE_PATH}/1`)
+            .send(UPDATED_LOCATION)
+            .expect('Content-type', /json/)
+            .expect(200);
+
+        expect(response.body).toEqual({
+            message: 'succes'
+        });
+
+        expect(connection.execute).toHaveBeenCalledTimes(2);
+
+        const [cantonSql, cantonBinds] = connection.execute.mock.calls[0];
+
+        expect(cantonSql).toMatch(/PI_DEVELOPERS\.CANTONS/);
+        expect(cantonBinds).toEqual({
+            name: 'Cartago'
+        });
+
+        const [updateSql] = connection.execute.mock.calls[1];
+
+        expect(updateSql).toMatch(/UPDATE PI_DEVELOPERS\.LOCATIONS/);
+        expect(updateSql).toMatch(/LOCATION_NAME/);
+        expect(updateSql).toMatch(/OPENING_HOUR/);
+        expect(updateSql).toMatch(/CLOSING_HOUR/);
+        expect(updateSql).toMatch(/ID_CANTON/);
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when canton lookup fails', async () => {
+        const connection = useConnection([
+            new Error('ORA-00942: table or view does not exist'),
+        ]);
+
+        const response = await request(app)
+            .put(`${BASE_PATH}/1`)
+            .send(UPDATED_LOCATION)
+            .expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.execute).toHaveBeenCalledTimes(1);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 when update fails', async () => {
+        const connection = useConnection([
+            { rows: [{ ID_CANTON: 3 }] },
+            new Error('ORA-01031: insufficient privileges'),
+        ]);
+
+        const response = await request(app)
+            .put(`${BASE_PATH}/1`)
+            .send(UPDATED_LOCATION)
+            .expect(500);
+
+        expect(response.body.message).toMatch(/ORA-01031/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+        test('500 when connection cannot be opened', async () => {
+        jest
+            .spyOn(oracledb, 'getConnection')
+            .mockRejectedValue(
+                new Error('NJS-503: connection refused')
+            );
+
+        const response = await request(app)
+            .put(`${BASE_PATH}/1`)
+            .send(UPDATED_LOCATION)
+            .expect(500);
+
+        expect(response.body.message).toMatch(/NJS-503/);
+    });
+});
+
+describe('DELETE /management/locations/:id', () => {
+    const del = (id = 4) => request(app).delete(`${BASE_PATH}/${id}`);
+
+    test('204 cuando se elimina y no tiene funciones', async () => {
+        const connection = useConnection([
+            { rows: [] },
+            { rowsAffected: 1 },
+        ]);
+
+        await del().expect(204);
+
+        const [checkSql, checkBinds] = connection.execute.mock.calls[0];
+        expect(checkSql).toMatch(/PI_DEVELOPERS\.SCREENINGS/);
+        expect(checkBinds).toEqual({ id: 4 });
+
+        const [sql, binds, options] = connection.execute.mock.calls[1];
+        expect(sql).toMatch(/SET IS_DELETED = 1/);
+        expect(sql).not.toMatch(/DELETE FROM/i);
+        expect(binds).toEqual({ id: 4 });
+        expect(options).toEqual({ autoCommit: true });
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('409 cuando la sucursal tiene funciones, y no se elimina nada', async () => {
+        const connection = useConnection([{ rows: [{ 1: 1 }] }]);
+
+        const response = await del().expect(409);
+
+        expect(response.body.message).toMatch(/screenings/i);
+        expect(connection.execute).toHaveBeenCalledTimes(1);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('404 cuando la sucursal no existe o ya estaba eliminada', async () => {
+        const connection = useConnection([{ rows: [] }, { rowsAffected: 0 }]);
+
+        await del(999).expect(404);
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('400 cuando el id no es un número, sin abrir conexión', async () => {
+        const getConnection = jest.spyOn(oracledb, 'getConnection').mockResolvedValue(createMockConnection());
+
+        await del('abc').expect(400);
+
+        expect(getConnection).not.toHaveBeenCalled();
+    });
+
+    test('500 cuando falla el chequeo, y la conexión se cierra', async () => {
+        const connection = useConnection([new Error('ORA-00942: table or view does not exist')]);
+
+        const response = await del().expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 cuando falla el UPDATE, y la conexión se cierra', async () => {
+        const connection = useConnection([{ rows: [] }, new Error('ORA-01031: insufficient privileges')]);
+
+        await del().expect(500);
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+});

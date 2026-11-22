@@ -5,6 +5,8 @@ import {
     getLocationListForCrud,
     countLocations,
     createLocation,
+    editLocation,
+    deleteLocation,
  } from '../controllers/location_controller.js';
 
 const router = Router();
@@ -14,5 +16,7 @@ router.get('/l/', getLocationListForCrud);
 router.get('/count', countLocations);
 router.get('/:id', getLocationByID);
 router.post('/', createLocation);
+router.put('/:id', editLocation);
+router.delete('/:id', deleteLocation);
 
 export default router;

@@ -9,6 +9,7 @@ export function mapDetailToFormValues(detail: Location): LocationFormValues {
         opening_hour: parseTime(detail.OPENING_HOUR),
         closing_hour: parseTime(detail.CLOSING_HOUR),
         canton_name: detail.CANTON_NAME ?? '',
-        province_id: detail.ID_PROVINCE ?? null, 
+        province_id: detail.ID_PROVINCE ?? null,
+        province_name:detail.PROVINCE_NAME??'', 
     };
 }
