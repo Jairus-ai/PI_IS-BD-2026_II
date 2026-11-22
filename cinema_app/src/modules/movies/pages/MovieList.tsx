@@ -11,6 +11,7 @@ import MovieFormDialog from '../components/MovieFormDialog';
 import { Actions } from '../../../components/crud/Actions';
 import { FilterField } from '../../../components/crud/FilterField';
 import { CrudPage } from '../../../components/crud/CrudPage';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 const emptyFilters = {
   name: '',
@@ -86,7 +87,7 @@ export default function MovieList() {
           });
         } catch (error) {
           notifications.show(
-            `Error al eliminar la película: ${(error as Error).message}`,
+            getErrorMessage(error, 'Error al eliminar la película'),
             {
               severity: 'error',
               autoHideDuration: 5000,

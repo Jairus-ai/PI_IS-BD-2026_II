@@ -47,10 +47,12 @@ function useDatabase({
             return { rows: [{ TAKEN: taken }] };
 
         if (/INSERT INTO PI_DEVELOPERS\.RESERVATIONS \(/.test(sql))
-            return { outBinds: { reservationId: [NEW_RESERVATION_ID] } };
-
-        if (/RETURNING RESERVED_UNTIL/.test(sql))
-            return { outBinds: { reservedUntil: [RESERVED_UNTIL] } };
+            return {
+                outBinds: {
+                    reservationId: [NEW_RESERVATION_ID],
+                    reservedUntil: [RESERVED_UNTIL]
+                }
+            };
 
         if (/INSERT INTO|DELETE FROM|SET RESERVED_UNTIL = SYSTIMESTAMP\s+WHERE/.test(sql)) {
             if (errors.write)
@@ -214,6 +216,16 @@ describe('GET /seats/:screeningId', () => {
         expect(sql).toMatch(/rs\.ID_SCREENING = :screeningId/);
     });
 
+    test('las compras reembolsadas no bloquean el asiento', async () => {
+        const connection = useDatabase();
+
+        await request(app).get('/seats/7').expect(200);
+
+        const [sql] = findCall(connection, /SEAT_RECEIPTS/);
+
+        expect(sql).toMatch(/NOT EXISTS \(\s*SELECT 1\s*FROM PI_DEVELOPERS\.REFUNDS rf\s*WHERE rf\.ID_RECEIPT = sr\.ID_RECEIPT\)/);
+    });
+
     test('un asiento comprado Y reservado sale una sola vez, no disponible', async () => {
         useDatabase({
             boughts: [{ ID_SEAT: 10 }],
@@ -309,7 +321,10 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
             .expect(200);
 
         expect(response.body.data.reservedUntil).toBe(RESERVED_UNTIL.toISOString());
-        expect(findCall(connection, /INSERT INTO PI_DEVELOPERS\.RESERVATIONS \(/)).toBeDefined();
+
+        const [, createBinds] = findCall(connection, /INSERT INTO PI_DEVELOPERS\.RESERVATIONS \(/);
+
+        expect(createBinds.minutes).toBe(5);
 
         const [, binds] = findCall(connection, /INSERT INTO PI_DEVELOPERS\.RESERVATIONS_SEATS/);
 
@@ -324,10 +339,10 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
-    test('con cookie válida agrega el asiento a la misma reserva y reinicia el tiempo', async () => {
+    test('con cookie válida agrega el asiento a la misma reserva sin reiniciar el tiempo', async () => {
         const connection = useDatabase({ ownReservation: ACTIVE_RESERVATION });
 
-        await request(app)
+        const response = await request(app)
             .post('/seats/7/reservation/11')
             .set('Cookie', reservationCookie())
             .expect(200);
@@ -335,11 +350,10 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
         expect(findCall(connection, /INSERT INTO PI_DEVELOPERS\.RESERVATIONS \(/)).toBeUndefined();
 
         const [, insertBinds] = findCall(connection, /INSERT INTO PI_DEVELOPERS\.RESERVATIONS_SEATS/);
-        const [, refreshBinds] = findCall(connection, /RETURNING RESERVED_UNTIL/);
 
         expect(insertBinds.reservationId).toBe(5);
-        expect(refreshBinds.reservationId).toBe(5);
-        expect(refreshBinds.minutes).toBe(15);
+        expect(findCall(connection, /UPDATE PI_DEVELOPERS\.RESERVATIONS\s+SET RESERVED_UNTIL = SYSTIMESTAMP \+/)).toBeUndefined();
+        expect(response.body.data.reservedUntil).toBe(RESERVED_UNTIL.toISOString());
     });
 
     test('con cookie de otra función cancela la reserva anterior y crea otra', async () => {
@@ -381,6 +395,19 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
         expect(connection.commit).not.toHaveBeenCalled();
     });
 
+    test('un asiento de una compra reembolsada se puede volver a reservar', async () => {
+        const connection = useDatabase();
+
+        await request(app)
+            .post('/seats/7/reservation/10')
+            .expect(200);
+
+        const [sql] = findCall(connection, /FROM DUAL/);
+
+        expect(sql).toMatch(/FROM PI_DEVELOPERS\.REFUNDS rf/);
+        expect(connection.commit).toHaveBeenCalledTimes(1);
+    });
+
     test('404 cuando el asiento no existe en la función', async () => {
         useDatabase({ lockedSeat: null });
 
@@ -404,7 +431,7 @@ describe('POST /seats/:screeningId/reservation/:seatId', () => {
 });
 
 describe('DELETE /seats/:screeningId/reservation/:seatId', () => {
-    test('quita el asiento de la reserva y reinicia el tiempo', async () => {
+    test('quita el asiento de la reserva sin reiniciar el tiempo', async () => {
         const connection = useDatabase({ ownReservation: ACTIVE_RESERVATION });
 
         const response = await request(app)
@@ -419,7 +446,7 @@ describe('DELETE /seats/:screeningId/reservation/:seatId', () => {
             screeningId: '7',
             seatId: '10'
         });
-        expect(findCall(connection, /RETURNING RESERVED_UNTIL/)).toBeDefined();
+        expect(findCall(connection, /UPDATE PI_DEVELOPERS\.RESERVATIONS\s+SET RESERVED_UNTIL = SYSTIMESTAMP \+/)).toBeUndefined();
         expect(connection.commit).toHaveBeenCalledTimes(1);
         expect(response.body.data.reservedUntil).toBe(RESERVED_UNTIL.toISOString());
         expect(findCookie(response)).toMatch(/HttpOnly/);

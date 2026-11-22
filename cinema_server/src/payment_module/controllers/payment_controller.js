@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import oracledb from 'oracledb';
 import {
   getConnection,
@@ -9,6 +8,7 @@ import {
   readReservationToken
 } from '../../seats_module/services/reservation_cookie.js';
 import { sendTicketsEmail } from '../../QR_module/controllers/QR_controller.js';
+import { getStripe } from '../services/stripe_client.js';
 
 const PAYMENT_CURRENCY = 'crc';
 const CENTS_PER_COLON = 100;
@@ -26,21 +26,6 @@ const RESERVATION_EXPIRED_CODE = 'RESERVATION_EXPIRED';
 const RESERVATION_EXPIRED_MESSAGE = 'La reserva de asientos expiró. Selecciona tus asientos de nuevo';
 const SESSION_ID_REQUIRED_MESSAGE = 'Falta el identificador del pago';
 const PAYMENT_NOT_FOUND_MESSAGE = 'El pago no existe';
-
-let stripeClient = null;
-
-function getStripe() {
-  if (!stripeClient) {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-
-    if (!secretKey)
-      throw new Error('STRIPE_SECRET_KEY is not defined in .env');
-
-    stripeClient = new Stripe(secretKey);
-  }
-
-  return stripeClient;
-}
 
 function rejectExpiredReservation(res) {
   clearReservationCookie(res);
@@ -86,18 +71,19 @@ async function getSeatsOnTime(connection, reservationId) {
   return result.rows;
 }
 
-async function registerPurchase(connection, session, seats) {
+async function registerPurchase(connection, session, paymentIntentId, seats) {
   const reservationId = Number(session.metadata.reservationId);
   const feeId = Number(session.metadata.feeId);
   const seatPrice = Number(session.metadata.seatPrice);
 
   const receiptResult = await connection.execute(
-    `INSERT INTO PI_DEVELOPERS.RECEIPTS (TOTAL_AMOUNT, STATUS, PAYMENT_TYPE, ID_CLIENT)
-    VALUES (:totalAmount, 'PAID', :paymentType, :clientId)
+    `INSERT INTO PI_DEVELOPERS.RECEIPTS (TOTAL_AMOUNT, PAYMENT_TYPE, ID_STRIPE_PAYMENT_INTENT, ID_CLIENT)
+    VALUES (:totalAmount, :paymentType, :paymentIntentId, :clientId)
     RETURNING ID_RECEIPT INTO :receiptId`,
     {
       totalAmount: session.amount_total / CENTS_PER_COLON,
       paymentType: session.payment_method_types?.[0]?.toUpperCase() ?? null,
+      paymentIntentId,
       clientId: Number(session.metadata.clientId),
       receiptId: {
         dir: oracledb.BIND_OUT,
@@ -133,6 +119,8 @@ async function registerPurchase(connection, session, seats) {
     WHERE ID_RESERVATION = :reservationId`,
     [reservationId]
   );
+
+  return receiptId;
 }
 
 async function confirmPayment(session) {
@@ -147,6 +135,7 @@ async function confirmPayment(session) {
     : session.payment_intent.id;
   let connection;
   let purchasedSeats;
+  let receiptId;
 
   try {
     connection = await getConnection();
@@ -178,7 +167,7 @@ async function confirmPayment(session) {
       return PAYMENT_STATUS.REJECTED;
     }
 
-    await registerPurchase(connection, session, seats);
+    receiptId = await registerPurchase(connection, session, paymentIntentId, seats);
     await getStripe().paymentIntents.capture(paymentIntentId);
     await connection.commit();
 
@@ -191,6 +180,7 @@ async function confirmPayment(session) {
   try {
     await sendTicketsEmail(
       Number(session.metadata.clientId),
+      receiptId,
       purchasedSeats.map((seat) => ({
         screeningId: seat.ID_SCREENING,
         seatId: seat.ID_SEAT
