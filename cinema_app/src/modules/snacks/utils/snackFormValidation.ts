@@ -1,33 +1,29 @@
-import type { Dayjs } from 'dayjs';
 import type { ServerErrors } from './snackFormUtils';
 
-export interface LocationFormValues {
+export interface SnackFormValues {
   name: string;
-  opening_hour: Dayjs | null;
-  closing_hour: Dayjs | null;
-  province_id: number | null;
-  canton_name: string;
-  province_name:string|null;
+  description: string;
+  price: number|null;
 }
 
 export function validateAll(
-  values: LocationFormValues,
+  values: SnackFormValues,
 ): ServerErrors {
   const errors: ServerErrors = {};
-  if (!values.name.trim()) errors.LOCATION_NAME = 'Campo obligatorio';
-  if (values.name.trim().length > 30) errors.LOCATION_NAME = 'El nombre no puede exceder 30 caracteres.';
+  if (!values.name.trim()) errors.SNACK_NAME = 'Campo obligatorio';
+  if (values.name.trim().length > 50) errors.SNACK_NAME = 'El nombre no puede exceder 50 caracteres.';
 
-  if (!values.opening_hour?.isValid()) {
-    errors.OPENING_HOUR = 'Seleccione la hora de apertura.';
+  if (values.price == null) 
+  {
+    errors.PRICE = 'Campo obligatorio';
+  }
+  else if (values.price<=0)
+  {
+    errors.PIRCE = 'El precio no pude ser 0';
   }
 
-  if (!values.closing_hour?.isValid()) {
-    errors.CLOSING_HOUR = 'Seleccione la hora de cierre.';
-  } 
-
-  if (!values.canton_name.trim()) errors.CANTON_NAME = 'Campo obligatorio';
-
-  if (values.province_id == null) errors.PROVINCE_NAME = 'Seleccione una provincia.';
+  if(!values.description.trim()) errors.SNACK_DESCRIPTION = 'Campo obligatorio';
+  if (values.description.trim().length > 100) errors.SNACK_DESCRIPTION = 'La descripción no puede exceder 100 caracteres.';
 
   return errors;
 }

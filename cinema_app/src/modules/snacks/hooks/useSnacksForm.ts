@@ -5,67 +5,56 @@ import useNotifications from '../../../hooks/useNotifications';
 import { readServerErrors } from '../utils/snackFormUtils';
 import type { ServerErrors } from '../utils/snackFormUtils';
 import { validateAll } from '../utils/snackFormValidation';
-import type { LocationFormValues } from '../utils/snackFormValidation';
+import type { SnackFormValues } from '../utils/snackFormValidation';
 import { mapDetailToFormValues } from '../utils/snackFormHydration';
-import { buildLocationPayload } from '../utils/snackPayloadBuilder';
-import type { Canton, Province } from '../types/snacks';
+import { buildSnackPayload } from '../utils/snackPayloadBuilder';
 
-const initialFormValues: LocationFormValues = {
+const initialFormValues: SnackFormValues = {
     name: '',
-    opening_hour: null,
-    closing_hour: null,
-    canton_name: '',
-    province_id:null,
-    province_name:'',
+    price: null,
+    description:'',
 };
 
-const ERROR_KEY: Record<keyof LocationFormValues, string> = {
-    name: 'LOCATION_NAME',
-    opening_hour: 'OPENING_HOUR',
-    closing_hour: 'CLOSING_HOUR',
-    canton_name: 'CANTON_NAME',
-    province_id: 'PROVINCE_ID',
-    province_name: 'PROVINCE_NAME',
+const ERROR_KEY: Record<keyof SnackFormValues, string> = {
+    name: 'SNACK_NAME',
+    price: 'SNACK',
+    description: 'SNACK_DESCRIPTION',
 };
 
 const ALL_ERROR_KEYS = Object.values(ERROR_KEY);
 
-export interface UseLocationFormArgs {
-    locationId: number | null;
+export interface UseSnackFormArgs {
+    snackId: number | null;
     open: boolean;
     onClose: () => void;
     onSaved?: () => void;
 }
 
-export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocationFormArgs) {
-    const isCreate = locationId == null;
+export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormArgs) {
+    const isCreate = snackId == null;
 
     const notifications = useNotifications();
 
-    const [values, setValues] = React.useState<LocationFormValues>(initialFormValues);
+    const [values, setValues] = React.useState<SnackFormValues>(initialFormValues);
     const [fieldErrors, setFieldErrors] = React.useState<ServerErrors>({});
     const [touched, setTouched] = React.useState<Record<string, boolean>>({});
 
     const {
-        locationDetail,
+        snackDetail,
         isLoadingDetail,
-        createLocation,
-        updateLocation,
-        isCreatingLocation,
-        isUpdatingLocation,
-        locationCantons,
-        isLoadingCantons,
-        locationProvinces,
-        isLoadingProvinces
-    } = useLocations(1, open && !isCreate ? locationId : null, values.province_id);
+        createSnack,
+        updateSnack,
+        isCreatingSnack,
+        isUpdatingSnack,
+    } = useLocations(1, open && !isCreate ? snackId : null, values.province_id);
 
     const touchedRef = React.useRef<Record<string, boolean>>({});
 
-    const saving = isCreatingLocation || isUpdatingLocation;
+    const saving = isCreatingSnack || isUpdatingSnack;
     const loading = !isCreate && isLoadingDetail;
 
     const validateAndSet = (
-        merged: LocationFormValues,
+        merged: SnackFormValues,
         touchedMap: Record<string, boolean>,
     ) => {
         const all = validateAll(merged);
@@ -78,7 +67,7 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         setFieldErrors(next);
     };
 
-    const touchAndValidate = (errorKey: string, currentValues: LocationFormValues) => {
+    const touchAndValidate = (errorKey: string, currentValues: SnackFormValues) => {
         const nextTouched = { ...touchedRef.current, [errorKey]: true };
         touchedRef.current = nextTouched;
         setTouched(nextTouched);
@@ -89,9 +78,9 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         touchAndValidate(errorKey, values);
     };
 
-    const setFieldValue = <K extends keyof LocationFormValues>(
+    const setFieldValue = <K extends keyof SnackFormValues>(
         field: K,
-        value: LocationFormValues[K],
+        value: SnackFormValues[K],
     ) => {
         const updated = { ...values, [field]: value };
         setValues(updated);
@@ -110,20 +99,6 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         setFieldValue('closing_hour', hour);
     };
 
-    const handleProvinceChange = (province: Province | null) => {
-        const updated = {
-            ...values,
-            province_id: province?.ID_PROVINCE ?? null,
-            province_name: province?.PROVINCE_NAME ?? null,
-            canton_name: ''
-        };
-        setValues(updated);
-        touchAndValidate('PROVINCE_NAME', updated);
-};
-
-    const handleCantonChange = (canton: Canton | null) => {
-        setFieldValue('canton_name', canton?.CANTON_NAME ?? '');
-    };
 
     React.useEffect(() => {
         if (!open) {
@@ -135,11 +110,11 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         setFieldErrors({});
 
         setValues(
-            !isCreate && locationDetail
-                ? mapDetailToFormValues(locationDetail)
+            !isCreate && snackDetail
+                ? mapDetailToFormValues(snackDetail)
                 : initialFormValues,
         );
-    }, [open, isCreate, locationDetail]);
+    }, [open, isCreate, snackDetail]);
 
     const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -155,16 +130,16 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         }
 
         try {
-            const payload = buildLocationPayload(values);
+            const payload = buildSnackPayload(values);
 
-            if (locationId == null) {
-                await createLocation(payload);
+            if (snackId == null) {
+                await createSnack(payload);
                 notifications.show('Sucursal creada correctamente.', {
                     severity: 'success',
                     autoHideDuration: 5000,
                 });
             } else {
-                await updateLocation(locationId, payload);
+                await updateSnack(snackId, payload);
                 notifications.show('Sucursal actualizada correctamente.', {
                     severity: 'success',
                     autoHideDuration: 5000,
@@ -180,7 +155,7 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
                 setFieldErrors(serverErrors);
             } else {
                 notifications.show(
-                    `Error al guardar la sucursal: ${(submitError as Error).message}`,
+                    `Error al guardar el snack: ${(submitError as Error).message}`,
                     { severity: 'error', autoHideDuration: 5000 },
                 );
             }
@@ -202,24 +177,12 @@ export function useLocationForm({ locationId, open, onClose, onSaved }: UseLocat
         name: values.name,
         opening_hour: values.opening_hour,
         closing_hour: values.closing_hour,
-        canton_name: values.canton_name,
-        province_id: values.province_id,
-        province_name: values.province_name,
 
         handleNameChange,
         handleOpHourChange,
         handleCloseHourChange,
-        handleCantonChange,
-        handleProvinceChange,
         handleSubmit,
         handleBlur,
-
-        cantons: locationCantons,
-        isLoadingCantons,
-
-        provinces:locationProvinces,
-        isLoadingProvinces,
-    };
 }
 
-export type LocationForm = ReturnType<typeof useLocationForm>;
+export type LocationForm = ReturnType<typeof useSnackForm>;

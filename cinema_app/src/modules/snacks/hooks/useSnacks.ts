@@ -1,95 +1,75 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Canton, Province } from '../types/snacks';
 import {
-  createLocation,
-  updateLocation,
-  deleteLocation,
-  getLocations,
-  getLocationsCount,
-  getLocationById,
-  getCantons,
-  getProvinces
-} from '../services/locationService';
+  createSnack,
+  updateSnack,
+  deleteSnack,
+  getSnacks,
+  getSnacksCount,
+  getSnackById,
+} from '../services/snackService';
 
 export const useLocations = (
   page: number = 1,
-  locationId: number | null | undefined = null,
-  provinceId: number | null | undefined = null,
+  snackId: number | null | undefined = null,
   filters: any = {},
 ) => {
-  const locationsQuery = useQuery({
-    queryKey: ['locations', page, filters],
-    queryFn: ()  => getLocations(page, filters),
+  const snackQuery = useQuery({
+    queryKey: ['snacks', page, filters],
+    queryFn: ()  => getSnacks(page, filters),
   });
 
   const countQuery = useQuery({
-    queryKey: ['locationsCount', filters],
-    queryFn: () => getLocationsCount(filters),
+    queryKey: ['snacksCount', filters],
+    queryFn: () => getSnacksCount(filters),
   });
 
-  const locationDetailQuery = useQuery({
-    queryKey: ['location', locationId],
-    queryFn: () => getLocationById(locationId),
-    enabled: locationId != null,
+  const snackDetailQuery = useQuery({
+    queryKey: ['snack', snackId],
+    queryFn: () => getSnackById(snackId),
+    enabled: snackId != null,
   });
-
-  const locationCantonsQuery = useQuery({
-    queryKey: ['locationCantons', provinceId],
-    queryFn: () => getCantons(provinceId),
-    enabled: provinceId != null,
-  }) 
-
-   const locationProvincesQuery = useQuery({
-    queryKey: ['locationProvinces'],
-    queryFn: () => getProvinces(),
-  }) 
 
   const queryClient = useQueryClient();
-  const createLocationMutation = useMutation({
-    mutationFn: createLocation,
+  const createSnackMutation = useMutation({
+    mutationFn: createSnack,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['locations'] });
-      await queryClient.invalidateQueries({ queryKey: ['locationsCount'] });
+      await queryClient.invalidateQueries({ queryKey: ['snacks'] });
+      await queryClient.invalidateQueries({ queryKey: ['snacksCount'] });
     },
   });
 
-  const updateLocationMutation = useMutation({
-    mutationFn: ({ id, location }: {id: number, location: any}) => updateLocation(id, location),
+  const updateSnackMutation = useMutation({
+    mutationFn: ({ id, snack }: {id: number, snack: any}) => updateSnack(id, snack),
     onSuccess: async(_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['locations'] });
-      await queryClient.invalidateQueries({ queryKey: ['location', variables.id] });
+      await queryClient.invalidateQueries({ queryKey: ['snacks'] });
+      await queryClient.invalidateQueries({ queryKey: ['snack', variables.id] });
     },
   });
 
-  const deleteLocationMutation = useMutation({
-    mutationFn: ({ id }: {id: number}) => deleteLocation(id),
+  const deleteSnackMutation = useMutation({
+    mutationFn: ({ id }: {id: number}) => deleteSnack(id),
     onSuccess: async(_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['locations'] });
-      await queryClient.invalidateQueries({ queryKey: ['location', variables.id] });
+      await queryClient.invalidateQueries({ queryKey: ['snacks'] });
+      await queryClient.invalidateQueries({ queryKey: ['snack', variables.id] });
     },
   });
 
   return {
-    locations: locationsQuery.data?.data ?? [],
-    totalLocations: countQuery.data?.total ?? 0,
-    isLoadingLocations: locationsQuery.isLoading,
-    LocationsError: locationsQuery.error,
+    snacks: snackQuery.data?.data ?? [],
+    totalsnacks: countQuery.data?.total ?? 0,
+    isLoadingSnacks: snackQuery.isLoading,
+    SnacksError: snackQuery.error,
 
-    locationProvinces: (locationProvincesQuery.data?.data?? []) as Province[],
-    isLoadingProvinces: locationProvincesQuery.isLoading,
-
-    locationDetail: locationDetailQuery.data?.data ?? null,
-    locationCantons: (locationCantonsQuery.data?.data?? []) as Canton[],
-    isLoadingDetail: locationDetailQuery.isLoading,
-    isLoadingCantons: locationCantonsQuery.isLoading,
-
-    createLocation: createLocationMutation.mutateAsync,
-    isCreatingLocation: createLocationMutation.isPending,
-    createLocationError: createLocationMutation.error,
-    updateLocation: (id: number, location: any) => updateLocationMutation.mutateAsync({ id, location }),
-    isUpdatingLocation: updateLocationMutation.isPending,
-    deleteLocation: deleteLocationMutation.mutateAsync,
-    isDeletingLocation: deleteLocationMutation.isPending,
-    deleteLocationError: deleteLocationMutation.error,
+    snackDetail: snackDetailQuery.data?.data ?? null,
+    isLoadingDetail: snackDetailQuery.isLoading,
+  
+    createSnack: createSnackMutation.mutateAsync,
+    isCreatingSnack: createSnackMutation.isPending,
+    createSnackError: createSnackMutation.error,
+    updateSnack: (id: number, snack: any) => updateSnackMutation.mutateAsync({ id, snack }),
+    isUpdatingSnack: updateSnackMutation.isPending,
+    deleteSnack: deleteSnackMutation.mutateAsync,
+    isSnackLocation: deleteSnackMutation.isPending,
+    deleteSnackError: deleteSnackMutation.error,
   };
 };

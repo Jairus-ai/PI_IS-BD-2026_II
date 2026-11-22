@@ -1,19 +1,6 @@
-export interface Location {
-  ID_LOCATION: number,
-  LOCATION_NAME:string,
-  OPENING_HOUR: string,
-  CLOSING_HOUR: string,
-  CANTON_NAME: string,
-  PROVINCE_NAME: string,
-  ID_PROVINCE: number,
-  ID_CANTON: number;
+export interface Snack {
+  ID_SNACK: number,
+  SNACK_NAME: string,
+  SNACK_DESCRIPTION: string,
+  PRICE: number
 };
-export interface Canton {
-  ID_CANTON: number,
-  CANTON_NAME: string;
-}
-
-export interface Province {
-  ID_PROVINCE:number,
-  PROVINCE_NAME: string;
-}
