@@ -409,13 +409,50 @@ export const editLocation = async(req, res, next) =>
   }
 };
 
+async function checkScreenings(connection, id)
+{
+  const request = `
+    SELECT sc.ID_SCREENING
+    FROM PI_DEVELOPERS.LOCATIONS l
+    JOIN PI_DEVELOPERS.SCREENS s
+    ON s.ID_LOCATION = l.ID_LOCATION
+    JOIN PI_DEVELOPERS.SCREENINGS sc
+    ON sc.ID_SCREEN = s.ID_SCREEN
+    WHERE l.ID_LOCATION = :id
+    AND sc.SCREENING_DATE >= TRUNC(SYSDATE)
+  `;
+
+  const result = await connection.execute(
+    request,
+    {id: Number(id)},
+    {
+      outFormat: oracledb.OUT_FORMAT_OBJECT
+    }
+  );
+
+  return result.rows.length > 0;
+};
+
 export const deleteLocation = async (req,res,next) =>
 {
   let connection;
   try{
     const { id } = req.params;
 
+    if (!Number.isInteger(Number(id))) 
+    {
+      console.log(Number.isInteger(id));
+      return res.status(400).json({ message: 'Invalid location id' });
+    }
+
     connection = await oracledb.getConnection();
+
+    const hasScreenings = await checkScreenings(connection, id);
+
+    if(hasScreenings)
+    {
+      return res.status(409).json({message:'Location has active screenings'})
+    };
     
     const request = `
       UPDATE PI_DEVELOPERS.LOCATIONS
@@ -432,7 +469,7 @@ export const deleteLocation = async (req,res,next) =>
     );
   
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ message: 'Discount not found' });
+      return res.status(404).json({ message: 'Location not found' });
     }
 
     res.status(204).json(

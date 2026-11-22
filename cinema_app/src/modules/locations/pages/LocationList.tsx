@@ -79,7 +79,7 @@ export default function LocationList() {
                 });
             } catch (error) {
                 notifications.show(
-                    `Error al eliminar la sucursal: ${(error as Error).message}`,
+                    `Error al eliminar la sucursal: ${(error as Error)}`,
                     {
                         severity: 'error',
                         autoHideDuration: 5000,
