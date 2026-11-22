@@ -165,7 +165,7 @@ async function createReservation(connection)
     const request = `
     INSERT INTO PI_DEVELOPERS.RESERVATIONS (RESERVED_UNTIL)
     VALUES (SYSTIMESTAMP + NUMTODSINTERVAL(:minutes, 'MINUTE'))
-    RETURNING ID_RESERVATION INTO :reservationId`;
+    RETURNING ID_RESERVATION, RESERVED_UNTIL INTO :reservationId, :reservedUntil`;
 
     const result = await connection.execute(
         request,
@@ -174,11 +174,18 @@ async function createReservation(connection)
             reservationId: {
                 dir: oracledb.BIND_OUT,
                 type: oracledb.NUMBER
+            },
+            reservedUntil: {
+                dir: oracledb.BIND_OUT,
+                type: oracledb.DB_TYPE_TIMESTAMP_TZ
             }
         }
     );
 
-    return result.outBinds.reservationId[0];
+    return {
+        ID_RESERVATION: result.outBinds.reservationId[0],
+        RESERVED_UNTIL: result.outBinds.reservedUntil[0]
+    };
 }
 
 async function cancelReservation(connection, reservationId)
@@ -193,29 +200,6 @@ async function cancelReservation(connection, reservationId)
         request,
         [reservationId]
     );
-}
-
-async function refreshReservation(connection, reservationId)
-{
-    const request = `
-    UPDATE PI_DEVELOPERS.RESERVATIONS
-    SET RESERVED_UNTIL = SYSTIMESTAMP + NUMTODSINTERVAL(:minutes, 'MINUTE')
-    WHERE ID_RESERVATION = :reservationId
-    RETURNING RESERVED_UNTIL INTO :reservedUntil`;
-
-    const result = await connection.execute(
-        request,
-        {
-            minutes: RESERVATION_DURATION_MINUTES,
-            reservationId,
-            reservedUntil: {
-                dir: oracledb.BIND_OUT,
-                type: oracledb.DB_TYPE_TIMESTAMP_TZ
-            }
-        }
-    );
-
-    return result.outBinds.reservedUntil[0];
 }
 
 function rejectExpiredReservation(res)
@@ -331,9 +315,9 @@ export const reserveSeat = async (req, res, next) =>
         if (token && !isSameScreening)
             await cancelReservation(connection, token.reservationId);
 
-        const reservationId = reservation
-            ? reservation.ID_RESERVATION
-            : await createReservation(connection);
+        const activeReservation = reservation
+            ?? await createReservation(connection);
+        const reservationId = activeReservation.ID_RESERVATION;
 
         await connection.execute(
             `INSERT INTO PI_DEVELOPERS.RESERVATIONS_SEATS (ID_SEAT, ID_SCREEN, ID_SCREENING, ID_RESERVATION)
@@ -346,8 +330,6 @@ export const reserveSeat = async (req, res, next) =>
             }
         );
 
-        const reservedUntil = await refreshReservation(connection, reservationId);
-
         await connection.commit();
 
         setReservationCookie(res, createReservationToken({
@@ -358,7 +340,7 @@ export const reserveSeat = async (req, res, next) =>
         res.status(200).json(
             {
                 data: {
-                    reservedUntil
+                    reservedUntil: activeReservation.RESERVED_UNTIL
                 }
             }
         );
@@ -399,8 +381,6 @@ export const releaseSeat = async (req, res, next) =>
             }
         );
 
-        const reservedUntil = await refreshReservation(connection, reservation.ID_RESERVATION);
-
         await connection.commit();
 
         setReservationCookie(res, createReservationToken(token));
@@ -408,7 +388,7 @@ export const releaseSeat = async (req, res, next) =>
         res.status(200).json(
             {
                 data: {
-                    reservedUntil
+                    reservedUntil: reservation.RESERVED_UNTIL
                 }
             }
         );
