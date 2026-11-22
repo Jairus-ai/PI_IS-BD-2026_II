@@ -1,7 +1,7 @@
 export const uploadPosterFile = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No se encontró el poster.' });
+      return res.status(400).json({ message: 'Póster no encontrado' });
     }
 
     const posterPath = `/posters/${req.file.filename}`;
