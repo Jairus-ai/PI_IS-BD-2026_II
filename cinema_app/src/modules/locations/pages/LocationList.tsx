@@ -85,7 +85,7 @@ export default function LocationList() {
                 if (axios.isAxiosError(error) && error.response?.status === 409) {
                     message += 'La sucursal tiene proyecciones activas o programadas.';
                 } else if (error instanceof Error) {
-                    message += ` ${error.message}`;
+                    message += `${error.message}`;
                 }
                 notifications.show(
                     getErrorMessage(error, 'Error al eliminar la sucursal'),
