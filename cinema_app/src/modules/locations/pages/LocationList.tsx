@@ -1,4 +1,5 @@
 import * as React from 'react';
+import axios from 'axios';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -78,8 +79,15 @@ export default function LocationList() {
                     autoHideDuration: 5000,
                 });
             } catch (error) {
+                let message = 'Error al eliminar la sucursal: ';
+
+                if (axios.isAxiosError(error) && error.response?.status === 409) {
+                    message += 'La sucursal tiene proyecciones activas o programadas.';
+                } else if (error instanceof Error) {
+                    message += `${error.message}`;
+                }
                 notifications.show(
-                    `Error al eliminar la sucursal: ${(error as Error).message}`,
+                    message,
                     {
                         severity: 'error',
                         autoHideDuration: 5000,

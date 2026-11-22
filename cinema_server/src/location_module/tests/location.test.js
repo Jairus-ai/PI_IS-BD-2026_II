@@ -570,3 +570,70 @@ describe(`PUT ${BASE_PATH}/:id`, () => {
         expect(response.body.message).toMatch(/NJS-503/);
     });
 });
+
+describe('DELETE /management/locations/:id', () => {
+    const del = (id = 4) => request(app).delete(`${BASE_PATH}/${id}`);
+
+    test('204 cuando se elimina y no tiene funciones', async () => {
+        const connection = useConnection([
+            { rows: [] },
+            { rowsAffected: 1 },
+        ]);
+
+        await del().expect(204);
+
+        const [checkSql, checkBinds] = connection.execute.mock.calls[0];
+        expect(checkSql).toMatch(/PI_DEVELOPERS\.SCREENINGS/);
+        expect(checkBinds).toEqual({ id: 4 });
+
+        const [sql, binds, options] = connection.execute.mock.calls[1];
+        expect(sql).toMatch(/SET IS_DELETED = 1/);
+        expect(sql).not.toMatch(/DELETE FROM/i);
+        expect(binds).toEqual({ id: 4 });
+        expect(options).toEqual({ autoCommit: true });
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('409 cuando la sucursal tiene funciones, y no se elimina nada', async () => {
+        const connection = useConnection([{ rows: [{ 1: 1 }] }]);
+
+        const response = await del().expect(409);
+
+        expect(response.body.message).toMatch(/screenings/i);
+        expect(connection.execute).toHaveBeenCalledTimes(1);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('404 cuando la sucursal no existe o ya estaba eliminada', async () => {
+        const connection = useConnection([{ rows: [] }, { rowsAffected: 0 }]);
+
+        await del(999).expect(404);
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('400 cuando el id no es un número, sin abrir conexión', async () => {
+        const getConnection = jest.spyOn(oracledb, 'getConnection').mockResolvedValue(createMockConnection());
+
+        await del('abc').expect(400);
+
+        expect(getConnection).not.toHaveBeenCalled();
+    });
+
+    test('500 cuando falla el chequeo, y la conexión se cierra', async () => {
+        const connection = useConnection([new Error('ORA-00942: table or view does not exist')]);
+
+        const response = await del().expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('500 cuando falla el UPDATE, y la conexión se cierra', async () => {
+        const connection = useConnection([{ rows: [] }, new Error('ORA-01031: insufficient privileges')]);
+
+        await del().expect(500);
+
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+});

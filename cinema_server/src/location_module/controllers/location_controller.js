@@ -357,14 +357,14 @@ export const createLocation = async(req, res, next) =>
 
 export const editLocation = async(req, res, next) =>
 {
-  let conection;
+  let connection;
 
   try
   {
     const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
-    conection = await getConnection();
+    connection = await getConnection();
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, conection);
+    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
     const {id} = req.params;
 
     const request = `
@@ -377,7 +377,7 @@ export const editLocation = async(req, res, next) =>
       WHERE ID_LOCATION = :id
     `;
 
-    await conection.execute(
+    await connection.execute(
       request,
       [
         LOCATION_NAME,
@@ -402,9 +402,88 @@ export const editLocation = async(req, res, next) =>
     next(error);
   }finally
   {
-    if (conection)
+    if (connection)
     {
-      await closeDatabaseConnection(conection);
+      await closeDatabaseConnection(connection);
+    }
+  }
+};
+
+async function checkScreenings(connection, id)
+{
+  const request = `
+    SELECT sc.ID_SCREENING
+    FROM PI_DEVELOPERS.LOCATIONS l
+    JOIN PI_DEVELOPERS.SCREENS s
+    ON s.ID_LOCATION = l.ID_LOCATION
+    JOIN PI_DEVELOPERS.SCREENINGS sc
+    ON sc.ID_SCREEN = s.ID_SCREEN
+    WHERE l.ID_LOCATION = :id
+    AND sc.SCREENING_DATE >= TRUNC(SYSDATE)
+  `;
+
+  const result = await connection.execute(
+    request,
+    {id: Number(id)},
+    {
+      outFormat: oracledb.OUT_FORMAT_OBJECT
+    }
+  );
+
+  return result.rows.length > 0;
+};
+
+export const deleteLocation = async (req,res,next) =>
+{
+  let connection;
+  try{
+    const { id } = req.params;
+
+    if (!Number.isInteger(Number(id))) 
+    {
+      console.log(Number.isInteger(id));
+      return res.status(400).json({ message: 'Invalid location id' });
+    }
+
+    connection = await oracledb.getConnection();
+
+    const hasScreenings = await checkScreenings(connection, id);
+
+    if(hasScreenings)
+    {
+      return res.status(409).json({message:'Location has active screenings'})
+    };
+    
+    const request = `
+      UPDATE PI_DEVELOPERS.LOCATIONS
+      SET IS_DELETED = 1
+      WHERE ID_LOCATION = :id
+      `;
+
+      const result = await connection.execute(
+      request,
+      {id: Number(id)},
+      { 
+        autoCommit: true
+      }
+    );
+  
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Location not found' });
+    }
+
+    res.status(204).json(
+      {
+        message: 'success'
+      }
+    );
+
+    
+  }catch (error) {
+    next(error);
+  }finally {
+    if (connection) {
+      await closeDatabaseConnection(connection);
     }
   }
 };
