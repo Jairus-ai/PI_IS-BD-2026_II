@@ -80,6 +80,13 @@ export default function LocationList() {
                     autoHideDuration: 5000,
                 });
             } catch (error) {
+                let message = 'Error al eliminar la sucursal: ';
+
+                if (axios.isAxiosError(error) && error.response?.status === 409) {
+                    message += 'La sucursal tiene proyecciones activas o programadas.';
+                } else if (error instanceof Error) {
+                    message += ` ${error.message}`;
+                }
                 notifications.show(
                     getErrorMessage(error, 'Error al eliminar la sucursal'),
                     {
