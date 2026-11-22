@@ -232,6 +232,13 @@ export default function ShowSeats() {
                 </Stack>
             </Paper>
 
+
+            {remainingTime !== null && (
+                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
+                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
+                </Typography>
+            )}
+
             <Stack sx={{ alignItems: 'center', mb: 2 }}>
                 <Box sx={{ width: '60%', maxWidth: 420, height: 10, bgcolor: 'grey.700', borderRadius: 0.5 }} />
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -316,12 +323,6 @@ export default function ShowSeats() {
                     <DisponibilityChartItem color={COLORS.selected} label="Seleccionado" />
                 </Stack>
             </Paper>
-
-            {remainingTime !== null && (
-                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
-                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
-                </Typography>
-            )}
 
             <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
                 <Button
