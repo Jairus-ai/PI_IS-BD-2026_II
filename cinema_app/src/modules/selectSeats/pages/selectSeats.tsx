@@ -380,12 +380,6 @@ export default function ShowSeats() {
                 </Stack>
             </Paper>
 
-            {remainingTime !== null && (
-                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
-                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
-                </Typography>
-            )}
-
             <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
                 <Button
                     variant="contained"
