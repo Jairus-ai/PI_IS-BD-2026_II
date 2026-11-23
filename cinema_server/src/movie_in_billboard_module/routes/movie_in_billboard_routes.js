@@ -2,15 +2,18 @@ import { Router } from 'express';
 import {
   getMoviesInBillboardsCount,
   getMoviesInBillboardsList,
-  getMovieInBillboardByID
+  getMovieInBillboardByID,
+  createMovieInBillboard
 } from '../controllers/movie_in_billboard_controller.js';
 import {
   validateQuery,
-  validateParams
+  validateParams,
+  validateBody
 } from '../../middleware/validate.js';
 import {
   movieInBillboardQuerySchema,
-  movieInBillboardIdSchema
+  movieInBillboardIdSchema,
+  movieInBillboardBodySchema
 } from '../schemas/movie_in_billboard_schema.js';
 import {
   ROLES,
@@ -28,5 +31,6 @@ router.use(requireSession(MOVIE_IN_BILLBOARD_ACCESS_ROLES));
 router.get('/', validateQuery(movieInBillboardQuerySchema), getMoviesInBillboardsList);
 router.get('/count', validateQuery(movieInBillboardQuerySchema), getMoviesInBillboardsCount);
 router.get('/:id', validateParams(movieInBillboardIdSchema), getMovieInBillboardByID);
+router.post('/', validateBody(movieInBillboardBodySchema), createMovieInBillboard);
 
 export default router;

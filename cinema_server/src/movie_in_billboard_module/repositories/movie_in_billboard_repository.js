@@ -113,3 +113,60 @@ export async function findMovieInBillboardById(connection, id) {
 
   return result.rows[0] ?? null;
 }
+
+export async function hasOverlappingMovieInBillboard(connection, movieInBillboard) {
+  const sql = `
+    SELECT 1
+    FROM PI_DEVELOPERS.MOVIES_IN_BILLBOARDS
+    WHERE ID_MOVIE = :movieId
+      AND ID_LOCATION = :locationId
+      AND IS_DELETED = 0
+      AND OPENING_DATE <= TO_DATE(:closingDate, 'YYYY-MM-DD')
+      AND CLOSING_DATE >= TO_DATE(:openingDate, 'YYYY-MM-DD')
+    FETCH FIRST 1 ROWS ONLY
+  `;
+
+  const binds = {
+    movieId: movieInBillboard.movieId,
+    locationId: movieInBillboard.locationId,
+    openingDate: movieInBillboard.openingDate,
+    closingDate: movieInBillboard.closingDate
+  };
+
+  const result = await connection.execute(sql, binds, OBJECT_FORMAT);
+
+  return result.rows.length > 0;
+}
+
+export async function insertMovieInBillboard(connection, movieInBillboard) {
+  const sql = `
+    INSERT INTO PI_DEVELOPERS.MOVIES_IN_BILLBOARDS
+      (OPENING_DATE, CLOSING_DATE, PREMIER, ID_LOCATION, ID_MOVIE)
+    VALUES (
+      TO_DATE(:openingDate, 'YYYY-MM-DD'),
+      TO_DATE(:closingDate, 'YYYY-MM-DD'),
+      :premier,
+      :locationId,
+      :movieId
+    )
+    RETURNING ID_MOVIE_IN_BILLBOARD INTO :movieInBillboardId
+  `;
+
+  const binds = {
+    openingDate: movieInBillboard.openingDate,
+    closingDate: movieInBillboard.closingDate,
+    premier: movieInBillboard.premier
+      ? 1
+      : 0,
+    locationId: movieInBillboard.locationId,
+    movieId: movieInBillboard.movieId,
+    movieInBillboardId: {
+      dir: oracledb.BIND_OUT,
+      type: oracledb.NUMBER
+    }
+  };
+
+  const result = await connection.execute(sql, binds, { autoCommit: true });
+
+  return result.outBinds.movieInBillboardId[0];
+}
