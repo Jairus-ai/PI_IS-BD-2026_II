@@ -7,6 +7,8 @@ import { validateAll } from '../utils/snackFormValidation';
 import type { SnackFormValues } from '../utils/snackFormValidation';
 import { mapDetailToFormValues } from '../utils/snackFormHydration';
 import { buildSnackPayload } from '../utils/snackPayloadBuilder';
+import { getErrorMessage } from '../../../services/errorMessage';
+
 
 const initialFormValues: SnackFormValues = {
     name: '',
@@ -16,7 +18,7 @@ const initialFormValues: SnackFormValues = {
 
 const ERROR_KEY: Record<keyof SnackFormValues, string> = {
     name: 'SNACK_NAME',
-    price: 'SNACK',
+    price: 'PRICE',
     description: 'SNACK_DESCRIPTION',
 };
 
@@ -153,7 +155,7 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
                 setFieldErrors(serverErrors);
             } else {
                 notifications.show(
-                    `Error al guardar el snack: ${(submitError as Error).message}`,
+                    getErrorMessage(submitError, 'Error al eliminar el snack'),
                     { severity: 'error', autoHideDuration: 5000 },
                 );
             }

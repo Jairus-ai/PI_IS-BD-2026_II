@@ -253,7 +253,7 @@ describe(`GET ${BASE_PATH}/:id`, () => {
 
         const response = await get(999).expect(404);
 
-        expect(response.body).toEqual({ message: 'Snack not found' });
+        expect(response.body).toEqual({ message: 'Snack no encontrado' });
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
@@ -266,4 +266,71 @@ describe(`GET ${BASE_PATH}/:id`, () => {
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
+});
+
+describe('POST ${BASE_PATH}', () => {
+    test('201 cuando se crea correctamente', async () => {
+        const connection = useConnection([
+            {
+                rows: [{ LAST_ID: 5 }],
+            },
+            {},
+        ]);
+
+        const response = await request(app)
+            .post('/management/snacks')
+            .send({
+                SNACK_NAME: 'Nachos',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 1500,
+            });
+
+        expect(response.status).toBe(201);
+
+        expect(response.body).toEqual({
+            message: 'success',
+        });
+
+        expect(connection.execute).toHaveBeenNthCalledWith(
+            2,
+            expect.stringContaining('INSERT INTO PI_DEVELOPERS.SNACKS'),
+            {
+                ID_SNACK: 6,
+                SNACK_NAME: 'Nachos',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 1500,
+            },
+            {
+                autoCommit: true,
+            }
+        );
+    });
+
+    test('409 cuando el nombre ya existe', async () => {
+        const duplicateError = Object.assign(
+            new Error('ORA-00001: unique constraint violated'),
+            { errorNum: 1 }
+        );
+
+        useConnection([
+            {
+                rows: [{ LAST_ID: 5 }],
+            },
+            duplicateError,
+        ]);
+
+        const response = await request(app)
+            .post('/management/snacks')
+            .send({
+                SNACK_NAME: 'Nachos',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 1500,
+            });
+
+        expect(response.status).toBe(409);
+
+        expect(response.body).toEqual({
+            message: 'Ya existe un snack con ese nombre.',
+        });
+    });
 });

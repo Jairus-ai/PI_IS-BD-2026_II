@@ -131,12 +131,12 @@ export const getSnackByID = async(req, res, next) =>
 
     if (!snack) 
     {
-      return res.status(404).json({ message: 'Snack not found' });
+      return res.status(404).json({ message: 'Snack no encontrado' });
     }
 
     res.status(200).json(
     { 
-      data: snack 
+      data: snack
     });
 
   }catch(error)
@@ -151,36 +151,43 @@ export const getSnackByID = async(req, res, next) =>
   }
 };
 
-//for the other stories
-/*
+
 export const createSnack = async(req, res, next) => 
 {
   let connection;
   try
   {
-    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
     connection = await getConnection();
+    const {SNACK_NAME, SNACK_DESCRIPTION, PRICE} = req.body;
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
+    const result = await connection.execute(
+      `SELECT MAX(ID_SNACK) AS LAST_ID 
+      FROM PI_DEVELOPERS.SNACKS`, 
+      [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
+    );
+
+    const lastId = result.rows[0].LAST_ID ?? 0;
+    const ID_SNACK = lastId + 1;  
 
     const request = `
-      INSERT INTO PI_DEVELOPERS.LOCATIONS(LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, ID_CANTON)
+      INSERT INTO PI_DEVELOPERS.SNACKS(ID_SNACK, SNACK_NAME, SNACK_DESCRIPTION, PRICE)
       VALUES
       (
-        :LOCATION_NAME,
-        TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
-        TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
-        :ID_CANTON
+        :ID_SNACK,
+        :SNACK_NAME,
+        :SNACK_DESCRIPTION,
+        :PRICE
       )
     `;
     
     await connection.execute(
       request,
       {
-        LOCATION_NAME: LOCATION_NAME, 
-        OPENING_HOUR: OPENING_HOUR, 
-        CLOSING_HOUR: CLOSING_HOUR,
-        ID_CANTON: ID_CANTON
+        ID_SNACK:ID_SNACK,
+        SNACK_NAME: SNACK_NAME, 
+        SNACK_DESCRIPTION: SNACK_DESCRIPTION, 
+        PRICE: PRICE
       },
       {
         autoCommit: true
@@ -195,6 +202,11 @@ export const createSnack = async(req, res, next) =>
     
   }catch(error)
   {
+    if (error.errorNum === 1) {
+      return res.status(409).json({
+        message: 'Ya existe un snack con ese nombre.',
+      });
+    }
     next(error);
   }finally
   {
@@ -205,7 +217,8 @@ export const createSnack = async(req, res, next) =>
   }
 
 };
-
+//for the other stories
+/*
 export const editSnack = async(req, res, next) =>
 {
   let connection;
@@ -314,4 +327,5 @@ export const deleteSnack = async (req,res,next) =>
       await closeDatabaseConnection(connection);
     }
   }
-};*/
+};
+*/

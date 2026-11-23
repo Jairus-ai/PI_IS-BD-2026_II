@@ -6,6 +6,6 @@ export function mapDetailToFormValues(detail: Snack): SnackFormValues {
     return {
         name: detail.SNACK_NAME ?? '',
         description: detail.SNACK_DESCRIPTION ?? '',
-        price:detail.PRICE?? null,
+        price:detail.PRICE ?? null,
     };
 }
