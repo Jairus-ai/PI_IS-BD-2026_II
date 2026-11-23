@@ -11,6 +11,17 @@ const optionalFilterId = (fieldName) =>
     ])
     .optional();
 
+const optionalMovieName = z
+  .string()
+  .trim()
+  .max(100, 'El nombre de la película no puede exceder los 100 caracteres.')
+  .transform((value) =>
+    value === ''
+      ? undefined
+      : value
+  )
+  .optional();
+
 export const movieInBillboardQuerySchema = z.object({
   page: z.coerce
     .number({ error: 'La página debe ser un número.' })
@@ -19,6 +30,7 @@ export const movieInBillboardQuerySchema = z.object({
     .default(1),
   locationId: optionalFilterId('El ID de sede'),
   ratingId: optionalFilterId('El ID de clasificación'),
+  movieName: optionalMovieName,
 });
 
 export const movieInBillboardIdSchema = z.object({

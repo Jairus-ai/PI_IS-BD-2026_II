@@ -152,13 +152,36 @@ describe('GET /management/movies_in_billboards/count', () => {
     const connection = mockDatabase({ rows: [{ TOTAL: 12 }] });
 
     await request(app)
-      .get(`${BASE_PATH}/count?locationId=&ratingId=`)
+      .get(`${BASE_PATH}/count?locationId=&ratingId=&movieName=%20%20`)
       .set('Cookie', sessionCookie(ROLES.SUPERUSER))
       .expect(200);
 
     const [, binds] = controllerCall(connection);
 
     expect(binds).toEqual({});
+  });
+
+  test('Searches the movie by name ignoring case and spaces around it', async () => {
+    const connection = mockDatabase({ rows: [{ TOTAL: 1 }] });
+
+    await request(app)
+      .get(`${BASE_PATH}/count?movieName=%20Incep%20`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .expect(200);
+
+    const [sql, binds] = controllerCall(connection);
+
+    expect(sql).toMatch(/LOWER\(m\.MOVIE_TITLE\) LIKE LOWER\(:movieName\)/);
+    expect(binds).toEqual({ movieName: '%Incep%' });
+  });
+
+  test('Returns 400 when the movie name is longer than 100 characters', async () => {
+    mockDatabase();
+
+    await request(app)
+      .get(`${BASE_PATH}/count?movieName=${'a'.repeat(101)}`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .expect(400);
   });
 
   test('Returns 400 when a filter is not a valid ID', async () => {

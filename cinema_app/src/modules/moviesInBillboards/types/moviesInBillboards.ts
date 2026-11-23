@@ -26,6 +26,7 @@ export interface MovieInBillboardPage {
 export interface MovieInBillboardFilters {
   locationId: number | '';
   ratingId: number | '';
+  movieName: string;
 }
 
 export interface LocationOption {

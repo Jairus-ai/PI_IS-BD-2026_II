@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent } from 'react';
 import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 import type { GridColDef } from '@mui/x-data-grid';
 import { CrudPage } from '../../../components/crud/CrudPage';
 import { ActionButton } from '../../../components/crud/ActionButton';
@@ -22,9 +23,12 @@ const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las películas en cartelera.';
 const NO_MOVIES_IN_BILLBOARDS_MESSAGE = 'No hay películas en ninguna de las carteleras.';
 const NO_FILTER_RESULTS_MESSAGE = 'No se encontraron resultados para la búsqueda.';
 
+const MAX_MOVIE_NAME_LENGTH = 100;
+
 const EMPTY_FILTERS: MovieInBillboardFilters = {
   locationId: '',
-  ratingId: ''
+  ratingId: '',
+  movieName: ''
 };
 
 const FIRST_PAGE = {
@@ -50,7 +54,9 @@ export default function MovieInBillboardList() {
     locations
   } = useMovieInBillboardFilterOptions();
 
-  const hasFilters = filters.locationId !== '' || filters.ratingId !== '';
+  const hasFilters = filters.locationId !== ''
+    || filters.ratingId !== ''
+    || filters.movieName.trim() !== '';
 
   const columns: GridColDef<MovieInBillboard>[] = [
     {
@@ -132,6 +138,14 @@ export default function MovieInBillboardList() {
       }
       filters={
         <>
+          <TextField
+            label="Buscar por nombre"
+            name="movieName"
+            value={filters.movieName}
+            onChange={handleFilterChange}
+            size="small"
+            slotProps={{ htmlInput: { maxLength: MAX_MOVIE_NAME_LENGTH } }}
+          />
           <FilterField
             label="Sucursal"
             name="locationId"

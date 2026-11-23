@@ -13,7 +13,7 @@ const MOVIES_IN_BILLBOARDS_SOURCE = `
     JOIN PI_DEVELOPERS.RATINGS r ON r.ID_RATING = m.ID_RATING
 `;
 
-export function buildMovieInBillboardFilters({ locationId, ratingId } = {}) {
+export function buildMovieInBillboardFilters({ locationId, ratingId, movieName } = {}) {
   const conditions = [
     'mib.IS_DELETED = 0',
     'm.IS_DELETED = 0',
@@ -29,6 +29,11 @@ export function buildMovieInBillboardFilters({ locationId, ratingId } = {}) {
   if (ratingId) {
     conditions.push('m.ID_RATING = :ratingId');
     binds.ratingId = ratingId;
+  }
+
+  if (movieName) {
+    conditions.push('LOWER(m.MOVIE_TITLE) LIKE LOWER(:movieName)');
+    binds.movieName = `%${movieName}%`;
   }
 
   return {

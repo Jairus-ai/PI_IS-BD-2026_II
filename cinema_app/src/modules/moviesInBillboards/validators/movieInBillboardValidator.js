@@ -1,8 +1,11 @@
 const INVALID_PAGE_MESSAGE = 'La página debe ser un número entero mayor a 0.';
 const INVALID_ID_MESSAGE = 'La película en cartelera seleccionada no es válida.';
 const INVALID_FILTER_MESSAGE = 'El filtro seleccionado no es válido.';
+const MOVIE_NAME_TOO_LONG_MESSAGE = 'El nombre de la película no puede exceder los 100 caracteres.';
 
-const FILTER_KEYS = [
+const MAX_MOVIE_NAME_LENGTH = 100;
+
+const ID_FILTER_KEYS = [
   'locationId',
   'ratingId'
 ];
@@ -30,7 +33,7 @@ export function validateMovieInBillboardId(id) {
 export function cleanMovieInBillboardFilters(filters = {}) {
   const cleanedFilters = {};
 
-  for (const key of FILTER_KEYS) {
+  for (const key of ID_FILTER_KEYS) {
     const value = filters[key];
 
     if (isEmpty(value))
@@ -41,6 +44,14 @@ export function cleanMovieInBillboardFilters(filters = {}) {
 
     cleanedFilters[key] = Number(value);
   }
+
+  const movieName = String(filters.movieName ?? '').trim();
+
+  if (movieName.length > MAX_MOVIE_NAME_LENGTH)
+    throw new Error(MOVIE_NAME_TOO_LONG_MESSAGE);
+
+  if (movieName !== '')
+    cleanedFilters.movieName = movieName;
 
   return cleanedFilters;
 }
