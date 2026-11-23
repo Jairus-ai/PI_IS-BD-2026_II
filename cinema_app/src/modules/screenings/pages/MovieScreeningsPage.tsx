@@ -14,6 +14,9 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import IconButton from '@mui/material/IconButton';
 import { useNavigate, useParams } from 'react-router';
 import { useMovieScreenings } from '../hooks/useMovieScreenings';
 import type { ListValue, Movie, Screening, ScreeningsError } from '../types/screenings';
@@ -35,6 +38,17 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 const pad = (value: number) => String(value).padStart(2, '0');
 const isValidDate = (date: Date): boolean => !Number.isNaN(date.getTime());
 const byStartTime = (a: Screening, b: Screening) => Date.parse(a.START_TIME) - Date.parse(b.START_TIME);
+
+const TOTAL_UPCOMING_DAYS = 14;
+const DAYS_PER_PAGE = 7;
+
+function getNext15Days(): string[] {
+    const today = new Date();
+    return Array.from({ length: TOTAL_UPCOMING_DAYS }, (_, offset) => {
+        const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+        return toDayKey(date);
+    });
+}
 
 function formatList(value: ListValue): string {
     if (Array.isArray(value)) {
@@ -72,10 +86,10 @@ function getScreeningDayKey(startTime: string): string | null {
 function formatDayLabel(dayKey: string): string {
     const [year, month, day] = dayKey.split('-').map(Number);
     const today = new Date();
-    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    //const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
     if (dayKey === toDayKey(today)) return 'Hoy';
-    if (dayKey === toDayKey(tomorrow)) return 'Mañana';
+    //if (dayKey === toDayKey(tomorrow)) return 'Mañana';
 
     const parts = Object.fromEntries(
         DAY_FORMAT.formatToParts(new Date(year, month - 1, day)).map((part) => [part.type, part.value]),
@@ -247,19 +261,36 @@ function MovieScreeningsContent({ idMovie }: Readonly<{ idMovie: number }>) {
     const screenings = rawScreenings as Screening[];
     const error = rawError as ScreeningsError | null;
 
-    const [selectedDay, setSelectedDay] = React.useState('');
+    const allDays = React.useMemo(() => getNext15Days(), []);
+    const [selectedDay, setSelectedDay] = React.useState(() => allDays[0]);
+    const [dayPage, setDayPage] = React.useState(0);
 
-    // Días con funciones según la sucursal activa (screenings ya viene filtrado por el hook)
-    const days = React.useMemo(() => {
-        const keys = new Set<string>();
-        screenings.forEach((screening) => {
-            const key = getScreeningDayKey(screening.START_TIME);
-            if (key) keys.add(key);
-        });
-        return [...keys].sort();
-    }, [screenings]);
+    const goToDayPage = (nextPage: number) => {
+        const clampedPage = Math.max(0, Math.min(maxPage, nextPage));
+        const pageDays = allDays.slice(clampedPage * DAYS_PER_PAGE, (clampedPage + 1) * DAYS_PER_PAGE);
+        setDayPage(clampedPage);
+        if (pageDays[0]) {
+            setSelectedDay(pageDays[0]);
+        }
+    };
 
-    const activeDay = days.includes(selectedDay) ? selectedDay : (days[0] ?? '');
+    const hasInitializedDay = React.useRef(false);
+    React.useEffect(() => {
+        if (hasInitializedDay.current || screenings.length === 0) return;
+        const firstDayWithShowtime = allDays.find((day) =>
+            screenings.some((screening) => getScreeningDayKey(screening.START_TIME) === day),
+        );
+        if (firstDayWithShowtime) {
+            const index = allDays.indexOf(firstDayWithShowtime);
+            setSelectedDay(firstDayWithShowtime);
+            setDayPage(Math.floor(index / DAYS_PER_PAGE));
+            hasInitializedDay.current = true;
+        }
+    }, [screenings, allDays]);
+
+    const maxPage = Math.ceil(allDays.length / DAYS_PER_PAGE) - 1;
+    const visibleDays = allDays.slice(dayPage * DAYS_PER_PAGE, (dayPage + 1) * DAYS_PER_PAGE);
+    const activeDay = allDays.includes(selectedDay) ? selectedDay : allDays[0];
 
     const locationGroups = React.useMemo(() => {
         const groups = new Map<number, LocationGroup>();
@@ -352,38 +383,60 @@ function MovieScreeningsContent({ idMovie }: Readonly<{ idMovie: number }>) {
                 <Alert severity="info">No hay funciones programadas en la sucursal seleccionada.</Alert>
             )}
 
-            {days.length > 0 && (
-                <Tabs
-                    value={activeDay}
-                    onChange={(_, value: string) => setSelectedDay(value)}
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    aria-label="Días con funciones"
-                    sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-                >
-                    {days.map((day) => (
-                        <Tab key={day} value={day} label={formatDayLabel(day)} />
-                    ))}
-                </Tabs>
+            {!hasNoScreenings && !hasNoMatches && (
+                <>
+                    <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: 'center', mb: 2, borderBottom: 1, borderColor: 'divider' }}
+                    >
+                        <IconButton
+                            aria-label="7 días anteriores"
+                            disabled={dayPage === 0}
+                            onClick={() => goToDayPage(dayPage - 1)}
+                            size="small"
+                        >
+                            <ChevronLeftIcon />
+                        </IconButton>
+
+                        <Tabs
+                            value={visibleDays.includes(activeDay) ? activeDay : false}
+                            onChange={(_, value: string) => setSelectedDay(value)}
+                            variant="scrollable"
+                            aria-label="Próximos 15 días"
+                        >
+                            {visibleDays.map((day) => (
+                                <Tab key={day} value={day} label={formatDayLabel(day)} />
+                            ))}
+                        </Tabs>
+
+                        <IconButton
+                            aria-label="Siguientes 7 días"
+                            disabled={dayPage >= maxPage}
+                            onClick={() => goToDayPage(dayPage + 1)}
+                            size="small"
+                        >
+                            <ChevronRightIcon />
+                        </IconButton>
+                    </Stack>
+
+                    {locationGroups.length === 0 ? (
+                        <Alert severity="info">No hay funciones programadas para este día.</Alert>
+                    ) : (
+                        <Stack spacing={2}>
+                            {locationGroups.map((group) => (
+                                <LocationSchedule
+                                    key={group.id}
+                                    group={group}
+                                    onSelect={(screeningId) => {
+                                        void navigate(`/seats/${screeningId}`);
+                                    }}
+                                />
+                            ))}
+                        </Stack>
+                    )}
+                </>
             )}
-
-            <Stack spacing={2}>
-                {locationGroups.map((group) => (
-                    <LocationSchedule
-                        key={group.id}
-                        group={group}
-                        onSelect={(screeningId) => {
-                            void navigate(`/seats/${screeningId}`);
-                        }}
-                    />
-                ))}
-            </Stack>
-
-            <Stack direction="row" sx={{ justifyContent: 'center', mt: 4 }}>
-                <Button variant="contained" color="inherit" disableElevation onClick={goHome}>
-                    Atrás
-                </Button>
-            </Stack>
         </Box>
     );
 }
