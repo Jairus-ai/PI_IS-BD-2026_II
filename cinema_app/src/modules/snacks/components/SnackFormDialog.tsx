@@ -1,27 +1,27 @@
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import { useLocationForm } from '../hooks/useSnacksForm';
-import LocationFormFields from './SnackFormFields';
+import { useSnackForm } from '../hooks/useSnacksForm';
+import SnackFormFields from './SnackFormFields';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
 
-interface LocationFormDialogProps {
-    readonly locationId: number | null;
+interface SnackFormDialogProps {
+    readonly snackId: number | null;
     readonly open: boolean;
     readonly onClose: () => void;
     readonly onSaved?: () => void;
 }
 
-const FORM_ID = 'location-form';
+const FORM_ID = 'snack-form';
 
-export default function LocationFormDialog({
-    locationId,
+export default function SnackFormDialog({
+    snackId,
     open,
     onClose,
     onSaved,
-}: LocationFormDialogProps) {
-    const form = useLocationForm({ locationId, open, onClose, onSaved });
+}: SnackFormDialogProps) {
+    const form = useSnackForm({ snackId, open, onClose, onSaved });
 
-    const title = form.isCreate ? 'Crear sucursal' : 'Editar sucursal';
+    const title = form.isCreate ? 'Crear snack' : 'Editar snack';
 
     return (
         <CrudDialog
@@ -39,7 +39,6 @@ export default function LocationFormDialog({
                                 : 'Completa todos los campos obligatorios correctamente'
                         }
                     >
-                        {/* El span permite que el Tooltip funcione aunque el botón esté deshabilitado */}
                         <span>
                             <Button
                                 type="submit"
@@ -53,7 +52,7 @@ export default function LocationFormDialog({
                 </>
             }
         >
-            <LocationFormFields form={form} formId={FORM_ID} />
+            <SnackFormFields form={form} formId={FORM_ID} />
         </CrudDialog>
     );
 }

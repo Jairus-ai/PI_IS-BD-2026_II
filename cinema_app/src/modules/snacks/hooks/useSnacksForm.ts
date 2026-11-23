@@ -1,6 +1,5 @@
 import * as React from 'react';
-import type { Dayjs } from 'dayjs';
-import { useLocations } from './useSnacks';
+import { useSnacks } from './useSnacks';
 import useNotifications from '../../../hooks/useNotifications';
 import { readServerErrors } from '../utils/snackFormUtils';
 import type { ServerErrors } from '../utils/snackFormUtils';
@@ -46,7 +45,7 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
         updateSnack,
         isCreatingSnack,
         isUpdatingSnack,
-    } = useLocations(1, open && !isCreate ? snackId : null, values.province_id);
+    } = useSnacks(1, open && !isCreate ? snackId : null);
 
     const touchedRef = React.useRef<Record<string, boolean>>({});
 
@@ -91,15 +90,14 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
         setFieldValue('name', event.target.value);
     };
 
-    const handleOpHourChange = (hour: Dayjs | null) => {
-        setFieldValue('opening_hour', hour);
+    const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setFieldValue('description', event.target.value);
     };
 
-    const handleCloseHourChange = (hour: Dayjs | null) => {
-        setFieldValue('closing_hour', hour);
+    const handlePriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = event.target.value;
+        setFieldValue('price', raw === '' ? null : Number(raw));
     };
-
-
     React.useEffect(() => {
         if (!open) {
             return;
@@ -175,14 +173,15 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
         fieldErrors,
         touched,
         name: values.name,
-        opening_hour: values.opening_hour,
-        closing_hour: values.closing_hour,
+        description: values.description,
+        price: values.price,
 
         handleNameChange,
-        handleOpHourChange,
-        handleCloseHourChange,
+        handleDescriptionChange,
+        handlePriceChange,
         handleSubmit,
         handleBlur,
+    };
 }
 
-export type LocationForm = ReturnType<typeof useSnackForm>;
+export type SnackForm = ReturnType<typeof useSnackForm>;

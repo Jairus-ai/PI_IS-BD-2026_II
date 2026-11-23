@@ -5,6 +5,7 @@ import MovieList from '../modules/movies/pages/MovieList';
 import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import LocationList from '../modules/locations/pages/LocationList.js';
+import SnackList from '../modules/snacks/pages/SnackList.js';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import {RequireSession} from '../components/common/RequireSession';
@@ -77,6 +78,10 @@ const router = createHashRouter([
       {
         path: '/discounts',
         Component: DiscountList,
+      },
+      {
+        path: '/snacks',
+        Component: SnackList,
       },
       {
         path: '/users',

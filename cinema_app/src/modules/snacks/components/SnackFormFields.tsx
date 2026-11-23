@@ -1,22 +1,17 @@
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { firstError } from '../utils/snackFormUtils';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
-import type { LocationForm } from '../hooks/useSnacksForm';
-import Autocomplete from '@mui/material/Autocomplete';
+import type { SnackForm } from '../hooks/useSnacksForm';
 
 interface FieldErrorProps {
     readonly show: boolean;
     readonly message: string;
 }
 
-interface LocationFormFieldsProps {
-    readonly form: LocationForm;
+interface SnackFormFieldsProps {
+    readonly form: SnackForm;
     readonly formId: string;
 }
 
@@ -24,7 +19,7 @@ function FieldError({ show, message }: FieldErrorProps) {
     return <>{(show && message) || ' '}</>;
 }
 
-export default function LocationFormFields({ form, formId }: LocationFormFieldsProps) {
+export default function SnackFormField({ form, formId }: SnackFormFieldsProps) {
     const err = (name: string) =>
         Boolean(form.touched[name]) && Boolean(form.fieldErrors[name]);
 
@@ -43,126 +38,52 @@ export default function LocationFormFields({ form, formId }: LocationFormFieldsP
                     label="Nombre"
                     value={form.name}
                     onChange={form.handleNameChange}
-                    slotProps={{ htmlInput: { maxLength: 31 } }}
-                    error={err('LOCATION_NAME')}
+                    slotProps={{ htmlInput: { maxLength: 51 } }}
+                    error={err('SNACK_NAME')}
                     helperText={
                         <FieldError
-                            show={err('LOCATION_NAME')}
-                            message={firstError(form.fieldErrors.LOCATION_NAME)}
+                            show={err('SNACK_NAME')}
+                            message={firstError(form.fieldErrors.SNACK_NAME)}
                         />
                     }
                     fullWidth
                     required
                 />
 
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                        <TimePicker
-                            label="Hora de apertura"
-                            views={['hours', 'minutes']}
-                            format="HH:mm"
-                            ampm={false}
-                            value={form.opening_hour}
-                            onChange={form.handleOpHourChange}
-                            timeSteps={{ minutes: 1 }}
-                            slotProps={{
-                                textField: {
-                                    fullWidth: true,
-                                    required: true,
-                                    error: err('OPENING_HOUR'),
-                                    helperText: (
-                                        <FieldError
-                                            show={err('OPENING_HOUR')}
-                                            message={firstError(form.fieldErrors.OPENING_HOUR)}
-                                        />
-                                    ),
-                                },
-                            }}
+                <TextField
+                    label="Descripción"
+                    value={form.name}
+                    onChange={form.handleDescriptionChange}
+                    slotProps={{ htmlInput: { maxLength: 101 } }}
+                    error={err('SNACK_DESCRIPTION')}
+                    helperText={
+                        <FieldError
+                            show={err('SNACK_DESCRIPTION')}
+                            message={firstError(form.fieldErrors.SNACK_DESCRIPTION)}
                         />
-
-                        <TimePicker
-                            label="Hora de cierre"
-                            views={['hours', 'minutes']}
-                            format="HH:mm"
-                            ampm={false}
-                            value={form.closing_hour}
-                            onChange={form.handleCloseHourChange}
-                            timeSteps={{ minutes: 1 }}
-                            slotProps={{
-                                textField: {
-                                    fullWidth: true,
-                                    required: true,
-                                    error: err('CLOSING_HOUR'),
-                                    helperText: (
-                                        <FieldError
-                                            show={err('CLOSING_HOUR')}
-                                            message={firstError(form.fieldErrors.CLOSING_HOUR)}
-                                        />
-                                    ),
-                                },
-                            }}
-                        />
-                    </Stack>
-                </LocalizationProvider>
-
-                <Autocomplete
-                    options={form.provinces}
-                    value={form.provinces.find((province) => province.PROVINCE_NAME === form.province_name) ?? null}
-                    onChange={(_, selected) => form.handleProvinceChange(selected)}
-                    onBlur={form.handleBlur('PROVINCE_NAME')}
-                    getOptionLabel={(province) => province.PROVINCE_NAME}
-                    isOptionEqualToValue={(option, selected) => option.ID_PROVINCE === selected.ID_PROVINCE}
-                    loading={form.isLoadingProvinces}
-                    noOptionsText="Sin provincias"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Provincia"
-                            required
-                            error={err('PROVINCE_NAME')}
-                            helperText={
-                                <FieldError
-                                    show={err('PROVINCE_NAME')}
-                                    message={firstError(form.fieldErrors.PROVINCE_NAME)}
-                                />
-                            }
-                        />
-                    )}
+                    }
+                    fullWidth
+                    required
                 />
 
-                <Autocomplete
-                    options={form.cantons}
-                    disabled={form.province_id == null}
-                    value={form.cantons.find((canton) => canton.CANTON_NAME === form.canton_name) ?? null}
-                    onChange={(_, selected) => form.handleCantonChange(selected)}
-                    onBlur={form.handleBlur('CANTON_NAME')}
-                    getOptionLabel={(canton) => canton.CANTON_NAME}
-                    isOptionEqualToValue={(option, selected) => option.ID_CANTON === selected.ID_CANTON}
-                    loading={form.isLoadingCantons}
-                    noOptionsText="Sin cantones"
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Cantón"
-                            required
-                            error={err('CANTON_NAME')}
-                            helperText={
-                                <FieldError
-                                    show={err('CANTON_NAME')}
-                                    message={firstError(form.fieldErrors.CANTON_NAME)}
-                                />
-                            }
+                <TextField
+                    label="Precio del snack"
+                    type="number"
+                    value={form.price}
+                    onChange={form.handlePriceChange}
+                    slotProps={{ htmlInput: { maxLength: 4 } }}
+                    error={err('PRICE')}
+                    helperText={
+                        <FieldError
+                            show={err('PRICE')}
+                            message={firstError(form.fieldErrors.PRICE)}
                         />
-                    )}
+                    }
+                    fullWidth
+                    required
                 />
 
                 <RequiredFieldsHint />
-
-                {form.saving ? (
-                    <Alert severity="info">
-                        {form.isCreate ? 'Creando sucursal...' : 'Actualizando sucursal...'}
-                    </Alert>
-                ) : null}
             </Stack>
         </Box>
     );

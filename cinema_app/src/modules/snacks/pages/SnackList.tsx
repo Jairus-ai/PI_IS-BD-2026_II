@@ -1,39 +1,40 @@
 import * as React from 'react';
-import axios from 'axios';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import type { GridColDef } from '@mui/x-data-grid';
-import { useLocations } from '../hooks/useSnacks';
+import { useSnacks } from '../hooks/useSnacks';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
-import type { Location } from '../types/snacks';
+import type { Snack } from '../types/snacks';
 import LocationDetailDialog from '../components/SnackDetailDialog';
 import LocationFormDialog from '../components/SnackFormDialog';
 import { Actions } from '../../../components/crud/Actions';
 import { CrudPage } from '../../../components/crud/CrudPage';
+import { getErrorMessage } from '../../../services/errorMessage';
+
 
 const emptyFilters = {
     name: '',
 };
 
-export default function LocationList() {
+export default function SnackList() {
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
     const serverPage = paginationModel.page + 1;
 
     const [filters, setFilters] = React.useState(emptyFilters);
     const [selectedId, setSelectedId] = React.useState<number | null>(null);
-    const [formLocationId, setFormLocationId] = React.useState<number | null>(null);
+    const [formSnackId, setFormSnackId] = React.useState<number | null>(null);
     const [formOpen, setFormOpen] = React.useState(false);
     const dialogs = useDialogs();
     const notifications = useNotifications();
 
     const {
-        locations,
-        totalLocations,
-        isLoadingLocations,
-        LocationsError,
-        deleteLocation,
-    } = useLocations(serverPage, null,null ,filters);
+        snacks,
+        totalsnacks,
+        isLoadingSnacks,
+        SnacksError,
+        deleteSnack,
+    } = useSnacks(serverPage, null ,filters);
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const { name, value } = event.target;
@@ -47,21 +48,21 @@ export default function LocationList() {
     }
 
     const openCreate = () => {
-        setFormLocationId(null);
+        setFormSnackId(null);
         setFormOpen(true);
     };
 
     const openEdit = (id: number) => {
-        setFormLocationId(id);
+        setFormSnackId(id);
         setFormOpen(true);
     };
 
     const handleRowDelete = React.useCallback(
-        async (location: Location) => {
+        async (snack: Snack) => {
             const confirmed = await dialogs.confirm(
-                `¿Desea eliminar la sucursal "${location.LOCATION_NAME}"?`,
+                `¿Desea eliminar el snack "${snack.SNACK_NAME}"?`,
                 {
-                    title: 'Eliminar sucursal',
+                    title: 'Eliminar snack',
                     severity: 'error',
                     okText: 'Eliminar',
                     cancelText: 'Cancelar',
@@ -73,21 +74,14 @@ export default function LocationList() {
             }
 
             try {
-                await deleteLocation({ id: location.ID_LOCATION });
-                notifications.show('Sucursal eliminada correctamente.', {
+                await deleteSnack({ id: snack.ID_SNACK });
+                notifications.show('Snack eliminado correctamente.', {
                     severity: 'success',
                     autoHideDuration: 5000,
                 });
             } catch (error) {
-                let message = 'Error al eliminar la sucursal: ';
-
-                if (axios.isAxiosError(error) && error.response?.status === 409) {
-                    message += 'La sucursal tiene proyecciones activas o programadas.';
-                } else if (error instanceof Error) {
-                    message += `${error.message}`;
-                }
                 notifications.show(
-                    message,
+                    getErrorMessage(error, 'Error al eliminar la sucursal'),
                     {
                         severity: 'error',
                         autoHideDuration: 5000,
@@ -95,25 +89,20 @@ export default function LocationList() {
                 );
             }
         },
-        [dialogs, deleteLocation, notifications],
+        [dialogs, deleteSnack, notifications],
     );
 
     const columns = React.useMemo<GridColDef[]>(
         () => [
             {
-                field: 'LOCATION_NAME',
+                field: 'SNACK_NAME',
                 headerName: 'Nombre',
                 flex: 1,
                 minWidth: 200,
             },
             {
-                field: 'OPENING_HOUR',
-                headerName: 'Apertura',
-                width: 120,
-            },
-            {
-                field: 'CLOSING_HOUR',
-                headerName: 'Cierre',
+                field: 'PRICE',
+                headerName: 'Precio',
                 width: 120,
             },
             {
@@ -124,10 +113,10 @@ export default function LocationList() {
                 minWidth: 220,
                 align: 'right',
                 getActions: Actions({
-                    onShow: (location: Location) => setSelectedId(location.ID_LOCATION),
-                    onEdit: (location: Location) => openEdit(location.ID_LOCATION),
-                    onDelete: (location: Location) => {
-                        void handleRowDelete(location);
+                    onShow: (snack: Snack) => setSelectedId(snack.ID_SNACK),
+                    onEdit: (snack: Snack) => openEdit(snack.ID_SNACK),
+                    onDelete: (snack: Snack) => {
+                        void handleRowDelete(snack);
                     },
                 }),
             },
@@ -137,15 +126,15 @@ export default function LocationList() {
 
     return (
         <CrudPage
-            title="Sucursales"
-            createLabel="Crear Sucursal"
+            title="Snacks"
+            createLabel="Crear Snack"
             onCreate={openCreate}
-            error={LocationsError}
-            rows={locations}
-            rowCount={totalLocations}
-            getRowId={(row: Location) => row.ID_LOCATION}
+            error={SnacksError}
+            rows={snacks}
+            rowCount={totalsnacks}
+            getRowId={(row: Snack) => row.ID_SNACK}
             columns={columns}
-            loading={isLoadingLocations}
+            loading={isLoadingSnacks}
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}
             filters={
@@ -169,16 +158,16 @@ export default function LocationList() {
             dialogs={
                 <>
                     <LocationDetailDialog
-                        locationId={selectedId}
+                        SnackId={selectedId}
                         open={selectedId !== null}
                         onClose={() => setSelectedId(null)}
                     />
                     <LocationFormDialog
-                        locationId={formLocationId}
+                        snackId={formSnackId}
                         open={formOpen}
                         onClose={() => {
                             setFormOpen(false);
-                            setFormLocationId(null);
+                            setFormSnackId(null);
                         }}
                     />
                 </>

@@ -8,7 +8,7 @@ import {
   getSnackById,
 } from '../services/snackService';
 
-export const useLocations = (
+export const useSnacks = (
   page: number = 1,
   snackId: number | null | undefined = null,
   filters: any = {},

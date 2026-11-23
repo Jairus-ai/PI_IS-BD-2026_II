@@ -1,26 +1,26 @@
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
-import { useLocations } from '../hooks/useSnacks';
-import type { Location } from '../types/snacks';
+import { useSnacks } from '../hooks/useSnacks';
+import type { Snack } from '../types/snacks';
 import { DetailField } from '../../../components/crud/DetailField';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
 
-interface LocationDetailDialogProps {
-    readonly locationId: number | null;
+interface SnackDetailDialogProps {
+    readonly SnackId: number | null;
     readonly open: boolean;
     readonly onClose: () => void;
 }
 
-export default function LocationDetailDialog({
-    locationId,
+export default function snackDetailDialog({
+    SnackId,
     open,
     onClose,
-}: LocationDetailDialogProps) {
-    const { locationDetail, isLoadingDetail } = useLocations(1, open ? locationId : null);
-    const location = locationDetail as Location | null;
+}: SnackDetailDialogProps) {
+    const { snackDetail, isLoadingDetail } = useSnacks(1, open ? SnackId : null);
+    const Snack = snackDetail as Snack | null;
 
-    const title = location?.LOCATION_NAME ?? (isLoadingDetail ? 'Cargando…' : 'Sucursal');
+    const title = Snack?.SNACK_NAME ?? (isLoadingDetail ? 'Cargando…' : 'Snack');
 
     return (
         <CrudDialog
@@ -30,23 +30,21 @@ export default function LocationDetailDialog({
             loading={isLoadingDetail}
             actions={<Button onClick={onClose}>Cerrar</Button>}
         >
-            {!location && locationId != null && !isLoadingDetail && (
+            {!Snack && SnackId != null && !isLoadingDetail && (
                 <Alert severity="warning">Sin datos.</Alert>
             )}
 
-            {location && (
+            {Snack && (
                 <Stack spacing={1.5}>
-                    <DetailField label="Nombre" value={location.LOCATION_NAME} />
+                    <DetailField label="Nombre" value={Snack.SNACK_NAME} />
                     <DetailField
-                        label="Hora de apertura"
-                        value={`${location.OPENING_HOUR}`}
+                        label="Descripción"
+                        value={`${Snack.SNACK_DESCRIPTION}`}
                     />
                     <DetailField
-                        label="Hora de cierre"
-                        value={`${location.CLOSING_HOUR}`}
+                        label="Precio del snack"
+                        value={`${Snack.PRICE}`}
                     />
-                    <DetailField label="Provincia" value={location.PROVINCE_NAME} />
-                    <DetailField label="Cantón" value={location.CANTON_NAME} />
                 </Stack>
             )}
         </CrudDialog>
