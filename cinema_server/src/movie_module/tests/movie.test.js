@@ -9,6 +9,7 @@ const mockRollback = jest.fn();
 const mockCountMovies = jest.fn();
 const mockListMovies = jest.fn();
 const mockFindMovieById = jest.fn();
+const mockListMovieOptions = jest.fn();
 const mockSplitMovieBody = jest.fn();
 const mockCreateMovieWithRelations = jest.fn();
 const mockUpdateMovieWithRelations = jest.fn();
@@ -24,6 +25,7 @@ jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   countMovies: mockCountMovies,
   listMovies: mockListMovies,
   findMovieById: mockFindMovieById,
+  listMovieOptions: mockListMovieOptions,
   splitMovieBody: mockSplitMovieBody,
   createMovieWithRelations: mockCreateMovieWithRelations,
   updateMovieWithRelations: mockUpdateMovieWithRelations,
@@ -104,6 +106,31 @@ describe('Movie Controller Endpoint Tests', () => {
 
       await request(app)
         .get('/management/movies')
+        .expect(500);
+
+      expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(dummyConnection);
+    });
+  });
+
+  describe('GET /management/movies/options', () => {
+    test('200 OK - Obtiene las opciones de películas', async () => {
+      const mockOptions = [{ ID_MOVIE: 1, MOVIE_TITLE: 'Inception' }];
+      mockListMovieOptions.mockResolvedValue(mockOptions);
+
+      const response = await request(app)
+        .get('/management/movies/options')
+        .expect(200);
+
+      expect(response.body).toEqual({ data: mockOptions });
+      expect(mockFindMovieById).not.toHaveBeenCalled();
+      expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(dummyConnection);
+    });
+
+    test('500 Error - Manejo de excepción', async () => {
+      mockListMovieOptions.mockRejectedValue(new Error('DB Error'));
+
+      await request(app)
+        .get('/management/movies/options')
         .expect(500);
 
       expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(dummyConnection);

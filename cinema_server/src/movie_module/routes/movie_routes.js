@@ -3,6 +3,7 @@ import {
   getMoviesCount,
   getMoviesList,
   getMovieByID,
+  getMovieOptions,
   createMovie,
   updateMovie,
   deleteMovie
@@ -21,6 +22,7 @@ const router = Router();
 
 router.get('/', validateQuery(movieQuerySchema), getMoviesList);
 router.get('/count', validateQuery(movieQuerySchema), getMoviesCount);
+router.get('/options', getMovieOptions);
 router.get('/:id', validateParams(movieIdSchema), getMovieByID);
 router.post('/poster', uploadPoster.single('poster'), uploadPosterFile);
 router.post('/', validateBody(movieBodySchema), createMovie);
