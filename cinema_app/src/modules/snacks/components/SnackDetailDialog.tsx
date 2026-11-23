@@ -12,7 +12,7 @@ interface SnackDetailDialogProps {
     readonly onClose: () => void;
 }
 
-export default function snackDetailDialog({
+export default function SnackDetailDialog({
     SnackId,
     open,
     onClose,

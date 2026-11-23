@@ -19,7 +19,7 @@ export function validateAll(
   }
   else if (values.price<=0)
   {
-    errors.PIRCE = 'El precio no pude ser 0';
+    errors.PRICE = 'El precio no pude ser 0';
   }
 
   if(!values.description.trim()) errors.SNACK_DESCRIPTION = 'Campo obligatorio';

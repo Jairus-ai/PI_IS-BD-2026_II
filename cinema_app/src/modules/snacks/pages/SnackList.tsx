@@ -81,7 +81,7 @@ export default function SnackList() {
                 });
             } catch (error) {
                 notifications.show(
-                    getErrorMessage(error, 'Error al eliminar la sucursal'),
+                    getErrorMessage(error, 'Error al eliminar el snack'),
                     {
                         severity: 'error',
                         autoHideDuration: 5000,
