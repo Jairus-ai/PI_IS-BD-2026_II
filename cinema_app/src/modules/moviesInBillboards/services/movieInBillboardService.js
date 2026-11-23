@@ -2,6 +2,7 @@ import { api } from '../../../services/api';
 import {
   cleanMovieInBillboardFilters,
   validateMovieInBillboardId,
+  validateNewMovieInBillboard,
   validatePage
 } from '../validators/movieInBillboardValidator';
 
@@ -39,6 +40,14 @@ export const getMovieInBillboard = async (id) => {
   validateMovieInBillboardId(id);
 
   const { data } = await api.get(`${MOVIES_IN_BILLBOARDS_PATH}/${id}`, SESSION_REQUEST_CONFIG);
+
+  return data.data;
+};
+
+export const createMovieInBillboard = async (movieInBillboard) => {
+  const body = validateNewMovieInBillboard(movieInBillboard);
+
+  const { data } = await api.post(MOVIES_IN_BILLBOARDS_PATH, body, SESSION_REQUEST_CONFIG);
 
   return data.data;
 };
