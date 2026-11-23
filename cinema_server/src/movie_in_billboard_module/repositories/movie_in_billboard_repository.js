@@ -101,7 +101,10 @@ export async function findMovieInBillboardById(connection, id) {
       r.RATING_NAME,
       r.RATING_CODE,
       m.MOVIE_DURATION,
-      m.POSTER
+      m.POSTER,
+      mib.ID_MOVIE,
+      mib.ID_LOCATION,
+      mib.PREMIER
     ${MOVIES_IN_BILLBOARDS_SOURCE}
     WHERE mib.ID_MOVIE_IN_BILLBOARD = :id
       AND mib.IS_DELETED = 0

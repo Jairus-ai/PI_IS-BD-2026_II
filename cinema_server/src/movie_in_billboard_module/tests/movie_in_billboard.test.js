@@ -39,7 +39,10 @@ const MOCK_MOVIE_IN_BILLBOARD_DETAIL = {
   ...MOCK_MOVIES_IN_BILLBOARDS[0],
   RATING_CODE: 'PG-13',
   MOVIE_DURATION: 148,
-  POSTER: '/posters/inception.jpg'
+  POSTER: '/posters/inception.jpg',
+  ID_MOVIE: 1,
+  ID_LOCATION: 3,
+  PREMIER: 0
 };
 
 const VALID_BODY = {

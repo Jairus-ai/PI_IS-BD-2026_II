@@ -15,6 +15,9 @@ export interface MovieInBillboardDetail extends MovieInBillboard {
   RATING_CODE: string;
   MOVIE_DURATION: number;
   POSTER: string;
+  ID_MOVIE: number;
+  ID_LOCATION: number;
+  PREMIER: number;
 }
 
 export interface MovieInBillboardPage {
