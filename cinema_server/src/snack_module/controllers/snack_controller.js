@@ -217,39 +217,35 @@ export const createSnack = async(req, res, next) =>
   }
 
 };
-//for the other stories
-/*
+
 export const editSnack = async(req, res, next) =>
 {
   let connection;
 
   try
   {
-    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
     connection = await getConnection();
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
     const {id} = req.params;
+    const {SNACK_NAME, SNACK_DESCRIPTION, PRICE} = req.body;
 
     const request = `
-      UPDATE PI_DEVELOPERS.LOCATIONS
+      UPDATE PI_DEVELOPERS.SNACKS
       SET
-      LOCATION_NAME = :LOCATION_NAME,
-      OPENING_HOUR = TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
-      CLOSING_HOUR = TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
-      ID_CANTON = :ID_CANTON
-      WHERE ID_LOCATION = :id
+      SNACK_NAME = :SNACK_NAME,
+      SNACK_DESCRIPTION = :SNACK_DESCRIPTION,
+      PRICE = :PRICE
+      WHERE ID_SNACK = :id
     `;
 
     await connection.execute(
       request,
-      [
-        LOCATION_NAME,
-        OPENING_HOUR,
-        CLOSING_HOUR,
-        ID_CANTON,
+      {
+        SNACK_NAME :SNACK_NAME,
+        SNACK_DESCRIPTION:SNACK_DESCRIPTION,
+        PRICE:PRICE,
         id,
-      ],
+      },
       {
         autoCommit: true
       }
@@ -257,12 +253,17 @@ export const editSnack = async(req, res, next) =>
 
     res.status(200).json(
       {
-        message:'succes'
+        message:'success'
       }
     );    
 
   }catch(error)
   {
+    if (error.errorNum === 1) {
+      return res.status(409).json({
+        message: 'Ya existe un snack con ese nombre.',
+      });
+    }
     next(error);
   }finally
   {
@@ -273,7 +274,8 @@ export const editSnack = async(req, res, next) =>
   }
 };
 
-
+//for the other stories
+/*
 export const deleteSnack = async (req,res,next) =>
 {
   let connection;

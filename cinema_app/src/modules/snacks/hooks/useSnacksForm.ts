@@ -155,7 +155,7 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
                 setFieldErrors(serverErrors);
             } else {
                 notifications.show(
-                    getErrorMessage(submitError, 'Error al eliminar el snack'),
+                    getErrorMessage(submitError, 'Error al guardar el snack'),
                     { severity: 'error', autoHideDuration: 5000 },
                 );
             }

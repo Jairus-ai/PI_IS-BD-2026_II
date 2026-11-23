@@ -334,3 +334,63 @@ describe('POST ${BASE_PATH}', () => {
         });
     });
 });
+
+describe('PUT ${BASE_PATH}/:id', () => {
+    test('200 OK cuando actualiza un snack correctamente', async () => {
+        const connection = useConnection([
+            {}
+        ]);
+
+        const response = await request(app)
+            .put('/management/snacks/5')
+            .send({
+                SNACK_NAME: 'Nachos Supreme',
+                SNACK_DESCRIPTION: 'Con queso extra',
+                PRICE: 2500,
+            });
+
+        expect(response.status).toBe(200);
+
+        expect(response.body).toEqual({
+            message: 'success',
+        });
+
+        expect(connection.execute).toHaveBeenCalledWith(
+            expect.stringContaining('UPDATE PI_DEVELOPERS.SNACKS'),
+            {
+                SNACK_NAME: 'Nachos Supreme',
+                SNACK_DESCRIPTION: 'Con queso extra',
+                PRICE: 2500,
+                id: '5',
+            },
+            {
+                autoCommit: true,
+            }
+        );
+    });
+
+    test('409 cuando el nombre del snack ya existe', async () => {
+        const duplicateError = Object.assign(
+            new Error('ORA-00001: unique constraint violated'),
+            { errorNum: 1 }
+        );
+
+        useConnection([
+            duplicateError
+        ]);
+
+        const response = await request(app)
+            .put('/management/snacks/5')
+            .send({
+                SNACK_NAME: 'Nachos',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 1500,
+            });
+
+        expect(response.status).toBe(409);
+
+        expect(response.body).toEqual({
+            message: 'Ya existe un snack con ese nombre.',
+        });
+    });
+});
