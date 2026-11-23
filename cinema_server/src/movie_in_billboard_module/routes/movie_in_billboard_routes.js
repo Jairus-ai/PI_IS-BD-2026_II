@@ -3,7 +3,8 @@ import {
   getMoviesInBillboardsCount,
   getMoviesInBillboardsList,
   getMovieInBillboardByID,
-  createMovieInBillboard
+  createMovieInBillboard,
+  updateMovieInBillboard
 } from '../controllers/movie_in_billboard_controller.js';
 import {
   validateQuery,
@@ -32,5 +33,6 @@ router.get('/', validateQuery(movieInBillboardQuerySchema), getMoviesInBillboard
 router.get('/count', validateQuery(movieInBillboardQuerySchema), getMoviesInBillboardsCount);
 router.get('/:id', validateParams(movieInBillboardIdSchema), getMovieInBillboardByID);
 router.post('/', validateBody(movieInBillboardBodySchema), createMovieInBillboard);
+router.put('/:id', validateParams(movieInBillboardIdSchema), validateBody(movieInBillboardBodySchema), updateMovieInBillboard);
 
 export default router;

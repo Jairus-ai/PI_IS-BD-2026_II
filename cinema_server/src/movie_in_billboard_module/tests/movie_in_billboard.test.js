@@ -354,6 +354,7 @@ describe('POST /management/movies_in_billboards', () => {
       EXISTS,
       EXISTS,
       NOT_FOUND,
+      NOT_FOUND,
       { outBinds: { movieInBillboardId: [7] } },
       { rows: [MOCK_MOVIE_IN_BILLBOARD_DETAIL] }
     );
@@ -367,7 +368,7 @@ describe('POST /management/movies_in_billboards', () => {
 
     expect(response.body).toEqual({ data: MOCK_MOVIE_IN_BILLBOARD_DETAIL });
 
-    const [sql, binds, options] = connection.execute.mock.calls[4];
+    const [sql, binds, options] = connection.execute.mock.calls[5];
 
     expect(sql).toMatch(/INSERT INTO PI_DEVELOPERS\.MOVIES_IN_BILLBOARDS/);
     expect(binds).toMatchObject({
@@ -378,7 +379,7 @@ describe('POST /management/movies_in_billboards', () => {
       movieId: 1
     });
     expect(options).toEqual({ autoCommit: true });
-    expect(connection.execute.mock.calls[5][1]).toEqual({ id: 7 });
+    expect(connection.execute.mock.calls[6][1]).toEqual({ id: 7 });
     expect(connection.close).toHaveBeenCalledTimes(2);
   });
 
@@ -406,6 +407,7 @@ describe('POST /management/movies_in_billboards', () => {
     mockDatabase(
       EXISTS,
       EXISTS,
+      NOT_FOUND,
       NOT_FOUND,
       { outBinds: { movieInBillboardId: [9] } },
       { rows: [MOCK_MOVIE_IN_BILLBOARD_DETAIL] }
@@ -471,6 +473,27 @@ describe('POST /management/movies_in_billboards', () => {
     expect(connection.execute).toHaveBeenCalledTimes(4);
   });
 
+  test('Returns 409 when the movie already has a premier in the same location', async () => {
+    const connection = mockDatabase(EXISTS, EXISTS, NOT_FOUND, EXISTS);
+
+    const response = await request(app)
+      .post(BASE_PATH)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(409);
+
+    expect(response.body.message).toBe('La película ya tiene un estreno en esta sucursal.');
+
+    const [sql, binds] = connection.execute.mock.calls[4];
+
+    expect(sql).toMatch(/PREMIER = 1/);
+    expect(binds).toEqual({
+      movieId: 1,
+      locationId: 3
+    });
+    expect(connection.execute).toHaveBeenCalledTimes(5);
+  });
+
   test('Returns 400 when the closing date is before the opening date', async () => {
     const connection = mockDatabase();
 
@@ -528,6 +551,7 @@ describe('POST /management/movies_in_billboards', () => {
     const connection = mockDatabase(
       EXISTS,
       EXISTS,
+      NOT_FOUND,
       NOT_FOUND,
       new Error('ORA-02291: integrity constraint violated')
     );
