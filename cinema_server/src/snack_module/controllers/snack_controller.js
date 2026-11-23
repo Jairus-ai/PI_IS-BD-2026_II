@@ -274,33 +274,24 @@ export const editSnack = async(req, res, next) =>
   }
 };
 
-//for the other stories
-/*
 export const deleteSnack = async (req,res,next) =>
 {
   let connection;
   try{
+
     const { id } = req.params;
 
     if (!Number.isInteger(Number(id))) 
     {
-      console.log(Number.isInteger(id));
-      return res.status(400).json({ message: 'Invalid snack id' });
+      return res.status(400).json({ message: 'ID invalida' });
     }
-
+    
     connection = await oracledb.getConnection();
 
-    const hasScreenings = await checkScreenings(connection, id);
-
-    if(hasScreenings)
-    {
-      return res.status(409).json({message:'Location has active screenings'})
-    };
-    
     const request = `
-      UPDATE PI_DEVELOPERS.LOCATIONS
+      UPDATE PI_DEVELOPERS.SNACKS
       SET IS_DELETED = 1
-      WHERE ID_LOCATION = :id
+      WHERE ID_SNACK = :id
       `;
 
       const result = await connection.execute(
@@ -312,7 +303,7 @@ export const deleteSnack = async (req,res,next) =>
     );
   
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ message: 'Location not found' });
+      return res.status(404).json({ message: 'Snack no encontrado' });
     }
 
     res.status(204).json(
@@ -330,4 +321,3 @@ export const deleteSnack = async (req,res,next) =>
     }
   }
 };
-*/
