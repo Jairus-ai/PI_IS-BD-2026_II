@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query';
 import {
   createMovieInBillboard,
+  updateMovieInBillboard,
   getMovieInBillboard,
   getMoviesInBillboardsCount,
   getMoviesInBillboardsList
@@ -130,5 +131,20 @@ export const useCreateMovieInBillboard = () => {
   return {
     createMovieInBillboard: mutation.mutateAsync,
     isCreatingMovieInBillboard: mutation.isPending
+  };
+};
+
+export const useUpdateMovieInBillboard = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, movieInBillboard }: { id: number; movieInBillboard: NewMovieInBillboard }) =>
+      updateMovieInBillboard(id, movieInBillboard),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MOVIES_IN_BILLBOARDS_QUERY_KEY })
+  });
+
+  return {
+    updateMovieInBillboard: mutation.mutateAsync,
+    isUpdatingMovieInBillboard: mutation.isPending
   };
 };

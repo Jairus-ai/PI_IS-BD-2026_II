@@ -41,9 +41,14 @@ export default function MovieInBillboardList() {
   const [filters, setFilters] = useState<MovieInBillboardFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [createForm, setCreateForm] = useState({
+  const [movieInBillboardForm, setMovieInBillboardForm] = useState<{
+    open: boolean;
+    key: number;
+    movieInBillboardId: number | null;
+  }>({
     open: false,
-    key: 0
+    key: 0,
+    movieInBillboardId: null
   });
 
   const {
@@ -68,26 +73,24 @@ export default function MovieInBillboardList() {
       field: 'MOVIE_TITLE',
       headerName: 'Película',
       flex: 2,
-      minWidth: 200
+      minWidth: 160
     },
     {
       field: 'LOCATION_NAME',
       headerName: 'Sucursal',
       flex: 1,
-      minWidth: 160
+      minWidth: 120
     },
     {
       field: 'OPENING_DATE',
       headerName: 'Fecha de inicio',
-      flex: 1,
-      minWidth: 140,
+      width: 120,
       valueFormatter: (value: string) => formatBillboardDate(value)
     },
     {
       field: 'CLOSING_DATE',
       headerName: 'Fecha de fin',
-      flex: 1,
-      minWidth: 140,
+      width: 120,
       valueFormatter: (value: string) => formatBillboardDate(value)
     },
     {
@@ -96,13 +99,17 @@ export default function MovieInBillboardList() {
       headerName: 'Acciones',
       align: 'left',
       headerAlign: 'left',
-      flex: 1,
-      minWidth: 120,
+      width: 300,
       getActions: ({ row }) => [
         <ActionButton
           key="show"
           label="Mostrar"
           onClick={() => setSelectedId(row.ID_MOVIE_IN_BILLBOARD)}
+        />,
+        <ActionButton
+          key="edit"
+          label="Modificar"
+          onClick={() => openMovieInBillboardForm(row.ID_MOVIE_IN_BILLBOARD)}
         />
       ]
     }
@@ -118,15 +125,16 @@ export default function MovieInBillboardList() {
     setPaginationModel(FIRST_PAGE);
   };
 
-  const openCreateForm = () => {
-    setCreateForm((previousForm) => ({
+  const openMovieInBillboardForm = (movieInBillboardId: number | null) => {
+    setMovieInBillboardForm((previousForm) => ({
       open: true,
-      key: previousForm.key + 1
+      key: previousForm.key + 1,
+      movieInBillboardId
     }));
   };
 
-  const closeCreateForm = () => {
-    setCreateForm((previousForm) => ({
+  const closeMovieInBillboardForm = () => {
+    setMovieInBillboardForm((previousForm) => ({
       ...previousForm,
       open: false
     }));
@@ -141,7 +149,7 @@ export default function MovieInBillboardList() {
     <CrudPage
       title="Películas en cartelera"
       createLabel="Agregar película"
-      onCreate={openCreateForm}
+      onCreate={() => openMovieInBillboardForm(null)}
       error={moviesInBillboardsError}
       errorMessage={LOAD_ERROR_MESSAGE}
       onRetry={() => void refetchMoviesInBillboards()}
@@ -204,9 +212,10 @@ export default function MovieInBillboardList() {
             onClose={() => setSelectedId(null)}
           />
           <MovieInBillboardFormDialog
-            key={createForm.key}
-            open={createForm.open}
-            onClose={closeCreateForm}
+            key={movieInBillboardForm.key}
+            open={movieInBillboardForm.open}
+            movieInBillboardId={movieInBillboardForm.movieInBillboardId}
+            onClose={closeMovieInBillboardForm}
           />
         </>
       }
