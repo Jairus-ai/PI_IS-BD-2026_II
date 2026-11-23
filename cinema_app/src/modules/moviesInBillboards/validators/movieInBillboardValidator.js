@@ -73,7 +73,7 @@ export function cleanMovieInBillboardFilters(filters = {}) {
   return cleanedFilters;
 }
 
-export function validateNewMovieInBillboard(movieInBillboard = {}) {
+export function getMovieInBillboardFormErrors(movieInBillboard = {}) {
   const {
     movieId,
     locationId,
@@ -81,30 +81,39 @@ export function validateNewMovieInBillboard(movieInBillboard = {}) {
     closingDate,
     premier = false
   } = movieInBillboard;
+  const errors = {};
 
   if (!isPositiveInteger(movieId))
-    throw new Error(INVALID_MOVIE_MESSAGE);
+    errors.movieId = INVALID_MOVIE_MESSAGE;
 
   if (!isPositiveInteger(locationId))
-    throw new Error(INVALID_LOCATION_MESSAGE);
+    errors.locationId = INVALID_LOCATION_MESSAGE;
 
   if (!isValidDate(openingDate))
-    throw new Error(INVALID_OPENING_DATE_MESSAGE);
+    errors.openingDate = INVALID_OPENING_DATE_MESSAGE;
 
   if (!isValidDate(closingDate))
-    throw new Error(INVALID_CLOSING_DATE_MESSAGE);
-
-  if (closingDate < openingDate)
-    throw new Error(CLOSING_BEFORE_OPENING_MESSAGE);
+    errors.closingDate = INVALID_CLOSING_DATE_MESSAGE;
+  else if (isValidDate(openingDate) && closingDate < openingDate)
+    errors.closingDate = CLOSING_BEFORE_OPENING_MESSAGE;
 
   if (typeof premier !== 'boolean')
-    throw new Error(INVALID_PREMIER_MESSAGE);
+    errors.premier = INVALID_PREMIER_MESSAGE;
+
+  return errors;
+}
+
+export function validateNewMovieInBillboard(movieInBillboard = {}) {
+  const [firstError] = Object.values(getMovieInBillboardFormErrors(movieInBillboard));
+
+  if (firstError)
+    throw new Error(firstError);
 
   return {
-    movieId: Number(movieId),
-    locationId: Number(locationId),
-    openingDate,
-    closingDate,
-    premier
+    movieId: Number(movieInBillboard.movieId),
+    locationId: Number(movieInBillboard.locationId),
+    openingDate: movieInBillboard.openingDate,
+    closingDate: movieInBillboard.closingDate,
+    premier: movieInBillboard.premier ?? false
   };
 }

@@ -6,6 +6,7 @@ import { CrudPage } from '../../../components/crud/CrudPage';
 import { ActionButton } from '../../../components/crud/ActionButton';
 import { FilterField } from '../../../components/crud/FilterField';
 import MovieInBillboardDetailDialog from '../components/MovieInBillboardDetailDialog';
+import MovieInBillboardFormDialog from '../components/MovieInBillboardFormDialog';
 import {
   useMovieInBillboardFilterOptions,
   useMoviesInBillboards
@@ -40,6 +41,10 @@ export default function MovieInBillboardList() {
   const [filters, setFilters] = useState<MovieInBillboardFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [createForm, setCreateForm] = useState({
+    open: false,
+    key: 0
+  });
 
   const {
     moviesInBillboards,
@@ -113,6 +118,20 @@ export default function MovieInBillboardList() {
     setPaginationModel(FIRST_PAGE);
   };
 
+  const openCreateForm = () => {
+    setCreateForm((previousForm) => ({
+      open: true,
+      key: previousForm.key + 1
+    }));
+  };
+
+  const closeCreateForm = () => {
+    setCreateForm((previousForm) => ({
+      ...previousForm,
+      open: false
+    }));
+  };
+
   const clearFilters = () => {
     setFilters(EMPTY_FILTERS);
     setPaginationModel(FIRST_PAGE);
@@ -121,6 +140,8 @@ export default function MovieInBillboardList() {
   return (
     <CrudPage
       title="Películas en cartelera"
+      createLabel="Agregar película"
+      onCreate={openCreateForm}
       error={moviesInBillboardsError}
       errorMessage={LOAD_ERROR_MESSAGE}
       onRetry={() => void refetchMoviesInBillboards()}
@@ -177,10 +198,17 @@ export default function MovieInBillboardList() {
         </>
       }
       dialogs={
-        <MovieInBillboardDetailDialog
-          movieInBillboardId={selectedId}
-          onClose={() => setSelectedId(null)}
-        />
+        <>
+          <MovieInBillboardDetailDialog
+            movieInBillboardId={selectedId}
+            onClose={() => setSelectedId(null)}
+          />
+          <MovieInBillboardFormDialog
+            key={createForm.key}
+            open={createForm.open}
+            onClose={closeCreateForm}
+          />
+        </>
       }
     />
   );
