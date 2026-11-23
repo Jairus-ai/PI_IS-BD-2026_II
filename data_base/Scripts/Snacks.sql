@@ -12,3 +12,5 @@ ALTER TABLE SNACKS
 ADD (IS_DELETED NUMBER(1) DEFAULT 0 NOT NULL)
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON PI_DEVELOPERS.SNACKS TO SERVER;
+
+alter table snacks add constraint Unique_snack_name unique(snack_name);
