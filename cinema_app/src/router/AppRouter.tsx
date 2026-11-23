@@ -18,6 +18,7 @@ import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
+import MovieInBillboardList from '../modules/moviesInBillboards/pages/MovieInBillboardList';
 
 const router = createHashRouter([
   {
@@ -102,6 +103,14 @@ const router = createHashRouter([
         element: (
           <RequireSession allowedRoles={MANAGER_ROLES}>
             <FeeList />
+          </RequireSession>
+        ),
+      },
+      {
+        path: '/movies-in-billboards',
+        element: (
+          <RequireSession allowedRoles={MANAGER_ROLES}>
+            <MovieInBillboardList />
           </RequireSession>
         ),
       },
