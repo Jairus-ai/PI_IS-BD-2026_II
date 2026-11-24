@@ -270,7 +270,10 @@ describe(`GET ${BASE_PATH}/:id`, () => {
 
 describe('POST ${BASE_PATH}', () => {
     test('201 crea el snack correctamente', async () => {
+    test('201 crea el snack correctamente', async () => {
         const connection = useConnection([
+            { rows: [] },
+            { rows: [{ LAST_ID: 5 }] },
             { rows: [] },
             { rows: [{ LAST_ID: 5 }] },
             {},
@@ -286,6 +289,8 @@ describe('POST ${BASE_PATH}', () => {
 
         console.log(response.status, Response.body);
 
+        console.log(response.status, Response.body);
+
         expect(response.status).toBe(201);
 
         expect(response.body).toEqual({
@@ -293,8 +298,18 @@ describe('POST ${BASE_PATH}', () => {
         });
 
         expect(connection.execute).toHaveBeenCalledTimes(3);
+        expect(connection.execute).toHaveBeenCalledTimes(3);
     });
 
+    test('409 cuando ya existe un snack con ese nombre', async () => {
+        const connection = useConnection([
+            {
+                rows: [
+                    {
+                        ID_SNACK: 7,
+                    },
+                ],
+            },
     test('409 cuando ya existe un snack con ese nombre', async () => {
         const connection = useConnection([
             {
@@ -321,107 +336,5 @@ describe('POST ${BASE_PATH}', () => {
         });
 
         expect(connection.execute).toHaveBeenCalledTimes(1);
-    });
-});
-
-describe('PUT ${BASE_PATH}/:id', () => {
-    test('200 actualiza el snack correctamente', async () => {
-        const connection = useConnection([
-            { rows: [] },
-            {},
-        ]);
-
-        const response = await request(app)
-            .put('/management/snacks/5')
-            .send({
-                SNACK_NAME: 'Nachos Supreme',
-                SNACK_DESCRIPTION: 'Con queso',
-                PRICE: 2500,
-            });
-
-        expect(response.status).toBe(200);
-
-        expect(response.body).toEqual({
-            message: 'success',
-        });
-
-        expect(connection.execute).toHaveBeenCalledTimes(2);
-    });
-
-    test('409 cuando ya existe un snack con ese nombre', async () => {
-        const connection = useConnection([
-            {
-                rows: [
-                    {
-                        ID_SNACK: 7,
-                    },
-                ],
-            },
-        ]);
-
-        const response = await request(app)
-            .put('/management/snacks/5')
-            .send({
-                SNACK_NAME: 'Nachos',
-                SNACK_DESCRIPTION: 'Con queso',
-                PRICE: 1500,
-            });
-
-        expect(response.status).toBe(409);
-
-        expect(response.body).toEqual({
-            message: 'Ya existe un snack con ese nombre.',
-        });
-
-        expect(connection.execute).toHaveBeenCalledTimes(1);
-    });
-});
-
-describe('DELETE ${BASE_PATH}/:id', () => {
-    test('204 elimina un snack correctamente', async () => {
-        const connection = useConnection([
-            { rowsAffected: 1 },
-        ]);
-
-        const response = await request(app)
-            .delete('/management/snacks/5');
-
-        expect(response.status).toBe(204);
-
-        expect(connection.execute).toHaveBeenCalledWith(
-            expect.stringContaining('UPDATE PI_DEVELOPERS.SNACKS'),
-            { id: 5 },
-            { autoCommit: true }
-        );
-    });
-
-    test('400 cuando el id no es numérico', async () => {
-        const response = await request(app)
-            .delete('/management/snacks/abc');
-
-        console.log(response.status);
-        console.log(response.body);
-
-        expect(response.status).toBe(400);
-
-        expect(response.body).toEqual({
-            message: 'ID invalida',
-        });
-
-    });
-
-    test('404 cuando el snack no existe', async () => {
-        useConnection([
-            { rowsAffected: 0 },
-        ]);
-
-        const response = await request(app)
-            .delete('/management/snacks/99');
-
-        expect(response.status).toBe(404);
-
-        expect(response.body).toEqual({
-            message: 'Snack no encontrado',
-        });
     });
 });

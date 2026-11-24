@@ -186,6 +186,32 @@ export const createSnack = async(req, res, next) =>
 
 
     result = await connection.execute(
+    const sql = `
+      SELECT ID_SNACK
+      FROM PI_DEVELOPERS.SNACKS
+      WHERE SNACK_NAME = :SNACK_NAME AND IS_DELETED = 0
+    `;
+
+    let result = await connection.execute(
+      sql,
+      {
+        SNACK_NAME:SNACK_NAME,
+      },
+      {
+        outFormat: oracledb.OUT_FORMAT_OBJECT
+      }
+    )
+
+
+    if (result.rows.length > 0) 
+    {
+      return res.status(409).json({
+        message: 'Ya existe un snack con ese nombre.',
+      });
+    }
+
+
+    result = await connection.execute(
       `SELECT MAX(ID_SNACK) AS LAST_ID 
       FROM PI_DEVELOPERS.SNACKS`, 
       [],
@@ -238,6 +264,8 @@ export const createSnack = async(req, res, next) =>
 
 };
 
+//for the other stories
+/*
 export const editSnack = async(req, res, next) =>
 {
   let connection;
