@@ -20,6 +20,7 @@ import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
+import RoomDashboard from '../modules/roomDashboard/pages/RoomDashboard';
 
 const router = createHashRouter([
   {
@@ -97,6 +98,10 @@ const router = createHashRouter([
             <FeeList />
           </RequireSession>
         ),
+      },
+      {
+        path: '/room-dashboard',
+        Component: RoomDashboard,
       },
     ],
   },
