@@ -66,7 +66,7 @@ describe('POST /management/movies/poster', () => {
       .expect(400);
 
     expect(response.body).toEqual({
-      message: 'No se encontró el poster.',
+      message: 'Póster no encontrado',
     });
   });
 });

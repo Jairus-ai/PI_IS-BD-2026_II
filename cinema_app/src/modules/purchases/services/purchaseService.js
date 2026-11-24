@@ -12,3 +12,9 @@ export const getPurchaseDetail = async (purchaseId) => {
   const { data } = await api.get(`/purchases/${purchaseId}`, SESSION_REQUEST_CONFIG);
   return data.data;
 };
+
+export const refundPurchase = async (purchaseId) => {
+  const { data } = await api.post(`/purchases/${purchaseId}/refund`, {}, SESSION_REQUEST_CONFIG);
+
+  return data.data;
+};
