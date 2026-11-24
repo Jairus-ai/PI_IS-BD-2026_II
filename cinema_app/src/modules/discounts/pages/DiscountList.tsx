@@ -81,7 +81,7 @@ export default function DiscountList() {
                 });
             } catch (error) {
                 notifications.show(
-                    getErrorMessage(error, 'Error al eliminar la descuento'),
+                    getErrorMessage(error, 'Error al eliminar el descuento'),
                     {
                         severity: 'error',
                         autoHideDuration: 5000,

@@ -220,7 +220,7 @@ export const getDiscountByID = async (req, res, next) =>
 
     if (!discount) 
     {
-      return res.status(404).json({ message: 'Location not found' });
+      return res.status(404).json({ message: 'Descuento no encontrado' });
     }
 
     res.status(200).json(

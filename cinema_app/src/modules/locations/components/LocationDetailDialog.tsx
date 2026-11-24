@@ -22,8 +22,6 @@ export default function LocationDetailDialog({
 
     const title = location?.LOCATION_NAME ?? (isLoadingDetail ? 'Cargando…' : 'Sucursal');
 
-    console.log(location);
-
     return (
         <CrudDialog
             open={open}

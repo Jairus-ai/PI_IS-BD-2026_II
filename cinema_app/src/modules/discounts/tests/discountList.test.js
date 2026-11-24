@@ -294,15 +294,25 @@ describe('DiscountList: eliminar', () => {
     });
 
     test('si falla el borrado, avisa del error con el motivo', async () => {
-        mockDeleteDiscount.mockRejectedValue(new Error('ORA-01031: insufficient privileges'));
+        mockDeleteDiscount.mockRejectedValue({
+            isAxiosError: true,
+            response: {
+                data: {
+                    message: 'ORA-01031: insufficient privileges',
+                },
+            },
+        });
         renderList();
 
         act(() => actionHandlers.onDelete(DISCOUNTS[0]));
 
         await waitFor(() =>
             expect(mockShow).toHaveBeenCalledWith(
-                'Error al eliminar el descuento: ORA-01031: insufficient privileges',
-                { severity: 'error', autoHideDuration: 5000 },
+                'Error al eliminar el descuento. Motivo: ORA-01031: insufficient privileges',
+                {
+                    severity: 'error',
+                    autoHideDuration: 5000,
+                },
             ),
         );
         expect(mockShow).not.toHaveBeenCalledWith(

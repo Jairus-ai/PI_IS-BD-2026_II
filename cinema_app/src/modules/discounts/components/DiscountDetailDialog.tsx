@@ -22,8 +22,6 @@ export default function DiscountDetailDialog({
 
     const title = discount?.DISCOUNT_NAME ?? (isLoadingDetail ? 'Cargando…' : 'Descuento');
 
-    console.log(discount);
-
     return (
         <CrudDialog
             open={open}
