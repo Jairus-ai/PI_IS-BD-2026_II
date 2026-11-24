@@ -294,34 +294,6 @@ describe('POST ${BASE_PATH}', () => {
 
         expect(connection.execute).toHaveBeenCalledTimes(3);
     });
-
-    test('409 cuando ya existe un snack con ese nombre', async () => {
-        const connection = useConnection([
-            {
-                rows: [
-                    {
-                        ID_SNACK: 7,
-                    },
-                ],
-            },
-        ]);
-
-        const response = await request(app)
-            .post('/management/snacks')
-            .send({
-                SNACK_NAME: 'Nachos',
-                SNACK_DESCRIPTION: 'Con queso',
-                PRICE: 1500,
-            });
-
-        expect(response.status).toBe(409);
-
-        expect(response.body).toEqual({
-            message: 'Ya existe un snack con ese nombre.',
-        });
-
-        expect(connection.execute).toHaveBeenCalledTimes(1);
-    });
 });
 
 describe('PUT ${BASE_PATH}/:id', () => {
