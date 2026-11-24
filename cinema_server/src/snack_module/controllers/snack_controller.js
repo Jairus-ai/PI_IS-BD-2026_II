@@ -259,6 +259,7 @@ export const editSnack = async(req, res, next) =>
       sql,
       {
         SNACK_NAME:SNACK_NAME,
+        id:id,
       },
       {
         outFormat: oracledb.OUT_FORMAT_OBJECT
