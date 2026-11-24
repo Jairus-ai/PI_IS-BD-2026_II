@@ -297,10 +297,6 @@ export const editSnack = async(req, res, next) =>
       }
     );
 
-    if (result.rowsAffected === 0) {
-      return res.status(404).json({ message: 'Snack no encontrado' });
-    }
-
     res.status(200).json(
       {
         message:'success'
@@ -309,11 +305,6 @@ export const editSnack = async(req, res, next) =>
 
   }catch(error)
   {
-    if (error.errorNum === 1) {
-      return res.status(409).json({
-        message: 'Ya existe un snack con ese nombre.',
-      });
-    }
     next(error);
   }finally
   {
