@@ -309,6 +309,7 @@ export const editSnack = async(req, res, next) =>
       SNACK_DESCRIPTION = :SNACK_DESCRIPTION,
       PRICE = :PRICE
       WHERE ID_SNACK = :id
+      AND IS_DELETED = 0
     `;
 
     await connection.execute(
@@ -323,6 +324,10 @@ export const editSnack = async(req, res, next) =>
         autoCommit: true
       }
     );
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ message: 'Snack no encontrado' });
+    }
 
     res.status(200).json(
       {
