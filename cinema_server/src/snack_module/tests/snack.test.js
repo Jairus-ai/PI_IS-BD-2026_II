@@ -294,6 +294,31 @@ describe('POST ${BASE_PATH}', () => {
 
         expect(connection.execute).toHaveBeenCalledTimes(3);
     });
+});
+
+describe('PUT ${BASE_PATH}/:id', () => {
+    test('200 actualiza el snack correctamente', async () => {
+        const connection = useConnection([
+            { rows: [] },
+            {},
+        ]);
+
+        const response = await request(app)
+            .put('/management/snacks/5')
+            .send({
+                SNACK_NAME: 'Nachos Supreme',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 2500,
+            });
+
+        expect(response.status).toBe(200);
+
+        expect(response.body).toEqual({
+            message: 'success',
+        });
+
+        expect(connection.execute).toHaveBeenCalledTimes(2);
+    });
 
     test('409 cuando ya existe un snack con ese nombre', async () => {
         const connection = useConnection([
@@ -307,7 +332,7 @@ describe('POST ${BASE_PATH}', () => {
         ]);
 
         const response = await request(app)
-            .post('/management/snacks')
+            .put('/management/snacks/5')
             .send({
                 SNACK_NAME: 'Nachos',
                 SNACK_DESCRIPTION: 'Con queso',
