@@ -134,13 +134,13 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
 
             if (snackId == null) {
                 await createSnack(payload);
-                notifications.show('Sucursal creada correctamente.', {
+                notifications.show('Snack creado correctamente.', {
                     severity: 'success',
                     autoHideDuration: 5000,
                 });
             } else {
                 await updateSnack(snackId, payload);
-                notifications.show('Sucursal actualizada correctamente.', {
+                notifications.show('Snack actualizado correctamente.', {
                     severity: 'success',
                     autoHideDuration: 5000,
                 });
@@ -155,7 +155,7 @@ export function useSnackForm({ snackId, open, onClose, onSaved }: UseSnackFormAr
                 setFieldErrors(serverErrors);
             } else {
                 notifications.show(
-                    getErrorMessage(submitError, 'Error al eliminar el snack'),
+                    getErrorMessage(submitError, 'Error al guardar el snack'),
                     { severity: 'error', autoHideDuration: 5000 },
                 );
             }
