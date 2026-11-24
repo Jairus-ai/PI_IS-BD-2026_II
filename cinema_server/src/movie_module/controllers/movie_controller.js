@@ -134,7 +134,7 @@ export const updateMovie = async (req, res, next) => {
     }
 
     if (outcome === 'not-found') {
-      return res.status(404).json({ message: 'Movie not found' });
+      return res.status(404).json({ message: 'Película no encontrada' });
     }
 
     res.status(200).json({ data: { ID_MOVIE: Number(id), ...movie, ...relations } });
@@ -158,7 +158,7 @@ export const deleteMovie = async (req, res, next) => {
     const rowsAffected = await softDeleteMovie(connection, id);
 
     if (rowsAffected === 0) {
-      return res.status(404).json({ message: 'Movie not found' });
+      return res.status(404).json({ message: 'Película no encontrada' });
     }
 
     res.status(200).json({ data: { ID_MOVIE: Number(id) } });
