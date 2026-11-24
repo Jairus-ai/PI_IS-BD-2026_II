@@ -135,40 +135,7 @@ export const getPurchaseDetail = async (req, res, next) => {
         JOIN PI_DEVELOPERS.FEES f ON f.ID_FEE = sr.ID_FEE
       WHERE sr.ID_RECEIPT = :purchaseId
       ORDER BY st.SEAT_ROW, st.SEAT_NUMBER`;
-    const summaryResult = await connection.execute(
-      summaryRequest,
-      {
-        purchaseId,
-        clientId: req.user.id
-      },
-      OBJECT_FORMAT
-    );
 
-    const summary = summaryResult.rows[0];
-    if (!summary) {
-      return res.status(404).json({ message: PURCHASE_NOT_FOUND_MESSAGE });
-    }
-
-
-    const purchaseSeatsRequest = `
-      SELECT
-        st.SEAT_ROW,
-        st.SEAT_NUMBER,
-        f.TYPE AS FEE_TYPE,
-        sr.AMOUNT
-      FROM PI_DEVELOPERS.SEAT_RECEIPTS sr
-        JOIN PI_DEVELOPERS.SEATS st
-          ON st.ID_SEAT = sr.ID_SEAT AND st.ID_SCREEN = sr.ID_SCREEN AND st.ID_SCREENING = sr.ID_SCREENING
-        JOIN PI_DEVELOPERS.FEES f ON f.ID_FEE = sr.ID_FEE
-      WHERE sr.ID_RECEIPT = :purchaseId
-      ORDER BY st.SEAT_ROW, st.SEAT_NUMBER`;
-
-    const purchaseSnacksRequest = `
-      SELECT sn.SNACK_NAME, snr.QUANTITY, snr.UNIT_PRICE
-      FROM PI_DEVELOPERS.SNACK_RECEIPTS snr
-        JOIN PI_DEVELOPERS.SNACKS sn ON sn.ID_SNACK = snr.ID_SNACK
-      WHERE snr.ID_RECEIPT = :purchaseId
-      ORDER BY sn.SNACK_NAME`;
     const purchaseSnacksRequest = `
       SELECT sn.SNACK_NAME, snr.QUANTITY, snr.UNIT_PRICE
       FROM PI_DEVELOPERS.SNACK_RECEIPTS snr

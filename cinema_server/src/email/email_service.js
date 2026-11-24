@@ -1,21 +1,8 @@
 import nodemailer from 'nodemailer';
 import { REFUND_MINIMUM_DAYS } from '../purchase_module/controllers/purchase_controller.js';
-import { REFUND_MINIMUM_DAYS } from '../purchase_module/controllers/purchase_controller.js';
 
 const DEFAULT_SENDER = 'CinePI <no-reply@cinepi.com>';
 const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-
-const AMOUNT_FORMATTER = new Intl.NumberFormat('es-CR', {
-  style: 'currency',
-  currency: 'CRC'
-});
-
-const REFUND_POLICY_MESSAGE =
-  'Puedes solicitar el reembolso de tu compra desde tu historial de compras ' +
-  `con al menos ${REFUND_MINIMUM_DAYS} días de anticipación a la proyección. ` +
-  'Una vez realizado el reembolso, los asientos quedan disponibles para la venta ' +
-  'y los códigos QR de estas entradas dejan de ser válidos.';
-
 
 const AMOUNT_FORMATTER = new Intl.NumberFormat('es-CR', {
   style: 'currency',
@@ -164,35 +151,12 @@ async function sendQREmail({
           <td style="padding: 4px 0;">${escapeHtml(value)}</td>
         </tr>`)
     .join('');
-  const details = getTicketDetails(purchase, seats);
-  const subject = 'Tus entradas de CinePI';
-  const detailRows = details
-    .map(([label, value]) => `
-        <tr>
-          <td style="padding: 4px 16px 4px 0;"><strong>${escapeHtml(label)}</strong></td>
-          <td style="padding: 4px 0;">${escapeHtml(value)}</td>
-        </tr>`)
-    .join('');
 
   return transporter.sendMail({
     from: process.env.EMAIL_FROM ?? DEFAULT_SENDER,
     to: email,
     subject,
-    subject,
     text:
-      'Gracias por tu compra en CinePI. ' +
-      'Adjuntamos los códigos QR de tus entradas.\n\n' +
-      details.map(([label, value]) => `${label}: ${value}`).join('\n') +
-      `\n\nNota: ${REFUND_POLICY_MESSAGE}`,
-    html: `
-      <p>Gracias por tu compra en CinePI.</p>
-      <p>Adjuntamos los códigos QR de tus entradas. Preséntalos al ingresar a la sala.</p>
-      <table style="border-collapse: collapse;">${detailRows}
-      </table>
-      <p style="font-size: 12px; color: #666666;">
-        <strong>Nota:</strong> ${escapeHtml(REFUND_POLICY_MESSAGE)}
-      </p>
-    `,
       'Gracias por tu compra en CinePI. ' +
       'Adjuntamos los códigos QR de tus entradas.\n\n' +
       details.map(([label, value]) => `${label}: ${value}`).join('\n') +
@@ -214,7 +178,6 @@ async function sendQREmail({
       },
     ],
   });
-}
 }
 
 async function sendTemporaryPasswordEmail({

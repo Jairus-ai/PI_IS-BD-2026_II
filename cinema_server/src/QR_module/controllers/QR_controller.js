@@ -40,7 +40,6 @@ async function getQRData(screeningId, seatId) {
 
         return result.rows[0] ?? null;
 
-
     } finally {
         if (connection) {
             await closeDatabaseConnection(connection);
@@ -65,7 +64,6 @@ async function QRGenerator(screeningId, seatId)
 
 
 /**
- * @param {Array<{qrCode: string, seat: string, screen: number, date: string, time: string }>} tickets
  * @param {Array<{qrCode: string, seat: string, screen: number, date: string, time: string }>} tickets
  * @returns {Promise<Buffer>}
  */
@@ -113,8 +111,6 @@ async function getUserEmail(userID) {
         connection = await getConnection();
         const request =
             `SELECT EMAIL
-        const request =
-            `SELECT EMAIL
             FROM PI_DEVELOPERS.CLIENTS
             WHERE ID_CLIENT = :id`;
 
@@ -125,7 +121,6 @@ async function getUserEmail(userID) {
             },
             { outFormat: oracledb.OUT_FORMAT_OBJECT },
         );
-
 
         return result.rows[0]?.EMAIL ?? null;
 
@@ -169,7 +164,6 @@ async function getPurchaseEmailData(receiptId) {
 
         return result.rows[0] ?? null;
 
-
     } finally {
         if (connection) {
             await closeDatabaseConnection(connection);
@@ -177,56 +171,9 @@ async function getPurchaseEmailData(receiptId) {
     }
 };
 
-async function getPurchaseEmailData(receiptId) {
-    let connection;
-
-    try {
-        connection = await getConnection();
-
-        const request =
-            `SELECT r.ID_RECEIPT,
-                r.TOTAL_AMOUNT,
-                TO_CHAR(r.RECEIPT_DATE, 'DD/MM/YYYY HH24:MI') AS RECEIPT_DATE,
-                l.LOCATION_NAME,
-                m.MOVIE_TITLE,
-                sc.ID_SCREEN AS SCREEN,
-                TO_CHAR(sc.SCREENING_DATE, 'DD/MM/YYYY') AS SCREENING_DATE,
-                TO_CHAR(sc.SCREENING_DATE + sc.SCREENING_START_TIME, 'HH24:MI') AS SCREENING_TIME
-            FROM PI_DEVELOPERS.RECEIPTS r
-                JOIN PI_DEVELOPERS.SEAT_RECEIPTS sr ON sr.ID_RECEIPT = r.ID_RECEIPT
-                JOIN PI_DEVELOPERS.SCREENINGS sc ON sc.ID_SCREENING = sr.ID_SCREENING
-                JOIN PI_DEVELOPERS.SCREENS scr ON scr.ID_SCREEN = sc.ID_SCREEN
-                JOIN PI_DEVELOPERS.LOCATIONS l ON l.ID_LOCATION = scr.ID_LOCATION
-                JOIN PI_DEVELOPERS.MOVIES_IN_BILLBOARDS mib ON mib.ID_MOVIE_IN_BILLBOARD = sc.ID_MOVIE_IN_BILLBOARD
-                JOIN PI_DEVELOPERS.MOVIES m ON m.ID_MOVIE = mib.ID_MOVIE
-            WHERE r.ID_RECEIPT = :receiptId
-            FETCH FIRST 1 ROWS ONLY`;
-
-        const result = await connection.execute(
-            request,
-            { receiptId: Number(receiptId) },
-            { outFormat: oracledb.OUT_FORMAT_OBJECT },
-        );
-
-        return result.rows[0] ?? null;
-
-    } finally {
-        if (connection) {
-            await closeDatabaseConnection(connection);
-        }
-    }
-};
-
-async function sendQREmail(email, QR_list, purchase = null)
 async function sendQREmail(email, QR_list, purchase = null)
 {
     const pdf= await buildTicketsPdf(QR_list);
-    await emailService.sendQREmail({
-        email,
-        pdfBuffer: pdf,
-        seats: QR_list.map((ticket) => ticket.seat),
-        purchase,
-    });
     await emailService.sendQREmail({
         email,
         pdfBuffer: pdf,
@@ -257,7 +204,6 @@ export const QRController = async (req, res, next) => {
         await sendQREmail(email, QR_list);
 
         res.status(200).json(
-            {
             {
                 message:"success"
             }
