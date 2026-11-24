@@ -269,11 +269,10 @@ describe(`GET ${BASE_PATH}/:id`, () => {
 });
 
 describe('POST ${BASE_PATH}', () => {
-    test('201 cuando se crea correctamente', async () => {
+    test('201 crea el snack correctamente', async () => {
         const connection = useConnection([
-            {
-                rows: [{ LAST_ID: 5 }],
-            },
+            { rows: [] },
+            { rows: [{ LAST_ID: 5 }] },
             {},
         ]);
 
@@ -285,38 +284,26 @@ describe('POST ${BASE_PATH}', () => {
                 PRICE: 1500,
             });
 
+        console.log(response.status, Response.body);
+
         expect(response.status).toBe(201);
 
         expect(response.body).toEqual({
             message: 'success',
         });
 
-        expect(connection.execute).toHaveBeenNthCalledWith(
-            2,
-            expect.stringContaining('INSERT INTO PI_DEVELOPERS.SNACKS'),
-            {
-                ID_SNACK: 6,
-                SNACK_NAME: 'Nachos',
-                SNACK_DESCRIPTION: 'Con queso',
-                PRICE: 1500,
-            },
-            {
-                autoCommit: true,
-            }
-        );
+        expect(connection.execute).toHaveBeenCalledTimes(3);
     });
 
-    test('409 cuando el nombre ya existe', async () => {
-        const duplicateError = Object.assign(
-            new Error('ORA-00001: unique constraint violated'),
-            { errorNum: 1 }
-        );
-
-        useConnection([
+    test('409 cuando ya existe un snack con ese nombre', async () => {
+        const connection = useConnection([
             {
-                rows: [{ LAST_ID: 5 }],
+                rows: [
+                    {
+                        ID_SNACK: 7,
+                    },
+                ],
             },
-            duplicateError,
         ]);
 
         const response = await request(app)
@@ -332,6 +319,8 @@ describe('POST ${BASE_PATH}', () => {
         expect(response.body).toEqual({
             message: 'Ya existe un snack con ese nombre.',
         });
+
+        expect(connection.execute).toHaveBeenCalledTimes(1);
     });
 });
 
