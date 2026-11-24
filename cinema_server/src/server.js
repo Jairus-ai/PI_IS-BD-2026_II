@@ -30,6 +30,7 @@ import seatsRoutes from './seats_module/routes/seats_routes.js';
 import QR_routes from './QR_module/routes/QR_routes.js';
 import paymentRoutes from './payment_module/routes/payment_routes.js';
 import { handleWebhook } from './payment_module/controllers/payment_controller.js';
+import roomDashboardRoutes from './room_dashboard_module/routes/room_dashboard_routes.js';
 
 process.env.TZ = CINEMA_TIME_ZONE;
 
@@ -77,6 +78,7 @@ app.use('/seats', seatsRoutes);
 app.use('/purchase', QR_routes);
 app.use('/management/cantons', cantonRoutes);
 app.use('/management/provinces', provinceRoutes);
+app.use('/management/room-dashboard', roomDashboardRoutes);
 
 // Route not found
 app.use((req, res, next) => {
