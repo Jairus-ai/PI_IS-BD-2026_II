@@ -39,7 +39,7 @@ type LogInErrorResponse = {
 
 const INITIAL_VALUES: LogInFormValues = { email: '', password: '' };
 const GENERIC_ERROR_MESSAGE = 'No se pudo iniciar sesión. Intenta de nuevo.';
-const WORKER_HOME_PATH = '/movies';
+const WORKER_HOME_PATH = '/room-dashboard';
 const CLIENT_HOME_PATH = '/';
 
 function getHomePath(user: SessionUser) {
