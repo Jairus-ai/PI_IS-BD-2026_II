@@ -17,6 +17,7 @@ import {
     releaseSeat,
     reserveSeat
 } from '../services/seatsService';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 //temporal values while the functions for screenings are not implemented, these values should be obtained from the screening data
 const ROWS = 10;
@@ -50,12 +51,6 @@ const RESERVATION_EXPIRED_MESSAGE = 'Tu reserva de asientos expiró. Selecciona 
 
 function isReservationExpired(error: unknown): boolean {
     return isAxiosError<{ code?: string }>(error) && error.response?.data?.code === RESERVATION_EXPIRED_CODE;
-}
-
-function getErrorMessage(error: unknown): string {
-    return isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message ?? error.message
-        : (error as Error).message;
 }
 
 function formatRemainingTime(milliseconds: number): string {
@@ -188,7 +183,7 @@ export default function ShowSeats() {
                 handleExpiredReservation();
             } else {
                 notifications.show(
-                    `No se pudo actualizar el asiento. Motivo: ${getErrorMessage(error)}`,
+                    getErrorMessage(error, 'No se pudo actualizar el asiento'),
                     {
                         severity: 'error',
                         autoHideDuration: 3000,
@@ -236,6 +231,13 @@ export default function ShowSeats() {
                     <Typography variant="caption"><b>Formato:</b> *formato de la película*</Typography>
                 </Stack>
             </Paper>
+
+
+            {remainingTime !== null && (
+                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
+                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
+                </Typography>
+            )}
 
             <Stack sx={{ alignItems: 'center', mb: 2 }}>
                 <Box sx={{ width: '60%', maxWidth: 420, height: 10, bgcolor: 'grey.700', borderRadius: 0.5 }} />
@@ -322,12 +324,6 @@ export default function ShowSeats() {
                 </Stack>
             </Paper>
 
-            {remainingTime !== null && (
-                <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 700, mb: 2 }}>
-                    Tus asientos están reservados por {formatRemainingTime(remainingTime)}
-                </Typography>
-            )}
-
             <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
                 <Button
                     variant="contained"
@@ -344,12 +340,7 @@ export default function ShowSeats() {
                     disableElevation
                     disabled={seatList.length === 0}
                     onClick={() => {
-                        void navigate('/purchaseConfirmationEmail', {
-                            state: {
-                                seatList,
-                                screeningId: validScreeningId,
-                            },
-                        });
+                        void navigate('/payment');
                     }}
                 >
                     Continuar

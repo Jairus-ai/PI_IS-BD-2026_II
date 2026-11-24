@@ -1,5 +1,4 @@
 import * as React from 'react';
-import axios from 'axios';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -11,6 +10,7 @@ import LocationDetailDialog from '../components/LocationDetailDialog';
 import LocationFormDialog from '../components/LocationFormDialog';
 import { Actions } from '../../../components/crud/Actions';
 import { CrudPage } from '../../../components/crud/CrudPage';
+import { getErrorMessage } from '../../../services/errorMessage';
 
 const emptyFilters = {
     name: '',
@@ -79,15 +79,8 @@ export default function LocationList() {
                     autoHideDuration: 5000,
                 });
             } catch (error) {
-                let message = 'Error al eliminar la sucursal: ';
-
-                if (axios.isAxiosError(error) && error.response?.status === 409) {
-                    message += 'La sucursal tiene proyecciones activas o programadas.';
-                } else if (error instanceof Error) {
-                    message += `${error.message}`;
-                }
                 notifications.show(
-                    message,
+                    getErrorMessage(error, 'Error al eliminar la sucursal'),
                     {
                         severity: 'error',
                         autoHideDuration: 5000,

@@ -6,6 +6,11 @@ export interface Purchase {
   TOTAL_AMOUNT: number;
   RECEIPT_DATE: string;
   MOVIE_TITLE: string | null;
+  SCREENING_DATE: string | null;
+  IS_REFUNDED: boolean;
+}
+export interface PurchaseHistoryEntry extends Purchase {
+  IS_REFUND_ON_TIME: boolean;
 }
 export interface PurchaseSeat {
   SEAT_ROW: string;
@@ -24,8 +29,6 @@ export interface PurchaseDiscount {
 }
 export interface PurchaseDetail extends Purchase {
   LOCATION_NAME: string | null;
-  SCREENING_DATE: string | null;
-  IS_REFUNDED: boolean;
   SEATS: PurchaseSeat[];
   SNACKS: PurchaseSnack[];
   DISCOUNTS: PurchaseDiscount[];

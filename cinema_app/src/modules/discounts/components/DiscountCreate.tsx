@@ -85,7 +85,7 @@ export default function DiscountCreate({
           submitAction={(values) => addDiscount(values, values.TYPE)}
           submitLabel="Crear"
           successMessage="Descuento creado correctamente."
-          errorMessage="No se pudo crear el descuento."
+          errorMessage="No se pudo crear el descuento"
           onSuccess={onCreated}
           onClose={onClose}
         />

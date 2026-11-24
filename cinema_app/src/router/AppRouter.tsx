@@ -5,6 +5,7 @@ import MovieList from '../modules/movies/pages/MovieList';
 import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import LocationList from '../modules/locations/pages/LocationList.js';
+import SnackList from '../modules/snacks/pages/SnackList.js';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import {RequireSession} from '../components/common/RequireSession';
@@ -18,6 +19,8 @@ import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
 import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
+import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
+import PaymentResult from '../modules/payments/pages/PaymentResult';
 import MovieInBillboardList from '../modules/moviesInBillboards/pages/MovieInBillboardList';
 
 const router = createHashRouter([
@@ -39,22 +42,13 @@ const router = createHashRouter([
   },
   {
     element: (
-      <DashboardLayout />
+      <RequireSession allowedRoles={CLIENT_ROLES} allowGuests>
+        <ClientLayout />
+      </RequireSession>
     ),
     children: [
       {
-        path:'/seats/:screeningId',
-        Component: ShowSeats,
-      }
-    ],
-  },
-  {
-    element: (
-      <DashboardLayout />
-    ),
-    children: [
-      {
-        path:'/seats/:screeningId',
+        path: '/seats/:screeningId',
         Component: ShowSeats,
       }
     ],
@@ -85,6 +79,10 @@ const router = createHashRouter([
       {
         path: '/discounts',
         Component: DiscountList,
+      },
+      {
+        path: '/snacks',
+        Component: SnackList,
       },
       {
         path: '/users',
@@ -130,6 +128,18 @@ const router = createHashRouter([
       {
         path: '/purchaseConfirmationEmail',
         Component: EmailConfirmation
+      },
+      {
+        path: '/payment',
+        Component: PaymentCheckout
+      },
+      {
+        path: '/payment/success',
+        element: <PaymentResult success />
+      },
+      {
+        path: '/payment/cancel',
+        element: <PaymentResult success={false} />
       },
     ],
   },

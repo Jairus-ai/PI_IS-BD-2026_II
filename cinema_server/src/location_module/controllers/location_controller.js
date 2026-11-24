@@ -147,7 +147,7 @@ export const getCantonsforLocation = async(req, res, next) =>
     const p = Number(req.query.provinceId);
 
     if (!Number.isInteger(p) || p <= 0) {
-      return res.status(400).json({ message: 'provinceId inválido' });
+      return res.status(400).json({ message: 'Provincia inválida' });
     }
 
       connection = await getConnection();
@@ -262,7 +262,7 @@ export const getLocationByID = async(req, res, next) =>
 
     if (!location) 
     {
-      return res.status(404).json({ message: 'Location not found' });
+      return res.status(404).json({ message: 'Sucursal no encontrada' });
     }
 
     res.status(200).json(
@@ -442,7 +442,7 @@ export const deleteLocation = async (req,res,next) =>
     if (!Number.isInteger(Number(id))) 
     {
       console.log(Number.isInteger(id));
-      return res.status(400).json({ message: 'Invalid location id' });
+      return res.status(400).json({ message: 'Sucursal inválida' });
     }
 
     connection = await oracledb.getConnection();
@@ -451,7 +451,7 @@ export const deleteLocation = async (req,res,next) =>
 
     if(hasScreenings)
     {
-      return res.status(409).json({message:'Location has active screenings'})
+      return res.status(409).json({message:'La sucursal tiene proyecciones activas'})
     };
     
     const request = `
@@ -469,7 +469,7 @@ export const deleteLocation = async (req,res,next) =>
     );
   
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ message: 'Location not found' });
+      return res.status(404).json({ message: 'Sucursal no encontrada' });
     }
 
     res.status(204).json(
