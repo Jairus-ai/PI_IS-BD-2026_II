@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { changePassword, getCurrentUser, logIn, logOut } from '../controllers/auth_controller.js';
 import { requireSession, ROLES } from '../../session/session.js';
 import { requestPasswordRecovery, verifyPasswordRecoveryCode, resetPassword} from '../controllers/password_recovery_controller.js';
+import { startGoogleLogin, handleGoogleCallback, getPendingGoogleSignUp, completeGoogleSignUp} from '../controllers/google_auth_controller.js';
 
 const router = Router();
 
@@ -20,5 +21,9 @@ router.patch('/change-password',
 router.post('/password-recovery/request', requestPasswordRecovery);
 router.post('/password-recovery/verify', verifyPasswordRecoveryCode);
 router.patch('/password-recovery/reset', resetPassword);
+router.get('/google', startGoogleLogin);
+router.get('/google/callback', handleGoogleCallback);
+router.get('/google/pending', getPendingGoogleSignUp);
+router.post('/google/complete', completeGoogleSignUp);
 
 export default router;
