@@ -26,8 +26,8 @@ import { validateGoogleSignUp } from '../validators/google_auth_validator.js';
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 //RUtas provisionales
 const FRONTEND_HOME_PATH = '/';
-const FRONTEND_LOGIN_PATH = '/login';
-const FRONTEND_COMPLETE_PATH = '/signup/google';
+const FRONTEND_LOGIN_PATH = '/#/login';
+const FRONTEND_SIGNUP_PATH = '/#/signup/google';
 
 const UNIQUE_CONSTRAINT_ERROR = 1;
 const INITIAL_SESSION_VERSION = 0;
