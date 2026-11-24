@@ -1,10 +1,14 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
-import { initializeDatabasePool, closeDatabasePool } from './database/database.js';
+import {
+  CINEMA_TIME_ZONE,
+  initializeDatabasePool,
+  closeDatabasePool
+} from './database/database.js';
 import movieRoutes from './movie_module/routes/movie_routes.js';
 import genreRoutes from './movie_module/routes/genre_routes.js';
 import languageRoutes from './movie_module/routes/language_routes.js';
@@ -19,14 +23,17 @@ import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
 import cantonRoutes from './location_module/routes/canton_routes.js';
 import provinceRoutes from './location_module/routes/province_routes.js';
+import snackRoutes from './snack_module/routes/snack_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
 import seatsRoutes from './seats_module/routes/seats_routes.js';
 import QR_routes from './QR_module/routes/QR_routes.js';
+import paymentRoutes from './payment_module/routes/payment_routes.js';
+import { handleWebhook } from './payment_module/controllers/payment_controller.js';
 import movieInBillboardRoutes from './movie_in_billboard_module/routes/movie_in_billboard_routes.js';
 
-dotenv.config();
+process.env.TZ = CINEMA_TIME_ZONE;
 
 const port = 3000;
 const ip = '0.0.0.0';
@@ -35,6 +42,9 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 const app = express();
 app.disable('x-powered-by');
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+
+app.post('/payments/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -50,6 +60,7 @@ app.use('/posters', (req, res, next) => {
 });
 
 //Mount routes in the app
+app.use('/payments', paymentRoutes);
 app.use('/auth', authRoutes);
 app.use('/clients', clientRoutes);
 app.use('/billboard', billboardRoutes);
@@ -68,6 +79,7 @@ app.use('/seats', seatsRoutes);
 app.use('/purchase', QR_routes);
 app.use('/management/cantons', cantonRoutes);
 app.use('/management/provinces', provinceRoutes);
+app.use('/management/snacks', snackRoutes);
 app.use('/management/movies_in_billboards', movieInBillboardRoutes);
 
 // Route not found
@@ -91,6 +103,7 @@ app.use((error, req, res, next) => {
       status === 500
         ? 'No fue posible completar la operación.'
         : error.message,
+    ...(error.details && { details: error.details }),
   });
 });
 app.use(globalErrorHandler);

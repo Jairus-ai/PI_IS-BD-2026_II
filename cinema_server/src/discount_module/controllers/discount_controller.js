@@ -193,7 +193,7 @@ export const getDiscountProducts = async (req, res, next ) =>
       ON b.ID_LOCATION = l.ID_LOCATION`
     }else
     {
-      return res.status(400).json({ message: 'Invalid product type' });
+      return res.status(400).json({ message: 'Tipo de producto inválido' });
     }
     const result = await connection.execute(
       request, [], 
@@ -263,7 +263,7 @@ export const addDiscount = async (req, res, next) =>
           )`
     }else
     {
-      return res.status(400).json({ message: 'Invalid product type' });
+      return res.status(400).json({ message: 'Tipo de producto inválido' });
     }
 
       await connection.execute(
@@ -315,13 +315,13 @@ export const deleteDiscount = async (req,res,next) =>
     );
 
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ message: 'Discount not found' });
+      return res.status(404).json({ message: 'Descuento no encontrado' });
     }
   
     res.status(204).send();
   }catch (error) {
     if (error.errorNum === 2292) {
-      return res.status(409).json({ message: 'Discount is in use and cannot be deleted' });
+      return res.status(409).json({ message: 'El descuento está en uso y no puede ser eliminada' });
     }
     next(error);
   }finally {
@@ -367,7 +367,7 @@ export const modifyDiscount = async (req,res,next) =>
           WHERE ID_DISCOUNT= :id`
     }else
     {
-      return res.status(400).json({ message: 'Invalid product type' });
+      return res.status(400).json({ message: 'Tipo de producto inválido' });
     }
 
       await connection.execute(
@@ -390,7 +390,7 @@ export const modifyDiscount = async (req,res,next) =>
     );
   }catch (error) {
     if (error.errorNum === 2292) {
-      return res.status(409).json({ message: 'Discount is in use and cannot be modified' });
+      return res.status(409).json({ message: 'El descuento está en uso y no puede ser modificado' });
     }
     next(error);
   }finally {

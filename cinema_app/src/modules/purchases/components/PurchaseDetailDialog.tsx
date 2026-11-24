@@ -1,15 +1,9 @@
 import { useState } from 'react';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import CloseIcon from '@mui/icons-material/Close';
+import { CrudDialog } from '../../../components/crud/CrudDialog';
 import { usePurchaseDetail } from '../hooks/usePurchases';
 import {
   formatAmount,
@@ -39,7 +33,7 @@ function DetailField({ label, value }: DetailFieldProps) {
   const lines = Array.isArray(value) ? value : [value];
   return (
     <div>
-      <Typography sx={{ color: 'primary.dark' }}>{label}</Typography>
+      <Typography variant="caption" sx={{ color: 'primary.dark' }}>{label}</Typography>
       {lines.map((line) => (
         <Typography key={line}>{line}</Typography>
       ))}
@@ -53,7 +47,7 @@ function listOrDefault(lines: string[]): string | string[] {
 
 function PurchaseFields({ purchase }: { readonly purchase: PurchaseDetail }) {
   return (
-    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
+    <Stack spacing={1.5}>
       <DetailField label="Sucursal" value={purchase.LOCATION_NAME ?? 'No disponible'} />
       <DetailField label="Número de compra" value={String(purchase.ID_RECEIPT)} />
       <DetailField label="Fecha y hora de la compra" value={formatDateTime(purchase.RECEIPT_DATE)} />
@@ -64,8 +58,8 @@ function PurchaseFields({ purchase }: { readonly purchase: PurchaseDetail }) {
       <DetailField label="Tarifa" value={listOrDefault(purchase.SEATS.map(getSeatFee))} />
       <DetailField label="Snacks" value={listOrDefault(purchase.SNACKS.map(getSnackLine))} />
       <DetailField label="Descuento" value={listOrDefault(purchase.DISCOUNTS.map(getDiscountLine))} />
-      <DetailField label="Reembolsada" value={purchase.IS_REFUNDED ? 'Sí' : 'No'} />
-    </Box>
+      {purchase.IS_REFUNDED && <DetailField label="Reembolsada" value="Sí" />}
+    </Stack>
   );
 }
 
@@ -78,13 +72,6 @@ export default function PurchaseDetailDialog({ purchaseId, onClose }: PurchaseDe
   const { purchase, isLoadingPurchase, purchaseError, refetchPurchase } = usePurchaseDetail(displayedId);
 
   const renderContent = () => {
-    if (isLoadingPurchase) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-          <CircularProgress />
-        </Box>
-      );
-    }
     if (purchaseError || !purchase) {
       return (
         <Alert
@@ -103,25 +90,14 @@ export default function PurchaseDetailDialog({ purchaseId, onClose }: PurchaseDe
   };
 
   return (
-    <Dialog
+    <CrudDialog
       open={purchaseId !== null}
+      title={`Compra #${displayedId}`}
       onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: 2 } } }}
+      loading={isLoadingPurchase}
+      actions={<Button onClick={onClose}>Cerrar</Button>}
     >
-      <DialogTitle sx={{ color: 'primary.dark', fontWeight: 700, pr: 6 }}>
-        Compra #{displayedId}
-        <IconButton aria-label="Cerrar" onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>{renderContent()}</DialogContent>
-      <DialogActions>
-        <Button variant="outlined" onClick={onClose}>
-          Cerrar
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {renderContent()}
+    </CrudDialog>
   );
 }

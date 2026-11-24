@@ -21,10 +21,11 @@ function ForbiddenRedirect() {
 
 type RequireSessionProps = {
   allowedRoles?: Role[];
+  allowGuests?: boolean;
   children: ReactNode;
 };
 
-export function RequireSession({ allowedRoles, children }: Readonly<RequireSessionProps>) {
+export function RequireSession({ allowedRoles, allowGuests = false, children }: Readonly<RequireSessionProps>) {
   const { user, isCheckingSession } = useSession();
   const location = useLocation();
 
@@ -36,8 +37,11 @@ export function RequireSession({ allowedRoles, children }: Readonly<RequireSessi
     );
   }
 
+  if (!user && allowGuests)
+    return children;
+
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
    if (user.requiresPasswordChange) {

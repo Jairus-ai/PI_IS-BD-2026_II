@@ -20,6 +20,10 @@ jest.unstable_mockModule('../../email/email_service.js',() => ({
 
 const { default: authRoutes } = await import('../routes/auth_routes.js');
 const { ROLES, createSessionToken, SESSION_COOKIE_NAME} = await import('../../session/session.js');
+const {
+  RESERVATION_COOKIE_NAME,
+  createReservationToken
+} = await import('../../seats_module/services/reservation_cookie.js');
 
 process.env.JWT_SECRET = 'test-secret';
 
@@ -101,6 +105,54 @@ afterEach(() => {
 });
 
 describe('POST /auth/login', () => {
+  describe('reservation made before logging in', () => {
+    function reservationCookie() {
+      const token = createReservationToken({
+        reservationId: 5,
+        screeningId: 2
+      });
+
+      return `${RESERVATION_COOKIE_NAME}=${token}`;
+    }
+
+    function findReservationCookie(response) {
+      return (response.headers['set-cookie'] ?? []).find((cookie) => cookie.startsWith(`${RESERVATION_COOKIE_NAME}=`));
+    }
+
+    test('a worker login expires the reservation and clears its cookie', async () => {
+      const connection = mockDatabaseConnection(async (sql) => (
+        /UPDATE PI_DEVELOPERS\.RESERVATIONS/.test(sql)
+          ? { rowsAffected: 1 }
+          : { rows: [accountRow({ ROLE_CODE: 'A' })] }
+      ));
+
+      const response = await request(app)
+        .post('/auth/login')
+        .set('Cookie', reservationCookie())
+        .send({ email: 'admin.prueba@cinepi.com', password: PASSWORD })
+        .expect(200);
+
+      const expireCall = connection.execute.mock.calls.find(([sql]) => /UPDATE PI_DEVELOPERS\.RESERVATIONS/.test(sql));
+
+      expect(expireCall[0]).toMatch(/SET RESERVED_UNTIL = SYSTIMESTAMP/);
+      expect(expireCall[1]).toEqual([5]);
+      expect(findReservationCookie(response)).toMatch(/Expires=Thu, 01 Jan 1970/);
+    });
+
+    test('a client login keeps the reservation', async () => {
+      const connection = mockDatabaseConnection(async () => ({ rows: [accountRow()] }));
+
+      const response = await request(app)
+        .post('/auth/login')
+        .set('Cookie', reservationCookie())
+        .send({ email: 'adrian.prueba@ucr.ac.cr', password: PASSWORD })
+        .expect(200);
+
+      expect(connection.execute.mock.calls.some(([sql]) => /RESERVATIONS/.test(sql))).toBe(false);
+      expect(findReservationCookie(response)).toBeUndefined();
+    });
+  });
+
   test('Log in client 200 OK and starts a session', async () => {
     const connection = mockDatabaseConnection(async () => ({ rows: [accountRow()] }));
 

@@ -1,5 +1,13 @@
 import oracledb from 'oracledb';
 
+export const CINEMA_TIME_ZONE = 'America/Costa_Rica';
+
+function setSessionTimeZone(connection, requestedTag, callback) {
+  connection.execute(`ALTER SESSION SET TIME_ZONE = '${CINEMA_TIME_ZONE}'`)
+    .then(() => callback())
+    .catch(callback);
+}
+
 export async function initializeDatabasePool() {
   try {
     await oracledb.createPool({
@@ -11,7 +19,8 @@ export async function initializeDatabasePool() {
       walletPassword: process.env.ORACLE_WALLET_PASSWORD,
       poolAlias: 'default',
       poolMin: 1,
-      poolMax: 5
+      poolMax: 5,
+      sessionCallback: setSessionTimeZone
     });
     console.log("Database connection pool initialized");
   } catch (error) {
