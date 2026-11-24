@@ -184,6 +184,13 @@ export default function DashboardSidebar({
               href="/locations"
               selected={!!matchPath('/locations/*', pathname) || pathname === '/'}
             />
+            <DashboardSidebarPageItem
+              id="snacks"
+              title="Snacks"
+              icon={<MovieIcon />}
+              href="/snacks"
+              selected={!!matchPath('/snacks/*', pathname) || pathname === '/'}
+            />
             
           </List>
         </Box>

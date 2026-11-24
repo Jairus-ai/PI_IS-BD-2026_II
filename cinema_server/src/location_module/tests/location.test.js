@@ -599,7 +599,9 @@ describe('DELETE /management/locations/:id', () => {
 
         const response = await del().expect(409);
 
-        expect(response.body.message).toMatch(/screenings/i);
+        expect(response.body).toEqual({
+            message: 'La sucursal tiene proyecciones activas',
+        });
         expect(connection.execute).toHaveBeenCalledTimes(1);
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
