@@ -22,7 +22,7 @@ const SESSION_DURATION_MS = SESSION_DURATION_MINUTES * 60 * 1000;
 const EXPIRED_SESSION_MESSAGE = 'La sesión expiró. Inicia sesión de nuevo';
 const FORBIDDEN_MESSAGE = 'No tienes permiso para realizar esta acción';
 
-function getJwtSecret() {
+export function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not defined in .env');
@@ -30,7 +30,7 @@ function getJwtSecret() {
   return secret;
 }
 
-function buildCookieOptions() {
+export function buildCookieOptions() {
   return {
     httpOnly: true,
     sameSite: 'lax',
