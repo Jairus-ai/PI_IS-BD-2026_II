@@ -4,22 +4,39 @@ import Divider from '@mui/material/Divider';
 import Popover from '@mui/material/Popover';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import PersonIcon from '@mui/icons-material/Person';
 import useSession from '../../hooks/useSession';
 import Button from '@mui/material/Button';
-import { Link } from 'react-router';
-import HistoryIcon from '@mui/icons-material/History';   
 import LogOutButton from '../common/LogOutButton';
-import { ROLES } from '../../context/SessionContext';
+import type { ReactNode } from 'react';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PersonIcon from '@mui/icons-material/Person';
+import HistoryIcon from '@mui/icons-material/History';
+import { Link } from 'react-router';
+import { ROLES, WORKER_ROLES } from '../../context/SessionContext';
 
 interface UserOptionsProps {
   readonly anchorEl: HTMLElement | null;
   readonly onClose: () => void;
 }
 
-export default function UserOptions({ anchorEl, onClose }: UserOptionsProps) {
-  const { user } = useSession();   // ajusta a lo que devuelva tu hook
+interface MenuLinkProps {
+  readonly to: string;
+  readonly icon: ReactNode;
+  readonly onClick: () => void;
+  readonly children: ReactNode;
+}
 
+function MenuLink({ to, icon, onClick, children }: MenuLinkProps) {
+  return (
+    <Button component={Link} to={to} startIcon={icon} onClick={onClick} sx={{ justifyContent: 'flex-start' }}>
+      {children}
+    </Button>
+  );
+}
+
+export default function UserOptions({ anchorEl, onClose }: UserOptionsProps) {
+  const { user } = useSession();
+  const isWorker = user ? WORKER_ROLES.includes(user.role) : false;
   return (
     <Popover
       open={Boolean(anchorEl)}
@@ -45,33 +62,25 @@ export default function UserOptions({ anchorEl, onClose }: UserOptionsProps) {
 
         <Divider />
 
-       <Stack spacing={0.5} sx={{ p: 1, minWidth: 180, alignItems: 'stretch' }}>
-				
-        <Button
-          component={Link}
-          to="/profile"
-          startIcon={<PersonIcon />}
-          onClick={onClose}
-          sx={{ justifyContent: 'flex-start' }}
-        >
-          Mi perfil
-        </Button>
+        <Stack spacing={0.5} sx={{ p: 1, minWidth: 180, alignItems: 'stretch' }}>
+          <MenuLink to="/profile" icon={<PersonIcon />} onClick={onClose}>
+            Mi perfil
+          </MenuLink>
 
-        {user?.role === ROLES.CLIENT && (
-          <Button
-            component={Link}
-            to="/purchase-history"
-            startIcon={<HistoryIcon />}
-            onClick={onClose}
-            sx={{ justifyContent: 'flex-start' }}
-          >
-            Historial de compras
-          </Button>
-        )}
+          {isWorker && (
+            <MenuLink to="/room-dashboard" icon={<DashboardIcon />} onClick={onClose}>
+              Panel de gestión
+            </MenuLink>
+          )}
 
-        <LogOutButton sx={{ justifyContent: 'flex-start' }} />
+          {user?.role === ROLES.CLIENT && (
+            <MenuLink to="/purchase-history" icon={<HistoryIcon />} onClick={onClose}>
+              Historial de compras
+            </MenuLink>
+          )}
 
-      </Stack>
+          <LogOutButton sx={{ justifyContent: 'flex-start' }} />
+        </Stack>
       </Box>
     </Popover>
   );
