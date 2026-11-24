@@ -249,6 +249,30 @@ export const editSnack = async(req, res, next) =>
     const {id} = req.params;
     const {SNACK_NAME, SNACK_DESCRIPTION, PRICE} = req.body;
 
+    const sql = `
+      SELECT ID_SNACK
+      FROM PI_DEVELOPERS.SNACKS
+      WHERE SNACK_NAME = :SNACK_NAME AND IS_DELETED = 0 AND ID_SNACK <> :id
+    `;
+
+    let result = await connection.execute(
+      sql,
+      {
+        SNACK_NAME:SNACK_NAME,
+      },
+      {
+        outFormat: oracledb.OUT_FORMAT_OBJECT
+      }
+    )
+
+
+    if (result.rows.length > 0) 
+    {
+      return res.status(409).json({
+        message: 'Ya existe un snack con ese nombre.',
+      });
+    }
+
     const request = `
       UPDATE PI_DEVELOPERS.SNACKS
       SET
@@ -279,11 +303,6 @@ export const editSnack = async(req, res, next) =>
 
   }catch(error)
   {
-    if (error.errorNum === 1) {
-      return res.status(409).json({
-        message: 'Ya existe un snack con ese nombre.',
-      });
-    }
     next(error);
   }finally
   {
