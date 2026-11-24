@@ -253,7 +253,7 @@ describe(`GET ${BASE_PATH}/:id`, () => {
 
         const response = await get(999).expect(404);
 
-        expect(response.body).toEqual({ message: 'Snack not found' });
+        expect(response.body).toEqual({ message: 'Snack no encontrado' });
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
@@ -266,4 +266,60 @@ describe(`GET ${BASE_PATH}/:id`, () => {
         expect(connection.close).toHaveBeenCalledTimes(1);
     });
 
+});
+
+describe('POST ${BASE_PATH}', () => {
+    test('201 crea el snack correctamente', async () => {
+        const connection = useConnection([
+            { rows: [] },
+            { rows: [{ LAST_ID: 5 }] },
+            {},
+        ]);
+
+        const response = await request(app)
+            .post('/management/snacks')
+            .send({
+                SNACK_NAME: 'Nachos',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 1500,
+            });
+
+        console.log(response.status, Response.body);
+
+        expect(response.status).toBe(201);
+
+        expect(response.body).toEqual({
+            message: 'success',
+        });
+
+        expect(connection.execute).toHaveBeenCalledTimes(3);
+    });
+
+    test('409 cuando ya existe un snack con ese nombre', async () => {
+        const connection = useConnection([
+            {
+                rows: [
+                    {
+                        ID_SNACK: 7,
+                    },
+                ],
+            },
+        ]);
+
+        const response = await request(app)
+            .post('/management/snacks')
+            .send({
+                SNACK_NAME: 'Nachos',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 1500,
+            });
+
+        expect(response.status).toBe(409);
+
+        expect(response.body).toEqual({
+            message: 'Ya existe un snack con ese nombre.',
+        });
+
+        expect(connection.execute).toHaveBeenCalledTimes(1);
+    });
 });
