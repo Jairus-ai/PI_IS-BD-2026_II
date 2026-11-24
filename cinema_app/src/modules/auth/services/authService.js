@@ -56,3 +56,13 @@ export const establishPassword = async ({
 
   return data;
 };
+
+export const getGooglePendingProfile = async () => {
+  const { data } = await api.get('/auth/google/pending', WITH_SESSION_COOKIE);
+  return data;
+};
+
+export const completeGoogleSignUp = async (profile) => {
+  const { data } = await api.post('/auth/google/complete', profile, WITH_SESSION_COOKIE);
+  return data;
+};
