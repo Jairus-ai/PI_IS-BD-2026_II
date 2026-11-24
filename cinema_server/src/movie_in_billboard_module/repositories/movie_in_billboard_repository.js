@@ -70,7 +70,14 @@ export async function listMoviesInBillboards(connection, queryParams, page) {
       r.RATING_NAME
     ${MOVIES_IN_BILLBOARDS_SOURCE}
     ${whereClause}
-    ORDER BY mib.OPENING_DATE DESC, m.MOVIE_TITLE ASC, l.LOCATION_NAME ASC
+    ORDER BY
+      CASE
+        WHEN mib.CLOSING_DATE >= TRUNC(SYSDATE) THEN 0
+        ELSE 1
+      END ASC,
+      mib.OPENING_DATE DESC,
+      m.MOVIE_TITLE ASC,
+      l.LOCATION_NAME ASC
     OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
   `;
 
@@ -265,6 +272,33 @@ export async function updateMovieInBillboardById(connection, id, movieInBillboar
   };
 
   const result = await connection.execute(sql, binds, { autoCommit: true });
+
+  return result.rowsAffected;
+}
+
+export async function hasActiveScreenings(connection, id) {
+  const sql = `
+    SELECT 1
+    FROM PI_DEVELOPERS.SCREENINGS
+    WHERE ID_MOVIE_IN_BILLBOARD = :id
+      AND IS_DELETED = 0
+    FETCH FIRST 1 ROWS ONLY
+  `;
+
+  const result = await connection.execute(sql, { id }, OBJECT_FORMAT);
+
+  return result.rows.length > 0;
+}
+
+export async function softDeleteMovieInBillboard(connection, id) {
+  const sql = `
+    UPDATE PI_DEVELOPERS.MOVIES_IN_BILLBOARDS
+    SET IS_DELETED = 1
+    WHERE ID_MOVIE_IN_BILLBOARD = :id
+      AND IS_DELETED = 0
+  `;
+
+  const result = await connection.execute(sql, { id }, { autoCommit: true });
 
   return result.rowsAffected;
 }
