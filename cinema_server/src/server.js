@@ -23,6 +23,7 @@ import userRoutes from './user_module/routes/user_routes.js';
 import locationRoutes from './location_module/routes/location_routes.js';
 import cantonRoutes from './location_module/routes/canton_routes.js';
 import provinceRoutes from './location_module/routes/province_routes.js';
+import snackRoutes from './snack_module/routes/snack_routes.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 import clientRoutes from './client_module/routes/client_routes.js';
 import authRoutes from './auth_module/routes/auth_routes.js';
@@ -79,6 +80,7 @@ app.use('/purchase', QR_routes);
 app.use('/management/cantons', cantonRoutes);
 app.use('/management/provinces', provinceRoutes);
 app.use('/management/room-dashboard', roomDashboardRoutes);
+app.use('/management/snacks', snackRoutes);
 
 // Route not found
 app.use((req, res, next) => {
