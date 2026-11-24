@@ -56,8 +56,8 @@ function getStatusForScreening(nowSeconds, { startSeconds, endSeconds }, cleanin
 }
 
 export function calculateAutomaticStatus(nowSeconds, slots, cleaningMinutes) {
-  const statuses = slots.map((slot) => getStatusForScreening(nowSeconds, slot, cleaningMinutes));
-  return AUTOMATIC_STATUS_PRIORITY.find((status) => statuses.includes(status)) ?? ROOM_STATUS.FREE;
+  const statuses = new Set(slots.map((slot) => getStatusForScreening(nowSeconds, slot, cleaningMinutes)));
+  return AUTOMATIC_STATUS_PRIORITY.find((status) => statuses.has(status)) ?? ROOM_STATUS.FREE;
 }
 
 export function pickDefaultIndex(phases) {
