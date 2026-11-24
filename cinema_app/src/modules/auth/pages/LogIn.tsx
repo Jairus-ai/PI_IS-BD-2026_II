@@ -8,8 +8,8 @@ import Typography from '@mui/material/Typography';
 import { isAxiosError } from 'axios';
 
 
-import { useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
-import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router';
+import { useEffect, useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
+import { Link as RouterLink, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router';
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
@@ -18,6 +18,7 @@ import useSession from '../../../hooks/useSession';
 import { WORKER_ROLES, type SessionUser } from '../../../context/SessionContext';
 import { useLogIn } from '../hooks/useLogIn';
 import { validateLogInForm, validateRequiredField } from '../validators/authValidator';
+import GoogleAuthButton from '../../../components/common/GoogleAuthButton'
 
 type LogInFormValues = {
   email: string;
@@ -39,6 +40,13 @@ type LogInErrorResponse = {
 
 const INITIAL_VALUES: LogInFormValues = { email: '', password: '' };
 const GENERIC_ERROR_MESSAGE = 'No se pudo iniciar sesión. Intenta de nuevo.';
+const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+  google_cancelled: 'Cancelaste el inicio de sesión con Google.',
+  google_state_invalid: 'La solicitud con Google expiró o no es válida. Intenta de nuevo.',
+  google_email_not_verified: 'Tu correo de Google no está verificado.',
+  google_staff_not_allowed: 'Las cuentas del personal no pueden ingresar con Google. Usa tu correo y contraseña.',
+  google_failed: 'No se pudo iniciar sesión con Google. Intenta de nuevo.'
+};
 const WORKER_HOME_PATH = '/movies';
 const CLIENT_HOME_PATH = '/';
 
@@ -55,6 +63,17 @@ export default function LogIn() {
   const [values, setValues] = useState<LogInFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<LogInFormErrors>({});
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const googleError = searchParams.get('error');
+
+  useEffect(() => {
+    const message = googleError ? GOOGLE_ERROR_MESSAGES[googleError] : undefined;
+    if (!message) {
+      return;
+    }
+    notifications.show(message, { key: `google-error-${googleError}`, severity: 'error', autoHideDuration: 6000 });
+    setSearchParams({}, { replace: true });
+  }, [googleError, notifications, setSearchParams]);
 
   if (user) {
     
@@ -204,6 +223,7 @@ export default function LogIn() {
           {isLoggingIn ? 'Ingresando…' : 'Iniciar sesión'}
         </Button>
       </Box>
+      <GoogleAuthButton />
       <Typography sx={{ textAlign: 'center' }}>
         ¿No tienes cuenta?{' '}
         <Link component={RouterLink} to="/register" variant="body2">
