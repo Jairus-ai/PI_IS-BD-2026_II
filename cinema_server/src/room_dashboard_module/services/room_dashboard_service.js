@@ -44,6 +44,7 @@ function toScreeningDto(row, slot, phase, capacity) {
   return {
     id: row.ID_SCREENING,
     movieTitle: row.MOVIE_TITLE,
+    poster: row.POSTER,
     genres: row.GENRES,
     durationMinutes: row.MOVIE_DURATION,
     language: row.MOVIE_LANGUAGE,
