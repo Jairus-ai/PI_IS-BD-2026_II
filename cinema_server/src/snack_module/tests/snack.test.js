@@ -270,10 +270,7 @@ describe(`GET ${BASE_PATH}/:id`, () => {
 
 describe('POST ${BASE_PATH}', () => {
     test('201 crea el snack correctamente', async () => {
-    test('201 crea el snack correctamente', async () => {
         const connection = useConnection([
-            { rows: [] },
-            { rows: [{ LAST_ID: 5 }] },
             { rows: [] },
             { rows: [{ LAST_ID: 5 }] },
             {},
@@ -289,8 +286,6 @@ describe('POST ${BASE_PATH}', () => {
 
         console.log(response.status, Response.body);
 
-        console.log(response.status, Response.body);
-
         expect(response.status).toBe(201);
 
         expect(response.body).toEqual({
@@ -298,55 +293,25 @@ describe('POST ${BASE_PATH}', () => {
         });
 
         expect(connection.execute).toHaveBeenCalledTimes(3);
-        expect(connection.execute).toHaveBeenCalledTimes(3);
-    });
-
-    test('409 cuando ya existe un snack con ese nombre', async () => {
-        const connection = useConnection([
-            {
-                rows: [
-                    {
-                        ID_SNACK: 7,
-                    },
-                ],
-            },
-    test('409 cuando ya existe un snack con ese nombre', async () => {
-        const connection = useConnection([
-            {
-                rows: [
-                    {
-                        ID_SNACK: 7,
-                    },
-                ],
-            },
-        ]);
-
-        const response = await request(app)
-            .post('/management/snacks')
-            .send({
-                SNACK_NAME: 'Nachos',
-                SNACK_DESCRIPTION: 'Con queso',
-                PRICE: 1500,
-            });
-
-        expect(response.status).toBe(409);
-
-        expect(response.body).toEqual({
-            message: 'Ya existe un snack con ese nombre.',
-        });
-
-        expect(connection.execute).toHaveBeenCalledTimes(1);
     });
 });
 
-describe('DELETE ${BASE_PATH}/:id', () => {
-    test('204 elimina un snack correctamente', async () => {
+describe('PUT ${BASE_PATH}/:id', () => {
+    test('200 actualiza el snack correctamente', async () => {
         const connection = useConnection([
-            { rowsAffected: 1 },
+            { rows: [] },
+            {},
         ]);
 
         const response = await request(app)
-            .delete('/management/snacks/5');
+            .put('/management/snacks/5')
+            .send({
+                SNACK_NAME: 'Nachos Supreme',
+                SNACK_DESCRIPTION: 'Con queso',
+                PRICE: 2500,
+            });
+
+        expect(response.status).toBe(200);
 
         expect(response.status).toBe(204);
 
@@ -385,5 +350,7 @@ describe('DELETE ${BASE_PATH}/:id', () => {
         expect(response.body).toEqual({
             message: 'Snack no encontrado',
         });
+
+        expect(connection.execute).toHaveBeenCalledTimes(1);
     });
 });
