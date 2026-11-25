@@ -47,7 +47,7 @@ export const getPurchaseHistory = async (req, res, next) => {
         LEFT JOIN PI_DEVELOPERS.MOVIES m ON m.ID_MOVIE = mib.ID_MOVIE
         LEFT JOIN PI_DEVELOPERS.REFUNDS rf ON rf.ID_RECEIPT = r.ID_RECEIPT
       WHERE r.ID_CLIENT = :clientId
-      GROUP BY rf.ID_REFUND, r.RECEIPT_DATE, r.TOTAL_AMOUNT
+      GROUP BY r.ID_RECEIPT, r.TOTAL_AMOUNT, r.RECEIPT_DATE, rf.ID_REFUND
       ORDER BY r.RECEIPT_DATE DESC`;
 
     const result = await connection.execute(

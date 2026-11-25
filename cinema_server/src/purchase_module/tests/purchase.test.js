@@ -125,6 +125,15 @@ describe('GET /purchases', () => {
     expect(connection.close).toHaveBeenCalledTimes(2);
   });
 
+  test('Groups by every selected column of the receipt, Oracle rejects the query otherwise', async () => {
+    const connection = mockDatabase({ rows: [] });
+
+    await request(app).get('/purchases').set('Cookie', sessionCookie(ROLES.CLIENT)).expect(200);
+
+    const [sql] = connection.execute.mock.calls[1];
+    expect(sql).toMatch(/GROUP BY r\.ID_RECEIPT, r\.TOTAL_AMOUNT, r\.RECEIPT_DATE, rf\.ID_REFUND/);
+  });
+
   test('Returns an empty list when the client has no purchases', async () => {
     mockDatabase({ rows: [] });
 
