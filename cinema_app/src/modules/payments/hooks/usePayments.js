@@ -4,26 +4,27 @@ import {
 } from '@tanstack/react-query';
 import {
   createPaymentIntent,
-  getPaymentReservation,
-  getPaymentStatus
+  getPaymentStatus,
+  getPurchaseSummary
 } from '../services/paymentService';
 
 const PENDING_STATUS = 'PENDING';
 const STATUS_POLL_INTERVAL_MS = 2000;
 
-export const usePaymentReservation = () => {
-  const reservationQuery = useQuery({
-    queryKey: ['paymentReservation'],
-    queryFn: getPaymentReservation,
+export const usePurchaseSummary = () => {
+  const summaryQuery = useQuery({
+    queryKey: ['purchaseSummary'],
+    queryFn: getPurchaseSummary,
     retry: false,
     refetchOnWindowFocus: false,
     gcTime: 0
   });
 
   return {
-    reservation: reservationQuery.data ?? null,
-    isLoadingReservation: reservationQuery.isLoading,
-    reservationError: reservationQuery.error
+    summary: summaryQuery.data ?? null,
+    isLoadingSummary: summaryQuery.isLoading,
+    summaryError: summaryQuery.error,
+    refetchSummary: summaryQuery.refetch
   };
 };
 

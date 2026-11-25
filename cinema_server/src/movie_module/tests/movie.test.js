@@ -7,6 +7,7 @@ const mockRollback = jest.fn();
 const mockCountMovies = jest.fn();
 const mockListMovies = jest.fn();
 const mockFindMovieById = jest.fn();
+const mockListMovieOptions = jest.fn();
 const mockSplitMovieBody = jest.fn();
 const mockCreateMovieWithRelations = jest.fn();
 const mockUpdateMovieWithRelations = jest.fn();
@@ -31,6 +32,7 @@ jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   countMovies: mockCountMovies,
   listMovies: mockListMovies,
   findMovieById: mockFindMovieById,
+  listMovieOptions: mockListMovieOptions,
   splitMovieBody: mockSplitMovieBody,
   createMovieWithRelations: mockCreateMovieWithRelations,
   updateMovieWithRelations: mockUpdateMovieWithRelations,

@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import { isAxiosError } from 'axios';
 
 
-import { useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FocusEvent, type SubmitEvent } from 'react';
 import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router';
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
@@ -39,7 +39,7 @@ type LogInErrorResponse = {
 
 const INITIAL_VALUES: LogInFormValues = { email: '', password: '' };
 const GENERIC_ERROR_MESSAGE = 'No se pudo iniciar sesión. Intenta de nuevo.';
-const WORKER_HOME_PATH = '/movies';
+const WORKER_HOME_PATH = '/room-dashboard';
 const CLIENT_HOME_PATH = '/';
 
 function getHomePath(user: SessionUser) {
@@ -126,7 +126,7 @@ export default function LogIn() {
         }
       );
 
-      navigate('/password-recovery', {
+      void navigate('/password-recovery', {
         state: {
           email: values.email,
         },
@@ -142,7 +142,7 @@ export default function LogIn() {
     notifications.show(GENERIC_ERROR_MESSAGE, { severity: 'error' });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formErrors = validateLogInForm(values);
     setErrors(formErrors);

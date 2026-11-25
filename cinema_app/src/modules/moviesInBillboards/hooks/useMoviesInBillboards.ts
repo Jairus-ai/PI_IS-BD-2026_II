@@ -1,20 +1,36 @@
-import { useQuery } from '@tanstack/react-query';
 import {
+  useMutation,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query';
+import {
+  createMovieInBillboard,
+  updateMovieInBillboard,
+  deleteMovieInBillboard,
   getMovieInBillboard,
   getMoviesInBillboardsCount,
   getMoviesInBillboardsList
 } from '../services/movieInBillboardService';
-import { getRatings } from '../../movies/services/movieService';
+import {
+  getMovieOptions,
+  getRatings
+} from '../../movies/services/movieService';
 import { getLocations } from '../../users/services/locationService';
-import type { Rating } from '../../movies/types/movies';
+import type {
+  MovieOption,
+  Rating
+} from '../../movies/types/movies';
 import type {
   LocationOption,
   MovieInBillboardDetail,
   MovieInBillboardFilters,
-  MovieInBillboardPage
+  MovieInBillboardPage,
+  NewMovieInBillboard
 } from '../types/moviesInBillboards';
 
 export const MOVIES_IN_BILLBOARDS_QUERY_KEY = ['movies-in-billboards'];
+const MOVIE_OPTIONS_QUERY_KEY = ['movie-options'];
+const LOCATION_OPTIONS_QUERY_KEY = ['location-options'];
 
 export const useMoviesInBillboards = (page: number, filters: MovieInBillboardFilters) => {
   const listQuery = useQuery<MovieInBillboardPage>({
@@ -74,12 +90,75 @@ export const useMovieInBillboardFilterOptions = () => {
   });
 
   const locationsQuery = useQuery<LocationOption[]>({
-    queryKey: ['location-options'],
+    queryKey: LOCATION_OPTIONS_QUERY_KEY,
     queryFn: getLocations
   });
 
   return {
     ratings: ratingsQuery.data?.data ?? [],
     locations: locationsQuery.data ?? []
+  };
+};
+
+export const useMovieInBillboardFormOptions = (enabled: boolean) => {
+  const moviesQuery = useQuery<{ data: MovieOption[] }>({
+    queryKey: MOVIE_OPTIONS_QUERY_KEY,
+    queryFn: getMovieOptions,
+    enabled
+  });
+
+  const locationsQuery = useQuery<LocationOption[]>({
+    queryKey: LOCATION_OPTIONS_QUERY_KEY,
+    queryFn: getLocations,
+    enabled
+  });
+
+  return {
+    movies: moviesQuery.data?.data ?? [],
+    locations: locationsQuery.data ?? [],
+    isLoadingOptions: moviesQuery.isLoading || locationsQuery.isLoading,
+    optionsError: moviesQuery.error ?? locationsQuery.error
+  };
+};
+
+export const useCreateMovieInBillboard = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (movieInBillboard: NewMovieInBillboard) => createMovieInBillboard(movieInBillboard),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MOVIES_IN_BILLBOARDS_QUERY_KEY })
+  });
+
+  return {
+    createMovieInBillboard: mutation.mutateAsync,
+    isCreatingMovieInBillboard: mutation.isPending
+  };
+};
+
+export const useUpdateMovieInBillboard = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, movieInBillboard }: { id: number; movieInBillboard: NewMovieInBillboard }) =>
+      updateMovieInBillboard(id, movieInBillboard),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MOVIES_IN_BILLBOARDS_QUERY_KEY })
+  });
+
+  return {
+    updateMovieInBillboard: mutation.mutateAsync,
+    isUpdatingMovieInBillboard: mutation.isPending
+  };
+};
+
+export const useDeleteMovieInBillboard = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: number) => deleteMovieInBillboard(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MOVIES_IN_BILLBOARDS_QUERY_KEY })
+  });
+
+  return {
+    deleteMovieInBillboard: mutation.mutateAsync
   };
 };

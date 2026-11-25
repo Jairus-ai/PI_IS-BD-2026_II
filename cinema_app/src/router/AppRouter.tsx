@@ -21,6 +21,10 @@ import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
+import RoomDashboard from '../modules/roomDashboard/pages/RoomDashboard';
+import MovieScreeningsPage from '../modules/screenings/pages/MovieScreeningsPage';
+import ProfilePage from '../modules/profile/pages/ProfilePage';
+import RoleLayout from '../components/layout/RoleLayout';
 import MovieInBillboardList from '../modules/moviesInBillboards/pages/MovieInBillboardList';
 
 const router = createHashRouter([
@@ -48,14 +52,14 @@ const router = createHashRouter([
     ),
     children: [
       {
-        path: '/seats/:screeningId',
+        path:'/seats/:screeningId',
         Component: ShowSeats,
-      }
+      },
+      {
+        path: '/movies/:idMovie',
+        Component: MovieScreeningsPage,
+      },
     ],
-  },
-  {
-  path: '/password-recovery',
-    Component: PasswordRecovery,
   },
   {
     element: (
@@ -112,6 +116,10 @@ const router = createHashRouter([
           </RequireSession>
         ),
       },
+      {
+        path: '/room-dashboard',
+        Component: RoomDashboard,
+      },
     ],
   },
   {
@@ -140,6 +148,19 @@ const router = createHashRouter([
       {
         path: '/payment/cancel',
         element: <PaymentResult success={false} />
+      },
+    ],
+  },
+  {
+    element: (
+      <RequireSession>
+        <RoleLayout />
+      </RequireSession>
+    ),
+    children: [
+      {
+        path: '/profile',
+        Component: ProfilePage,
       },
     ],
   },

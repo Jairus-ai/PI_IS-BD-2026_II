@@ -6,6 +6,7 @@ import {
   createMovieWithRelations,
   findMovieById,
   listMovies,
+  listMovieOptions,
   softDeleteMovie,
   updateMovieWithRelations
 } from '../repositories/movie_repository.js';
@@ -109,5 +110,11 @@ describe('movie_repository', () => {
     const connection = createConnection();
 
     expect(await softDeleteMovie(connection, 1)).toBe(1);
+  });
+
+  test('Lists the movie options', async () => {
+    const connection = createConnection({ rows: [{ ID_MOVIE: 1 }] });
+
+    expect(await listMovieOptions(connection)).toEqual([{ ID_MOVIE: 1 }]);
   });
 });

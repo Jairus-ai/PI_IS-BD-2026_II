@@ -29,6 +29,11 @@ export interface MovieDetail {
   LANGUAGES: string | null;
 }
 
+export interface MovieOption {
+  ID_MOVIE: number;
+  MOVIE_TITLE: string;
+}
+
 export interface Genre {
   ID_GENRE: number;
   GENRE_NAME: string;

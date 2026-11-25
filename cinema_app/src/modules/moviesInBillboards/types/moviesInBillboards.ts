@@ -15,6 +15,9 @@ export interface MovieInBillboardDetail extends MovieInBillboard {
   RATING_CODE: string;
   MOVIE_DURATION: number;
   POSTER: string;
+  ID_MOVIE: number;
+  ID_LOCATION: number;
+  PREMIER: number;
 }
 
 export interface MovieInBillboardPage {
@@ -27,6 +30,14 @@ export interface MovieInBillboardFilters {
   locationId: number | '';
   ratingId: number | '';
   movieName: string;
+}
+
+export interface NewMovieInBillboard {
+  movieId: number;
+  locationId: number;
+  openingDate: string;
+  closingDate: string;
+  premier: boolean;
 }
 
 export interface LocationOption {

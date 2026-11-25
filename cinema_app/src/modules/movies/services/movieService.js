@@ -26,6 +26,11 @@ export const getMovieById = async (id) => {
   return data;
 };
 
+export const getMovieOptions = async () => {
+  const { data } = await api.get('/management/movies/options');
+  return data;
+};
+
 export const getGenres = async () => {
   const { data } = await api.get('/management/genres');
   return data;

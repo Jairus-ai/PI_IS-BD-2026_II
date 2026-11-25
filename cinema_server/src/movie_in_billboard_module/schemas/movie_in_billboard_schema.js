@@ -39,3 +39,27 @@ export const movieInBillboardIdSchema = z.object({
     .int('El ID de la película en cartelera debe ser un entero.')
     .positive('El ID de la película en cartelera debe ser mayor a 0.'),
 });
+
+const requiredId = (fieldName) =>
+  z.coerce
+    .number({ error: `${fieldName} debe ser un número.` })
+    .int(`${fieldName} debe ser un número entero.`)
+    .positive(`${fieldName} debe ser mayor a 0.`);
+
+const requiredDate = (fieldName) =>
+  z.iso.date({ error: `${fieldName} debe ser una fecha válida con formato AAAA-MM-DD.` });
+
+export const movieInBillboardBodySchema = z
+  .object({
+    movieId: requiredId('El ID de la película'),
+    locationId: requiredId('El ID de sede'),
+    openingDate: requiredDate('La fecha de inicio'),
+    closingDate: requiredDate('La fecha de fin'),
+    premier: z
+      .boolean({ error: 'El estreno debe ser verdadero o falso.' })
+      .default(false),
+  })
+  .refine((movieInBillboard) => movieInBillboard.closingDate >= movieInBillboard.openingDate, {
+    path: ['closingDate'],
+    error: 'La fecha de fin no puede ser anterior a la fecha de inicio.',
+  });

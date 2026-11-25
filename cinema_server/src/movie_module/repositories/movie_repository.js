@@ -198,6 +198,25 @@ export async function findMovieById(connection, id) {
   return result.rows[0] ?? null;
 }
 
+export async function listMovieOptions(connection) {
+  const sql = `
+    SELECT
+      ID_MOVIE,
+      MOVIE_TITLE
+    FROM PI_DEVELOPERS.MOVIES
+    WHERE IS_DELETED = 0
+    ORDER BY MOVIE_TITLE ASC, ID_MOVIE ASC
+  `;
+
+  const result = await connection.execute(
+    sql,
+    {},
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows;
+}
+
 // Functions for create movie
 export async function insertMovie(connection, movie) {
   const result = await connection.execute(
@@ -219,7 +238,6 @@ export async function insertMovie(connection, movie) {
   return result.outBinds.idmovie[0];
 }
 
-// TODO(Jesus): Awaits are removed, but errors are not handled. To do pending.
 async function insertMovieGenres(connection, idMovie, ids) {
   for (const idGenre of ids) {
     connection.execute(
