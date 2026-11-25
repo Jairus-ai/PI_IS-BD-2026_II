@@ -5,6 +5,7 @@ import MovieList from '../modules/movies/pages/MovieList';
 import ClientSignUp from '../modules/clients/pages/ClientSignUp';
 import DiscountList from '../modules/discounts/pages/DiscountList';
 import LocationList from '../modules/locations/pages/LocationList.js';
+import SnackList from '../modules/snacks/pages/SnackList.js';
 import App from '../App';
 import LogIn from '../modules/auth/pages/LogIn';
 import {RequireSession} from '../components/common/RequireSession';
@@ -20,6 +21,7 @@ import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
+import MovieInBillboardList from '../modules/moviesInBillboards/pages/MovieInBillboardList';
 
 const router = createHashRouter([
   {
@@ -79,6 +81,10 @@ const router = createHashRouter([
         Component: DiscountList,
       },
       {
+        path: '/snacks',
+        Component: SnackList,
+      },
+      {
         path: '/users',
         Component: UserList,
       },
@@ -95,6 +101,14 @@ const router = createHashRouter([
         element: (
           <RequireSession allowedRoles={MANAGER_ROLES}>
             <FeeList />
+          </RequireSession>
+        ),
+      },
+      {
+        path: '/movies-in-billboards',
+        element: (
+          <RequireSession allowedRoles={MANAGER_ROLES}>
+            <MovieInBillboardList />
           </RequireSession>
         ),
       },

@@ -19,14 +19,14 @@ jest.unstable_mockModule('../../database/database.js', () => ({
 }));
 
 jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
-  rollback: jest.fn(),
-  countMovies: jest.fn(),
-  listMovies: jest.fn(),
-  findMovieById: jest.fn(),
-  splitMovieBody: jest.fn(),
-  createMovieWithRelations: jest.fn(),
-  updateMovieWithRelations: jest.fn(),
-  softDeleteMovie: jest.fn(),
+  rollback: mockRollback,
+  countMovies: mockCountMovies,
+  listMovies: mockListMovies,
+  findMovieById: mockFindMovieById,
+  splitMovieBody: mockSplitMovieBody,
+  createMovieWithRelations: mockCreateMovieWithRelations,
+  updateMovieWithRelations: mockUpdateMovieWithRelations,
+  softDeleteMovie: mockSoftDeleteMovie,
 }));
 
 jest.unstable_mockModule('../../middleware/validate.js', () => ({
