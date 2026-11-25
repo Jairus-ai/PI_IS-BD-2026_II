@@ -13,13 +13,12 @@ export function validateAll(
   if (!values.name.trim()) errors.SNACK_NAME = 'Campo obligatorio';
   if (values.name.trim().length > 50) errors.SNACK_NAME = 'El nombre no puede exceder 50 caracteres.';
 
-  if (values.price == null) 
+  if (values.price  == null || !Number.isFinite(values.price)) 
   {
     errors.PRICE = 'Campo obligatorio';
-  }
-  else if (values.price<=0)
+  }else if (values.price <= 0)
   {
-    errors.PRICE = 'El precio no pude ser 0';
+    errors.PRICE = 'El precio no puede ser 0';
   }
 
   if(!values.description.trim()) errors.SNACK_DESCRIPTION = 'Campo obligatorio';
