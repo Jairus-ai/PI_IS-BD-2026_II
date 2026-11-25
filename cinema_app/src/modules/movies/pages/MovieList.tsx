@@ -5,6 +5,8 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { useMovies } from '../hooks/useMovies';
 import { useDialogs } from '../../../hooks/useDialogs';
 import useNotifications from '../../../hooks/useNotifications';
+import useSession from '../../../hooks/useSession';
+import { MANAGER_ROLES } from '../../../context/SessionContext';
 import type { Movie } from '../types/movies';
 import MovieDetailDialog from '../components/MovieDetailDialog';
 import MovieFormDialog from '../components/MovieFormDialog';
@@ -32,6 +34,9 @@ export default function MovieList() {
 
   const dialogs = useDialogs();
   const notifications = useNotifications();
+  const { user } = useSession();
+
+  const canManageMovies = !!user && MANAGER_ROLES.includes(user.role);
 
   const {
     movies,
@@ -131,19 +136,27 @@ export default function MovieList() {
         align: 'right',
         getActions: Actions({
           onShow: (movie: any) => setSelectedId(movie.ID_MOVIE),
-          onEdit: (movie: any) => openEdit(movie.ID_MOVIE),
-          onDelete: (movie: any) => handleRowDelete(movie),
+          onEdit: canManageMovies
+            ? (movie: any) => openEdit(movie.ID_MOVIE)
+            : undefined,
+          onDelete: canManageMovies
+            ? (movie: any) => handleRowDelete(movie)
+            : undefined,
         }),
       },
     ],
-    [handleRowDelete],
+    [handleRowDelete, canManageMovies],
   );
 
   return (
     <CrudPage
       title="Películas"
       createLabel="Crear Película"
-      onCreate={openCreate}
+      onCreate={
+        canManageMovies
+          ? openCreate
+          : undefined
+      }
       error={moviesError}
       rows={movies}
       rowCount={totalMovies}

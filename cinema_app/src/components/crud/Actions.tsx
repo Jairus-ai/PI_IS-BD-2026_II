@@ -6,8 +6,8 @@ export function Actions({
   onDelete,
 } : {
   readonly onShow: (row: any) => void,
-  readonly onEdit: (row: any) => void,
-  readonly onDelete: (row: any) => void,
+  readonly onEdit?: (row: any) => void,
+  readonly onDelete?: (row: any) => void,
 
 }) {
 
@@ -19,15 +19,19 @@ export function Actions({
         label="Mostrar"
         onClick={() => {onShow?.(row)}}
       />,
-      <ActionButton
-        key="edit"
-        label="Modificar"
-        onClick={() => {onEdit?.(row)}}
-      />,
-      <ActionButton
-        key="delete"
-        label="Eliminar"
-        onClick={() => {onDelete?.(row)}}
-      />,
-    ];
+      onEdit && (
+        <ActionButton
+          key="edit"
+          label="Modificar"
+          onClick={() => {onEdit(row)}}
+        />
+      ),
+      onDelete && (
+        <ActionButton
+          key="delete"
+          label="Eliminar"
+          onClick={() => {onDelete(row)}}
+        />
+      ),
+    ].filter((action) => !!action);
 }
