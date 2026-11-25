@@ -23,6 +23,7 @@ import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
 import ProfilePage from '../modules/profile/pages/ProfilePage';
 import RoleLayout from '../components/layout/RoleLayout';
+import MovieInBillboardList from '../modules/moviesInBillboards/pages/MovieInBillboardList';
 
 const router = createHashRouter([
   {
@@ -102,6 +103,14 @@ const router = createHashRouter([
         element: (
           <RequireSession allowedRoles={MANAGER_ROLES}>
             <FeeList />
+          </RequireSession>
+        ),
+      },
+      {
+        path: '/movies-in-billboards',
+        element: (
+          <RequireSession allowedRoles={MANAGER_ROLES}>
+            <MovieInBillboardList />
           </RequireSession>
         ),
       },
