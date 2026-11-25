@@ -39,7 +39,10 @@ const MOCK_MOVIE_IN_BILLBOARD_DETAIL = {
   ...MOCK_MOVIES_IN_BILLBOARDS[0],
   RATING_CODE: 'PG-13',
   MOVIE_DURATION: 148,
-  POSTER: '/posters/inception.jpg'
+  POSTER: '/posters/inception.jpg',
+  ID_MOVIE: 1,
+  ID_LOCATION: 3,
+  PREMIER: 0
 };
 
 const VALID_BODY = {
@@ -354,6 +357,7 @@ describe('POST /management/movies_in_billboards', () => {
       EXISTS,
       EXISTS,
       NOT_FOUND,
+      NOT_FOUND,
       { outBinds: { movieInBillboardId: [7] } },
       { rows: [MOCK_MOVIE_IN_BILLBOARD_DETAIL] }
     );
@@ -367,7 +371,7 @@ describe('POST /management/movies_in_billboards', () => {
 
     expect(response.body).toEqual({ data: MOCK_MOVIE_IN_BILLBOARD_DETAIL });
 
-    const [sql, binds, options] = connection.execute.mock.calls[4];
+    const [sql, binds, options] = connection.execute.mock.calls[5];
 
     expect(sql).toMatch(/INSERT INTO PI_DEVELOPERS\.MOVIES_IN_BILLBOARDS/);
     expect(binds).toMatchObject({
@@ -378,7 +382,7 @@ describe('POST /management/movies_in_billboards', () => {
       movieId: 1
     });
     expect(options).toEqual({ autoCommit: true });
-    expect(connection.execute.mock.calls[5][1]).toEqual({ id: 7 });
+    expect(connection.execute.mock.calls[6][1]).toEqual({ id: 7 });
     expect(connection.close).toHaveBeenCalledTimes(2);
   });
 
@@ -406,6 +410,7 @@ describe('POST /management/movies_in_billboards', () => {
     mockDatabase(
       EXISTS,
       EXISTS,
+      NOT_FOUND,
       NOT_FOUND,
       { outBinds: { movieInBillboardId: [9] } },
       { rows: [MOCK_MOVIE_IN_BILLBOARD_DETAIL] }
@@ -471,6 +476,27 @@ describe('POST /management/movies_in_billboards', () => {
     expect(connection.execute).toHaveBeenCalledTimes(4);
   });
 
+  test('Returns 409 when the movie already has a premier in the same location', async () => {
+    const connection = mockDatabase(EXISTS, EXISTS, NOT_FOUND, EXISTS);
+
+    const response = await request(app)
+      .post(BASE_PATH)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(409);
+
+    expect(response.body.message).toBe('La película ya tiene un estreno en esta sucursal.');
+
+    const [sql, binds] = connection.execute.mock.calls[4];
+
+    expect(sql).toMatch(/PREMIER = 1/);
+    expect(binds).toEqual({
+      movieId: 1,
+      locationId: 3
+    });
+    expect(connection.execute).toHaveBeenCalledTimes(5);
+  });
+
   test('Returns 400 when the closing date is before the opening date', async () => {
     const connection = mockDatabase();
 
@@ -529,11 +555,273 @@ describe('POST /management/movies_in_billboards', () => {
       EXISTS,
       EXISTS,
       NOT_FOUND,
+      NOT_FOUND,
       new Error('ORA-02291: integrity constraint violated')
     );
 
     await request(app)
       .post(BASE_PATH)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(500);
+
+    expect(connection.close).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('PUT /management/movies_in_billboards/:id', () => {
+  const FOUND_DETAIL = { rows: [MOCK_MOVIE_IN_BILLBOARD_DETAIL] };
+  const UPDATED = { rowsAffected: 1 };
+
+  test('Returns 403 for an employee', async () => {
+    mockDatabase();
+
+    await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.EMPLOYEE))
+      .send(VALID_BODY)
+      .expect(403);
+  });
+
+  test('Updates the movie in billboard and returns it', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      EXISTS,
+      EXISTS,
+      NOT_FOUND,
+      NOT_FOUND,
+      NOT_FOUND,
+      UPDATED,
+      FOUND_DETAIL
+    );
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+    expect(response.body).toEqual({ data: MOCK_MOVIE_IN_BILLBOARD_DETAIL });
+
+    const [sql, binds, options] = connection.execute.mock.calls[7];
+
+    expect(sql).toMatch(/UPDATE PI_DEVELOPERS\.MOVIES_IN_BILLBOARDS/);
+    expect(binds).toEqual({
+      openingDate: '2026-12-01',
+      closingDate: '2026-12-31',
+      premier: 1,
+      locationId: 3,
+      movieId: 1,
+      id: 1
+    });
+    expect(options).toEqual({ autoCommit: true });
+    expect(connection.close).toHaveBeenCalledTimes(2);
+  });
+
+  test('Ignores the same movie in billboard when checking overlaps and premiers', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      EXISTS,
+      EXISTS,
+      NOT_FOUND,
+      NOT_FOUND,
+      NOT_FOUND,
+      UPDATED,
+      FOUND_DETAIL
+    );
+
+    await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.SUPERUSER))
+      .send(VALID_BODY)
+      .expect(200);
+
+    const [overlapSql, overlapBinds] = connection.execute.mock.calls[4];
+    const [premierSql, premierBinds] = connection.execute.mock.calls[5];
+
+    expect(overlapSql).toMatch(/ID_MOVIE_IN_BILLBOARD <> :excludedId/);
+    expect(overlapBinds.excludedId).toBe(1);
+    expect(premierSql).toMatch(/PREMIER = 1/);
+    expect(premierSql).toMatch(/ID_MOVIE_IN_BILLBOARD <> :excludedId/);
+    expect(premierBinds.excludedId).toBe(1);
+  });
+
+  test('Skips the premier check when it is not a premier', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      EXISTS,
+      EXISTS,
+      NOT_FOUND,
+      NOT_FOUND,
+      UPDATED,
+      FOUND_DETAIL
+    );
+
+    await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send({
+        ...VALID_BODY,
+        premier: false
+      })
+      .expect(200);
+
+    expect(connection.execute.mock.calls[5][0]).toMatch(/SCREENINGS/);
+    expect(connection.execute.mock.calls[6][1].premier).toBe(0);
+  });
+
+  test('Returns 404 when the movie in billboard does not exist', async () => {
+    const connection = mockDatabase(NOT_FOUND);
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/99`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(404);
+
+    expect(response.body.message).toBe('No se encontró la película en cartelera.');
+    expect(connection.execute).toHaveBeenCalledTimes(2);
+  });
+
+  test('Returns 400 when the movie does not exist', async () => {
+    mockDatabase(FOUND_DETAIL, NOT_FOUND);
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(400);
+
+    expect(response.body.message).toBe('La película seleccionada no existe.');
+  });
+
+  test('Returns 400 when the location does not exist', async () => {
+    mockDatabase(FOUND_DETAIL, EXISTS, NOT_FOUND);
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(400);
+
+    expect(response.body.message).toBe('La sucursal seleccionada no existe.');
+  });
+
+  test('Returns 409 when the dates overlap with another movie in billboard', async () => {
+    mockDatabase(FOUND_DETAIL, EXISTS, EXISTS, EXISTS);
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(409);
+
+    expect(response.body.message).toBe('La película ya está en la cartelera de esta sucursal durante esas fechas.');
+  });
+
+  test('Returns 409 when the movie already has a premier in the same location', async () => {
+    mockDatabase(FOUND_DETAIL, EXISTS, EXISTS, NOT_FOUND, EXISTS);
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(409);
+
+    expect(response.body.message).toBe('La película ya tiene un estreno en esta sucursal.');
+  });
+
+  test('Returns 409 when there are screenings outside the new data', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      EXISTS,
+      EXISTS,
+      NOT_FOUND,
+      NOT_FOUND,
+      EXISTS
+    );
+
+    const response = await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(409);
+
+    expect(response.body.message).toBe('No se puede modificar porque hay funciones programadas que quedarían fuera de la película, la sucursal o las fechas.');
+
+    const [sql, binds] = connection.execute.mock.calls[6];
+
+    expect(sql).toMatch(/s\.SCREENING_DATE < TO_DATE\(:openingDate, 'YYYY-MM-DD'\)/);
+    expect(sql).toMatch(/s\.SCREENING_DATE > TO_DATE\(:closingDate, 'YYYY-MM-DD'\)/);
+    expect(binds).toEqual({
+      id: 1,
+      movieId: 1,
+      locationId: 3,
+      openingDate: '2026-12-01',
+      closingDate: '2026-12-31'
+    });
+    expect(connection.execute).toHaveBeenCalledTimes(7);
+  });
+
+  test('Returns 404 when the movie in billboard is deleted before updating it', async () => {
+    mockDatabase(
+      FOUND_DETAIL,
+      EXISTS,
+      EXISTS,
+      NOT_FOUND,
+      NOT_FOUND,
+      NOT_FOUND,
+      { rowsAffected: 0 }
+    );
+
+    await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(404);
+  });
+
+  test('Returns 400 when the ID is not a positive integer', async () => {
+    const connection = mockDatabase();
+
+    await request(app)
+      .put(`${BASE_PATH}/abc`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send(VALID_BODY)
+      .expect(400);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 400 when the closing date is before the opening date', async () => {
+    const connection = mockDatabase();
+
+    await request(app)
+      .put(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .send({
+        ...VALID_BODY,
+        closingDate: '2026-11-30'
+      })
+      .expect(400);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 500 and closes the connection when the update fails', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      EXISTS,
+      EXISTS,
+      NOT_FOUND,
+      NOT_FOUND,
+      NOT_FOUND,
+      new Error('ORA-02291: integrity constraint violated')
+    );
+
+    await request(app)
+      .put(`${BASE_PATH}/1`)
       .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
       .send(VALID_BODY)
       .expect(500);
