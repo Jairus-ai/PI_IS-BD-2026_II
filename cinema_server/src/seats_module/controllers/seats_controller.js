@@ -214,6 +214,50 @@ function rejectExpiredReservation(res)
     );
 }
 
+export const getScreenInfo = async (req, res, next) =>
+{
+    let connection;
+    try
+    {
+        connection = await getConnection()
+        const { screeningId } = req.params;
+    
+        let request = `
+            SELECT
+                sc.AMOUNT_ROWS AS "ROWS",
+                sc.AMOUNT_SEATS_PER_ROWS AS COLS,
+                sc.AMOUNT_SEATS AS SEAT_SIZE
+            FROM PI_DEVELOPERS.SCREENS sc
+            JOIN PI_DEVELOPERS.SCREENINGS s
+            ON sc.ID_SCREEN = s.ID_SCREEN
+            WHERE ID_SCREENING = :screeningId`;
+
+        const result = await conection.execute(
+            request,
+            [screeningId],
+            {
+                outFormat: oracledb.OUT_FORMAT_OBJECT  // Convert output to JSON
+            }
+        );
+
+        res.status(200).json(
+            {
+                data: result.rows,
+            }
+        );
+        
+    }catch(error)
+    {
+        next(error);
+    }finally
+    {
+        if(connection)
+        {
+            await closeDatabaseConnection(connection);
+        };
+    }
+};
+
 export const getSeatsInfoFromScreening = async (req, res, next) => {
     let conection;
     try
