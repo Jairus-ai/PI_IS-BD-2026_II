@@ -22,7 +22,7 @@ import { validateOAuthSignUp } from '../validators/oauth_signup_validator.js';
 
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 const FRONTEND_HOME_PATH = '/';
-const FRONTEND_LOGIN_PATH = '/login';
+const FRONTEND_LOGIN_PATH = '/#/login';
 
 const UNIQUE_CONSTRAINT_ERROR = 1;
 const INITIAL_SESSION_VERSION = 0;

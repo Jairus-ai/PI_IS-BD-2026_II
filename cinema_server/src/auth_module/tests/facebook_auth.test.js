@@ -109,7 +109,7 @@ function sessionPayload(response) {
 
 function expectLoginError(response, errorCode) {
   expect(response.status).toBe(302);
-  expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=${errorCode}`);
+  expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=${errorCode}`);
 }
 
 // Simula Graph API (no se llama a Facebook de verdad): token y luego perfil
@@ -226,7 +226,7 @@ describe('GET /auth/facebook/callback', () => {
     const response = await runCallback();
 
     expect(response.status).toBe(302);
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/signup/facebook`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/signup/facebook`);
     expect(cookieValue(response, PENDING_COOKIE)).toBeTruthy();
     expect(cookieValue(response, SESSION_COOKIE_NAME)).toBeFalsy();
     expect(findCall(connection, 'INSERT')).toBeUndefined();

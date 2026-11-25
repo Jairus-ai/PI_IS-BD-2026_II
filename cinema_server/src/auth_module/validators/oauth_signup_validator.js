@@ -1,10 +1,10 @@
 import { normalizeUserData, validateUserData } from '../../shared/validators/user_data_validator.js';
 
-export function validateGoogleSignUp(googleProfile, body = {}) {
+export function validateOAuthSignUp(oauthProfile, body = {}) {
   const client = normalizeUserData({
-    ...googleProfile,
+    ...oauthProfile,
     ...body,
-    email: googleProfile.email
+    email: oauthProfile.email
   });
 
   return { errors: validateUserData(client), client };

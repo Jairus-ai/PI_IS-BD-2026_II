@@ -203,7 +203,7 @@ describe('GET /auth/google/callback', () => {
     const response = await runCallback();
 
     expect(response.status).toBe(302);
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/signup/google`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/signup/google`);
     expect(cookieValue(response, PENDING_COOKIE)).toBeTruthy();
     expect(cookieValue(response, SESSION_COOKIE_NAME)).toBeFalsy();
     expect(findCall(connection, 'INSERT')).toBeUndefined();
@@ -260,7 +260,7 @@ describe('GET /auth/google/callback', () => {
     const response = await runCallback({ claims: { email: 'Admin@CinePI.com' } });
 
     expect(response.status).toBe(302);
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_staff_not_allowed`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_staff_not_allowed`);
     expect(cookieValue(response, SESSION_COOKIE_NAME)).toBeFalsy();
     expect(findCall(connection, 'FROM PI_DEVELOPERS.WORKERS')[1]).toEqual({ email: 'admin@cinepi.com' });
     expect(findCall(connection, 'INSERT')).toBeUndefined();
@@ -271,7 +271,7 @@ describe('GET /auth/google/callback', () => {
 
     const response = await runCallback({ claims: { email_verified: false } });
 
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_email_not_verified`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_email_not_verified`);
     expect(getConnectionSpy).not.toHaveBeenCalled();
   });
 
@@ -280,7 +280,7 @@ describe('GET /auth/google/callback', () => {
 
     const response = await runCallback({ query: { error: 'access_denied' } });
 
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_cancelled`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_cancelled`);
     expect(global.fetch).not.toHaveBeenCalled();
     expect(getConnectionSpy).not.toHaveBeenCalled();
   });
@@ -288,14 +288,14 @@ describe('GET /auth/google/callback', () => {
   test('a state that does not match is rejected without calling Google', async () => {
     const response = await runCallback({ query: { state: 'estado-falso' } });
 
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_state_invalid`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_state_invalid`);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
   test('a missing state cookie is rejected without calling Google', async () => {
     const response = await runCallback({ withStateCookie: false });
 
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_state_invalid`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_state_invalid`);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -318,7 +318,7 @@ describe('GET /auth/google/callback', () => {
       .query({ code: 'code-123', state: flow.state })
       .set('Cookie', flow.cookie);
 
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_failed`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_failed`);
     expect(cookieValue(response, SESSION_COOKIE_NAME)).toBeFalsy();
   });
 
@@ -330,7 +330,7 @@ describe('GET /auth/google/callback', () => {
 
     const response = await runCallback();
 
-    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/login?error=google_failed`);
+    expect(response.headers.location).toBe(`${CLIENT_ORIGIN}/#/login?error=google_failed`);
     expect(connection.rollback).toHaveBeenCalledTimes(1);
     expect(connection.close).toHaveBeenCalledTimes(1);
   });

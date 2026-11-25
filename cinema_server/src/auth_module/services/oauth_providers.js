@@ -11,14 +11,14 @@ import {
 
 export const GOOGLE = {
   name: GOOGLE_PROVIDER,
-  signUpPath: '/signup/google',
+  signUpPath: '/#/signup/google',
   buildAuthorizationUrl: buildGoogleAuthorizationUrl,
   fetchProfile: (code, { codeVerifier }) => fetchGoogleProfile(code, codeVerifier)
 };
 
 export const FACEBOOK = {
   name: FACEBOOK_PROVIDER,
-  signUpPath: '/signup/facebook',
+  signUpPath: '/#/signup/facebook',
   buildAuthorizationUrl: buildFacebookAuthorizationUrl,
   fetchProfile: (code) => fetchFacebookProfile(code)
 };
