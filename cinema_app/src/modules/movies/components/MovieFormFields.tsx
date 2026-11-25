@@ -17,6 +17,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { AudiovisualFormat, Director, Genre, Language, Rating } from '../types/movies';
 import { firstError } from '../utils/movieFormUtils';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
+import MoviePoster from '../../../components/common/MoviePoster';
 import type { MovieForm } from '../hooks/useMovieForm';
 import dayjs from 'dayjs';
 
@@ -288,7 +289,6 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
           </Typography>
 
           <Stack
-            direction={{ xs: 'column', sm: 'row' }}
             spacing={2}
             sx={{ alignItems: 'flex-start', mt: 1 }}
           >
@@ -304,11 +304,11 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
 
             {form.previewSrc
               ? (
-                <Box
-                  component="img"
+                <MoviePoster
                   src={form.previewSrc}
                   alt="Póster de la película"
-                  sx={{ width: 120, borderRadius: 1, objectFit: 'cover' }}
+                  width={120}
+                  height={180}
                 />
               ) : (
                 <Typography
