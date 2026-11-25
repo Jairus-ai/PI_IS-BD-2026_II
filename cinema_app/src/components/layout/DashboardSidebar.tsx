@@ -5,9 +5,12 @@ import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Toolbar from '@mui/material/Toolbar';
-import PersonIcon from '@mui/icons-material/Person';
-import MovieIcon from '@mui/icons-material/Movie';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleIcon from '@mui/icons-material/People';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import MovieIcon from '@mui/icons-material/Movie';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import TheatersIcon from '@mui/icons-material/Theaters';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
@@ -151,16 +154,23 @@ export default function DashboardSidebar({
           >
             <DashboardSidebarHeaderItem>Secciones principales</DashboardSidebarHeaderItem>
             <DashboardSidebarPageItem
+              id="room-dashboard"
+              title="Dashboard de salas"
+              icon={<DashboardIcon />}
+              href="/room-dashboard"
+              selected={!!matchPath('/room-dashboard/*', pathname)}
+            />
+            <DashboardSidebarPageItem
               id="users"
               title="Usuarios"
-              icon={<PersonIcon />}
+              icon={<PeopleIcon />}
               href="/users"
               selected={!!matchPath('/users/*', pathname)}
             />
             <DashboardSidebarPageItem
               id="discounts"
               title="Descuentos"
-              icon={<PersonIcon />}
+              icon={<LocalOfferIcon />}
               href="/discounts"
               selected={!!matchPath('/discounts/*', pathname) || pathname === '/'}
             />
@@ -188,7 +198,7 @@ export default function DashboardSidebar({
             <DashboardSidebarPageItem
               id="locations"
               title="Sucursales"
-              icon={<MovieIcon />}
+              icon={<StorefrontIcon />}
               href="/locations"
               selected={!!matchPath('/locations/*', pathname) || pathname === '/'}
             />
