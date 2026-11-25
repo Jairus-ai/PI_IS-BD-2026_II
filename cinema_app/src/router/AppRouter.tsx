@@ -20,7 +20,7 @@ import PurchaseHistory from '../modules/purchases/pages/PurchaseHistory';
 import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
-import GoogleSignUp from '../modules/auth/pages/GoogleSignUp';
+import OAuthSignUp from '../modules/auth/pages/OAuthSignUp';
 
 const router = createHashRouter([
   {
@@ -32,8 +32,8 @@ const router = createHashRouter([
     Component: ClientSignUp,
   },
   {
-    path: '/signup/google',
-    Component: GoogleSignUp,
+    path: '/signup/:provider',
+    Component: OAuthSignUp,
   },
   {
     path: '/login',

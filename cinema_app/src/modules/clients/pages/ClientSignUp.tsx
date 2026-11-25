@@ -15,7 +15,7 @@ import type { SessionUser } from '../../../context/SessionContext';
 import { useRegisterClient } from '../hooks/useRegisterClient';
 import { validateClientForm, validateRequiredField } from '../validators/clientValidator';
 import { checkPasswordStrength, MINIMUM_PASSWORD_SCORE } from '../../../shared/validators/passwordValidator';
-import GoogleAuthButton from '../../../components/common/GoogleAuthButton';
+import OAuthButtons from '../../../components/common/OAuthButtons';
 import ClientProfileFields, { FormField } from '../components/ClientProfileFields';
 
 type ClientFormValues = {
@@ -216,7 +216,7 @@ export default function ClientSignUp() {
           {isRegistering ? 'Registrando…' : 'Registrarme'}
         </Button>
       </Box>
-      <GoogleAuthButton />
+      <OAuthButtons />
       <Typography sx={{ textAlign: 'center' }}>
         <Link component={RouterLink} to="/" variant="body2">
           Volver al inicio

@@ -1,13 +1,14 @@
 import { useState, type ChangeEvent, type FocusEvent, type FormEvent } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router';
+import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { isAxiosError } from 'axios';
+
 import AuthLayout from '../../../components/common/AuthLayout';
-import GoogleAuthButton from '../../../components/common/GoogleAuthButton';
+import { OAuthButton } from '../../../components/common/OAuthButtons';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
 import useNotifications from '../../../hooks/useNotifications';
 import useSession from '../../../hooks/useSession';
@@ -17,9 +18,10 @@ import ClientProfileFields, {
   type FieldErrors,
   type ProfileValues
 } from '../../clients/components/ClientProfileFields';
-import { useCompleteGoogleSignUp, useGooglePendingProfile } from '../hooks/useGoogleSignUp';
+import { useCompleteOAuthSignUp, useOAuthPendingProfile } from '../hooks/useOAuthSignUp';
+import { isOAuthProvider, OAUTH_PROVIDERS, type OAuthProvider } from '../utils/oauthProviders';
 
-type GoogleSignUpValues = ProfileValues & { email: string };
+type OAuthSignUpValues = ProfileValues & { email: string };
 
 type CompleteErrorResponse = {
   errors?: FieldErrors;
@@ -28,9 +30,8 @@ type CompleteErrorResponse = {
 
 const TITLE = 'Completar registro';
 const GENERIC_ERROR_MESSAGE = 'No se pudo completar el registro. Intenta de nuevo.';
-const EXPIRED_MESSAGE = 'Tu registro con Google expiró. Inicia de nuevo para continuar.';
 
-const INITIAL_VALUES: GoogleSignUpValues = {
+const INITIAL_VALUES: OAuthSignUpValues = {
   email: '',
   firstName: '',
   middleName: '',
@@ -42,17 +43,30 @@ const INITIAL_VALUES: GoogleSignUpValues = {
   phoneNumber: ''
 };
 
-export default function GoogleSignUp() {
+export default function OAuthSignUp() {
+  const { provider } = useParams();
+
+  if (!isOAuthProvider(provider)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <OAuthSignUpForm provider={provider} />;
+}
+
+function OAuthSignUpForm({ provider }: Readonly<{ provider: OAuthProvider }>) {
+  const { label } = OAUTH_PROVIDERS[provider];
+  const expiredMessage = `Tu registro con ${label} expiró. Inicia de nuevo para continuar.`;
+
   const navigate = useNavigate();
   const notifications = useNotifications();
   const { startSession } = useSession();
-  const { profile, isLoadingProfile, isProfileError } = useGooglePendingProfile();
-  const { completeSignUp, isCompleting } = useCompleteGoogleSignUp();
+  const { profile, isLoadingProfile, isProfileError } = useOAuthPendingProfile(provider);
+  const { completeSignUp, isCompleting } = useCompleteOAuthSignUp(provider);
 
-  const [edits, setEdits] = useState<Partial<GoogleSignUpValues>>({});
+  const [edits, setEdits] = useState<Partial<OAuthSignUpValues>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  const values: GoogleSignUpValues = {
+  const values: OAuthSignUpValues = {
     ...INITIAL_VALUES,
     email: profile?.email ?? '',
     firstName: profile?.firstName ?? '',
@@ -88,7 +102,7 @@ export default function GoogleSignUp() {
     }
   };
 
-  const handleCompleteSuccess = (response: { data: Parameters<typeof startSession>[0] }) => {
+  const handleCompleteSuccess = (response: { data: Parameters<typeof startSession>[0] }): void => {
     const client = response.data;
     startSession(client);
     notifications.show(`¡Bienvenido, ${client.firstName}! Tu cuenta fue creada.`, {
@@ -98,11 +112,11 @@ export default function GoogleSignUp() {
     navigate('/', { replace: true });
   };
 
-  const handleCompleteError = (error: Error) => {
+  const handleCompleteError = (error: Error): void => {
     if (isAxiosError<CompleteErrorResponse>(error)) {
       const { status, data } = error.response ?? {};
       if (status === 401) {
-        notifications.show(EXPIRED_MESSAGE, { severity: 'warning', autoHideDuration: 5000 });
+        notifications.show(expiredMessage, { severity: 'warning', autoHideDuration: 5000 });
         navigate('/login', { replace: true });
         return;
       }
@@ -124,7 +138,7 @@ export default function GoogleSignUp() {
       return;
     }
 
-    const formErrors: FieldErrors = { ...validateUserData(values) };
+    const formErrors = validateUserData(values);
     setErrors(formErrors);
     if (Object.keys(formErrors).length > 0) {
       return;
@@ -147,8 +161,8 @@ export default function GoogleSignUp() {
   if (isProfileError) {
     return (
       <AuthLayout title={TITLE}>
-        <Typography>{EXPIRED_MESSAGE}</Typography>
-        <GoogleAuthButton showDivider={false} />
+        <Typography>{expiredMessage}</Typography>
+        <OAuthButton provider={provider} />
         <Typography sx={{ textAlign: 'center' }}>
           <Link component={RouterLink} to="/login" variant="body2">
             Volver a iniciar sesión
@@ -161,7 +175,7 @@ export default function GoogleSignUp() {
   return (
     <AuthLayout title={TITLE} cardWidth={560}>
       <Typography color="text.secondary">
-        Completa tus datos para terminar de crear tu cuenta con Google.
+        {`Completa tus datos para terminar de crear tu cuenta con ${label}.`}
       </Typography>
       <Box
         component="form"
