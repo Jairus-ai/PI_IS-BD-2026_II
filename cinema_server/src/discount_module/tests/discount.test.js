@@ -27,6 +27,23 @@ const NEW_DISCOUNT = {
   ID_FK_PRODUCT: 1,
 };
 
+const discountRows = () => [
+    {
+        ID_DISCOUNT: 1,
+        DISCOUNT_NAME: 'BIRTHDAY',
+        DISCOUNT_PORCENTAGE: 30,
+        DISCOUNT_START_DATE: '2026-06-01',
+        DISCOUNT_FINISH_DATE: '2026-06-30',
+    },
+    {
+        ID_DISCOUNT: 2,
+        DISCOUNT_NAME: 'D.DAY',
+        DISCOUNT_PORCENTAGE: 50,
+        DISCOUNT_START_DATE: '2026-01-01',
+        DISCOUNT_FINISH_DATE: '2026-02-01',
+    },
+];
+
 function createMockConnection(responses = []) {
   const execute = jest.fn();
   for (const response of responses) {
@@ -45,6 +62,17 @@ function useConnection(responses) {
   return connection;
 }
 
+function freezeToday(year, monthIndex, day) {
+    jest.useFakeTimers({
+        now: new Date(year, monthIndex, day, 12, 0, 0),
+        doNotFake: [
+            'nextTick', 'setImmediate', 'clearImmediate',
+            'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout',
+            'queueMicrotask', 'hrtime', 'performance',
+        ],
+    });
+}
+
 const app = express();
 app.use(express.json());
 app.use('/management/discounts', discountRoutes);
@@ -57,29 +85,187 @@ afterEach(() => {
 });
 
 describe('GET /management/discounts', () => {
-  test('200 OK', async () => {
-    const connection = useConnection([{ rows: MOCK_DISCOUNTS }]);
+    const url = '/management/discounts';
 
-    const response = await request(app)
-      .get('/management/discounts')
-      .expect('Content-type', /json/)
-      .expect(200);
+    afterEach(() => {
+        jest.useRealTimers();
+    });
 
-    expect(response.body.data).toEqual(MOCK_DISCOUNTS);
-    expect(response.body.data).toHaveLength(2);
-    expect(connection.close).toHaveBeenCalledTimes(1);
-  });
+    test('200 OK devuelve la lista sin las fechas y con el estado calculado', async () => {
+        freezeToday(2026, 5, 15);
+        useConnection([{ rows: discountRows() }]);
 
-  test('500 when the query fails', async () => {
-    const connection = useConnection([
-      new Error('ORA-00942: table or view does not exist'),
-    ]);
+        const response = await request(app)
+            .get(url)
+            .expect('Content-type', /json/)
+            .expect(200);
 
-    const response = await request(app).get('/management/discounts').expect(500);
+        expect(response.body.data).toEqual([
+            { ID_DISCOUNT: 1, DISCOUNT_NAME: 'BIRTHDAY', DISCOUNT_PORCENTAGE: 30, DISCOUNT_STATE: 'activo' },
+            { ID_DISCOUNT: 2, DISCOUNT_NAME: 'D.DAY', DISCOUNT_PORCENTAGE: 50, DISCOUNT_STATE: 'finalizado' },
+        ]);
+        for (const row of response.body.data) {
+            expect(row).not.toHaveProperty('DISCOUNT_START_DATE');
+            expect(row).not.toHaveProperty('DISCOUNT_FINISH_DATE');
+        }
+    });
 
-    expect(response.body.message).toMatch(/ORA-00942/);
-    expect(connection.close).toHaveBeenCalledTimes(1);
-  });
+    test.each([
+        ['próximo (empieza mañana)', '2026-06-16', '2026-06-30', 'próximo'],
+        ['activo (en curso)', '2026-06-01', '2026-06-30', 'activo'],
+        ['activo (empieza hoy)', '2026-06-15', '2026-06-20', 'activo'],
+        ['activo (termina hoy)', '2026-06-01', '2026-06-15', 'activo'],
+        ['finalizado (terminó ayer)', '2026-05-01', '2026-06-14', 'finalizado'],
+    ])('el estado es %s', async (_label, start, finish, expected) => {
+        freezeToday(2026, 5, 15);
+        useConnection([{
+            rows: [{
+                ID_DISCOUNT: 1,
+                DISCOUNT_NAME: 'X',
+                DISCOUNT_PORCENTAGE: 10,
+                DISCOUNT_START_DATE: start,
+                DISCOUNT_FINISH_DATE: finish,
+            }],
+        }]);
+
+        const response = await request(app).get(url).expect(200);
+
+        expect(response.body.data[0].DISCOUNT_STATE).toBe(expected);
+    });
+
+    test('la consulta excluye los eliminados, ordena y pagina en el servidor', async () => {
+        const connection = useConnection([{ rows: discountRows() }]);
+
+        await request(app).get(url).expect(200);
+
+        const [sql, binds, options] = connection.execute.mock.calls[0];
+        expect(sql).toMatch(/d\.IS_DELETED = 0/);
+        expect(sql).toMatch(/ORDER BY d\.DISCOUNT_NAME, d\.ID_DISCOUNT/);
+        expect(sql).toMatch(/OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY/);
+        expect(sql).toMatch(/TO_CHAR\(d\.DISCOUNT_START_DATE/);
+        expect(sql).not.toMatch(/;\s*$/);
+        expect(sql).not.toMatch(/DISCOUNT_NAME,\s*s\s/);
+        expect(binds).toEqual({ offset: 0, limit: 10 });
+        expect(options).toEqual({ outFormat: oracledb.OUT_FORMAT_OBJECT });
+    });
+
+    test('aplica la página y el filtro por nombre', async () => {
+        const connection = useConnection([{ rows: [] }]);
+
+        await request(app).get(`${url}?page=3&name=cumple`).expect(200);
+
+        const [sql, binds] = connection.execute.mock.calls[0];
+        expect(sql).toMatch(/LOWER\(d\.DISCOUNT_NAME\) LIKE LOWER\(:name\)/);
+        expect(binds).toEqual({ name: '%cumple%', offset: 20, limit: 10 });
+    });
+
+    test.each([
+        ['abc'],
+        ['0'],
+        ['-5'],
+    ])('vuelve a la primera página cuando page=%s', async (page) => {
+        const connection = useConnection([{ rows: [] }]);
+
+        await request(app).get(`${url}?page=${page}`).expect(200);
+
+        expect(connection.execute.mock.calls[0][1]).toEqual({ offset: 0, limit: 10 });
+    });
+
+    test.each([
+        ['vacío', '?name='],
+        ['solo espacios', '?name=%20%20'],
+        ['repetido', '?name=a&name=b'],
+    ])('ignora un filtro de nombre %s', async (_label, query) => {
+        const connection = useConnection([{ rows: [] }]);
+
+        await request(app).get(`${url}${query}`).expect(200);
+
+        expect(connection.execute.mock.calls[0][1]).toEqual({ offset: 0, limit: 10 });
+    });
+
+    test('200 OK con una lista vacía', async () => {
+        useConnection([{ rows: [] }]);
+
+        const response = await request(app).get(url).expect(200);
+
+        expect(response.body).toEqual({ data: [] });
+    });
+
+    test('500 cuando falla la consulta, y la conexión se cierra', async () => {
+        const connection = useConnection([new Error('ORA-00904: invalid identifier')]);
+
+        const response = await request(app).get(url).expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00904/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+});
+
+
+describe('GET /management/discounts/count', () => {
+    const url = '/management/discounts/count';
+
+    test('200 OK devuelve el total', async () => {
+        const connection = useConnection([{ rows: [{ TOTAL: 25 }] }]);
+
+        const response = await request(app)
+            .get(url)
+            .expect('Content-type', /json/)
+            .expect(200);
+
+        expect(response.body).toEqual({ total: 25 });
+
+        const [sql, binds] = connection.execute.mock.calls[0];
+        expect(sql).toMatch(/COUNT\(d\.ID_DISCOUNT\)/);
+        expect(sql).toMatch(/d\.IS_DELETED = 0/);
+        expect(binds).toEqual({});
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('aplica el mismo filtro de nombre que la lista', async () => {
+        const connection = useConnection([{ rows: [{ TOTAL: 3 }] }]);
+
+        const response = await request(app).get(`${url}?name=cumple`).expect(200);
+
+        expect(response.body).toEqual({ total: 3 });
+        const [sql, binds] = connection.execute.mock.calls[0];
+        expect(sql).toMatch(/LOWER\(d\.DISCOUNT_NAME\) LIKE LOWER\(:name\)/);
+        expect(binds).toEqual({ name: '%cumple%' });
+    });
+
+    test('no usa la página, porque el total no depende de ella', async () => {
+        const connection = useConnection([{ rows: [{ TOTAL: 3 }] }]);
+
+        await request(app).get(`${url}?page=4`).expect(200);
+
+        expect(connection.execute.mock.calls[0][1]).toEqual({});
+    });
+
+    test('devuelve 0 cuando no hay descuentos', async () => {
+        useConnection([{ rows: [{ TOTAL: 0 }] }]);
+
+        const response = await request(app).get(url).expect(200);
+
+        expect(response.body).toEqual({ total: 0 });
+    });
+
+    test('/count no lo captura la ruta /:id', async () => {
+        const connection = useConnection([{ rows: [{ TOTAL: 1 }] }]);
+
+        const response = await request(app).get(url).expect(200);
+
+        expect(response.body).toEqual({ total: 1 });
+        expect(connection.execute.mock.calls[0][0]).toMatch(/COUNT/);
+    });
+
+    test('500 cuando falla la consulta, y la conexión se cierra', async () => {
+        const connection = useConnection([new Error('ORA-00942: table or view does not exist')]);
+
+        const response = await request(app).get(url).expect(500);
+
+        expect(response.body.message).toMatch(/ORA-00942/);
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe('GET /management/discounts/DP/:type', () => {
