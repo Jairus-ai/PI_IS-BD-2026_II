@@ -72,7 +72,7 @@ export default function MovieList() {
   };
 
   const handleRowDelete = React.useCallback(
-    (movie: Movie) => async () => {
+    async (movie: Movie) => {
       const confirmed = await dialogs.confirm(
         `¿Desea eliminar la película "${movie.MOVIE_TITLE}"?`,
         {
@@ -140,7 +140,7 @@ export default function MovieList() {
             ? (movie: any) => openEdit(movie.ID_MOVIE)
             : undefined,
           onDelete: canManageMovies
-            ? (movie: any) => handleRowDelete(movie)
+            ? (movie: any) => void handleRowDelete(movie)
             : undefined,
         }),
       },
