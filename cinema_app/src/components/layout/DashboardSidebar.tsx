@@ -18,6 +18,77 @@ import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
 import DashboardSidebarPageItem from './DashboardSidebarPageItem';
 import DashboardSidebarHeaderItem from './DashboardSidebarHeaderItem';
 import getDrawerSxTransitionMixin from '../../theme/mixins';
+import useSession from '../../hooks/useSession';
+import {
+  MANAGER_ROLES,
+  type Role
+} from '../../context/SessionContext';
+
+interface SidebarItem {
+  id: string;
+  title: string;
+  icon: React.ReactNode;
+  href: string;
+  matchesRoot?: boolean;
+  allowedRoles?: Role[];
+}
+
+const SIDEBAR_ITEMS: SidebarItem[] = [
+  {
+    id: 'room-dashboard',
+    title: 'Dashboard de salas',
+    icon: <DashboardIcon />,
+    href: '/room-dashboard'
+  },
+  {
+    id: 'users',
+    title: 'Usuarios',
+    icon: <PeopleIcon />,
+    href: '/users'
+  },
+  {
+    id: 'discounts',
+    title: 'Descuentos',
+    icon: <LocalOfferIcon />,
+    href: '/discounts',
+    matchesRoot: true
+  },
+  {
+    id: 'fees',
+    title: 'Tarifas',
+    icon: <PaymentsIcon />,
+    href: '/fees',
+    allowedRoles: MANAGER_ROLES
+  },
+  {
+    id: 'movies',
+    title: 'Películas',
+    icon: <MovieIcon />,
+    href: '/movies',
+    matchesRoot: true
+  },
+  {
+    id: 'movies-in-billboards',
+    title: 'Carteleras',
+    icon: <TheatersIcon />,
+    href: '/movies-in-billboards',
+    allowedRoles: MANAGER_ROLES
+  },
+  {
+    id: 'locations',
+    title: 'Sucursales',
+    icon: <StorefrontIcon />,
+    href: '/locations',
+    matchesRoot: true
+  },
+  {
+    id: 'snacks',
+    title: 'Snacks',
+    icon: <MovieIcon />,
+    href: '/snacks',
+    matchesRoot: true
+  }
+];
 
 export interface DashboardSidebarProps {
   expanded?: boolean;
@@ -35,6 +106,8 @@ export default function DashboardSidebar({
   const theme = useTheme();
 
   const { pathname } = useLocation();
+
+  const { user } = useSession();
 
   const [expandedItemIds, setExpandedItemIds] = React.useState<string[]>([]);
 
@@ -153,68 +226,23 @@ export default function DashboardSidebar({
             }}
           >
             <DashboardSidebarHeaderItem>Secciones principales</DashboardSidebarHeaderItem>
-            <DashboardSidebarPageItem
-              id="room-dashboard"
-              title="Dashboard de salas"
-              icon={<DashboardIcon />}
-              href="/room-dashboard"
-              selected={!!matchPath('/room-dashboard/*', pathname)}
-            />
-            <DashboardSidebarPageItem
-              id="users"
-              title="Usuarios"
-              icon={<PeopleIcon />}
-              href="/users"
-              selected={!!matchPath('/users/*', pathname)}
-            />
-            <DashboardSidebarPageItem
-              id="discounts"
-              title="Descuentos"
-              icon={<LocalOfferIcon />}
-              href="/discounts"
-              selected={!!matchPath('/discounts/*', pathname) || pathname === '/'}
-            />
-            <DashboardSidebarPageItem
-              id="fees"
-              title="Tarifas"
-              icon={<PaymentsIcon />}
-              href="/fees"
-              selected={!!matchPath('/fees/*', pathname)}
-            />
-            <DashboardSidebarPageItem
-              id="movies"
-              title="Películas"
-              icon={<MovieIcon />}
-              href="/movies"
-              selected={!!matchPath('/movies/*', pathname) || pathname === '/'}
-            />
-            <DashboardSidebarPageItem
-              id="movies-in-billboards"
-              title="Carteleras"
-              icon={<TheatersIcon />}
-              href="/movies-in-billboards"
-              selected={!!matchPath('/movies-in-billboards/*', pathname)}
-            />
-            <DashboardSidebarPageItem
-              id="locations"
-              title="Sucursales"
-              icon={<StorefrontIcon />}
-              href="/locations"
-              selected={!!matchPath('/locations/*', pathname) || pathname === '/'}
-            />
-            <DashboardSidebarPageItem
-              id="snacks"
-              title="Snacks"
-              icon={<MovieIcon />}
-              href="/snacks"
-              selected={!!matchPath('/snacks/*', pathname) || pathname === '/'}
-            />
-            
+            {SIDEBAR_ITEMS
+              .filter((item) => !item.allowedRoles || (!!user && item.allowedRoles.includes(user.role)))
+              .map((item) => (
+                <DashboardSidebarPageItem
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  icon={item.icon}
+                  href={item.href}
+                  selected={!!matchPath(`${item.href}/*`, pathname) || (!!item.matchesRoot && pathname === '/')}
+                />
+              ))}
           </List>
         </Box>
       </React.Fragment>
     ),
-    [mini, hasDrawerTransitions, isFullyExpanded, expandedItemIds, pathname],
+    [mini, hasDrawerTransitions, isFullyExpanded, expandedItemIds, pathname, user],
   );
 
   const getDrawerSharedSx = React.useCallback(
