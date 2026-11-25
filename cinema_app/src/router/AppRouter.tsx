@@ -22,6 +22,8 @@ import EmailConfirmation from '../modules/ticketBill/pages/EmailConfirmation.js'
 import PaymentCheckout from '../modules/payments/pages/PaymentCheckout';
 import PaymentResult from '../modules/payments/pages/PaymentResult';
 import MovieScreeningsPage from '../modules/screenings/pages/MovieScreeningsPage';
+import ProfilePage from '../modules/profile/pages/ProfilePage';
+import RoleLayout from '../components/layout/RoleLayout';
 import MovieInBillboardList from '../modules/moviesInBillboards/pages/MovieInBillboardList';
 
 const router = createHashRouter([
@@ -141,6 +143,19 @@ const router = createHashRouter([
       {
         path: '/payment/cancel',
         element: <PaymentResult success={false} />
+      },
+    ],
+  },
+  {
+    element: (
+      <RequireSession>
+        <RoleLayout />
+      </RequireSession>
+    ),
+    children: [
+      {
+        path: '/profile',
+        Component: ProfilePage,
       },
     ],
   },
