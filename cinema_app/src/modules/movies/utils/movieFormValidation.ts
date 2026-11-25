@@ -51,13 +51,19 @@ export function validatePosterFile(file: File): string | null {
   return null;
 }
 
+export function normalizeMovieTitle(title: string): string {
+  return title.trim().toLowerCase();
+}
+
 export function validateAll(
   values: MovieFormValues,
-  isCreate: boolean
+  isCreate: boolean,
+  takenTitles: string[] = []
 ): ServerErrors {
   const errors: ServerErrors = {};
   if (!values.title.trim()) errors.MOVIE_TITLE = 'Campo obligatorio';
   if (values.title.trim().length > 100) errors.MOVIE_TITLE = 'El título no puede exceder 100 caracteres.';
+  if (takenTitles.includes(normalizeMovieTitle(values.title))) errors.MOVIE_TITLE = 'Ya existe una película con ese título.';
   if (!values.yearDate?.isValid()) {
     errors.PUBLISHING_YEAR = 'Seleccione el año de publicación.';
   } else {

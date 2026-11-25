@@ -1,6 +1,11 @@
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Dayjs } from 'dayjs';
-import { useMovies } from './useMovies';
+import {
+  MOVIE_OPTIONS_QUERY_KEY,
+  useMovies
+} from './useMovies';
+import { getMovieOptions } from '../services/movieService';
 import useNotifications from '../../../hooks/useNotifications';
 import type {
   AudiovisualFormat,
@@ -8,10 +13,15 @@ import type {
   Genre,
   Language,
   MovieDetail,
+  MovieOption,
   Rating
 } from '../types/movies';
 import { posterUrl, readServerErrors } from '../utils/movieFormUtils';
-import { validateAll, MovieFormValues } from '../utils/movieFormValidation';
+import {
+  normalizeMovieTitle,
+  validateAll,
+  MovieFormValues
+} from '../utils/movieFormValidation';
 import type { ServerErrors } from '../utils/movieFormUtils';
 import { mapDetailToFormValues } from '../utils/movieFormHydration';
 import { buildMoviePayload } from '../utils/moviePayloadBuilder';
@@ -70,6 +80,19 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
 
   const touchedRef = React.useRef<Record<string, boolean>>({});
 
+  const movieOptionsQuery = useQuery<{ data: MovieOption[] }>({
+    queryKey: MOVIE_OPTIONS_QUERY_KEY,
+    queryFn: getMovieOptions,
+    enabled: open
+  });
+
+  const takenTitles = React.useMemo(
+    () => (movieOptionsQuery.data?.data ?? [])
+      .filter((option) => option.ID_MOVIE !== movieId)
+      .map((option) => normalizeMovieTitle(option.MOVIE_TITLE)),
+    [movieOptionsQuery.data, movieId]
+  );
+
   const detail = movieDetail as MovieDetail | null;
   const catalogs = { genres, ratings, languages, formats, directors };
   const saving = uploading || isCreatingMovie || isUpdatingMovie;
@@ -79,7 +102,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     merged: MovieFormValues,
     touchedMap: Record<string, boolean>,
   ) => {
-    const all = validateAll(merged, isCreate);
+    const all = validateAll(merged, isCreate, takenTitles);
     const next: ServerErrors = {};
     for (const key of Object.keys(all)) {
       if (touchedMap[key]) next[key] = all[key];
@@ -224,7 +247,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     touchedRef.current = allTouched;
     setTouched(allTouched);
 
-    const all = validateAll(values, isCreate);
+    const all = validateAll(values, isCreate, takenTitles);
     setFieldErrors(all);
     if (Object.keys(all).length > 0) return;
 
@@ -271,7 +294,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     }
   };
 
-  const isValid = Object.keys(validateAll(values, isCreate)).length === 0;
+  const isValid = Object.keys(validateAll(values, isCreate, takenTitles)).length === 0;
 
   return {
     isCreate, loading, saving, uploading, isValid,

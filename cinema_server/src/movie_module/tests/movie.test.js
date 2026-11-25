@@ -10,6 +10,7 @@ const mockCountMovies = jest.fn();
 const mockListMovies = jest.fn();
 const mockFindMovieById = jest.fn();
 const mockListMovieOptions = jest.fn();
+const mockMovieTitleExists = jest.fn();
 const mockSplitMovieBody = jest.fn();
 const mockCreateMovieWithRelations = jest.fn();
 const mockUpdateMovieWithRelations = jest.fn();
@@ -26,6 +27,7 @@ jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   listMovies: mockListMovies,
   findMovieById: mockFindMovieById,
   listMovieOptions: mockListMovieOptions,
+  movieTitleExists: mockMovieTitleExists,
   splitMovieBody: mockSplitMovieBody,
   createMovieWithRelations: mockCreateMovieWithRelations,
   updateMovieWithRelations: mockUpdateMovieWithRelations,
@@ -71,6 +73,7 @@ describe('Movie Controller Endpoint Tests', () => {
     mockGetConnection.mockResolvedValue(dummyConnection);
     mockCloseDatabaseConnection.mockResolvedValue();
     mockRollback.mockResolvedValue();
+    mockMovieTitleExists.mockResolvedValue(false);
   });
 
   describe('GET /management/movies/count', () => {
@@ -187,6 +190,18 @@ describe('Movie Controller Endpoint Tests', () => {
         data: { ID_MOVIE: 10, ...movieData, ...relationsData },
       });
       expect(mockCloseDatabaseConnection).toHaveBeenCalledWith(dummyConnection);
+    });
+
+    test('409 Conflict - Rechaza un título repetido', async () => {
+      mockSplitMovieBody.mockReturnValue({ movie: { MOVIE_TITLE: 'Tenet' }, relations: {} });
+      mockMovieTitleExists.mockResolvedValue(true);
+
+      await request(app)
+        .post('/management/movies')
+        .send({ MOVIE_TITLE: 'Tenet' })
+        .expect(409);
+
+      expect(mockCreateMovieWithRelations).not.toHaveBeenCalled();
     });
 
     test('500 Error - Hace rollback si falla la inserción', async () => {

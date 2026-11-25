@@ -24,6 +24,7 @@ jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   listMovies: jest.fn(),
   findMovieById: jest.fn(),
   listMovieOptions: jest.fn(),
+  movieTitleExists: jest.fn(),
   splitMovieBody: jest.fn(),
   createMovieWithRelations: jest.fn(),
   updateMovieWithRelations: jest.fn(),
