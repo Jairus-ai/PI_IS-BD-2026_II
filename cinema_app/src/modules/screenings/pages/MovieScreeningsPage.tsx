@@ -14,10 +14,12 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import IconButton from '@mui/material/IconButton';
 import { useNavigate, useParams } from 'react-router';
+import { getPosterUrl } from '../../billboard/types/billboard';
 import { useMovieScreenings } from '../hooks/useMovieScreenings';
 import type { ListValue, Movie, Screening, ScreeningsError } from '../types/screenings';
 
@@ -56,16 +58,7 @@ function formatList(value: ListValue): string {
     }
     const raw = String(value ?? '').trim();
     if (!raw) return '—';
-
-    if (/[,;|]/.test(raw)) {
-        return raw.split(/[,;|]/).map((item) => item.trim()).filter(Boolean).join(', ');
-    }
-
-    return raw
-        .replace(/Dolby\s+Atmos/gi, 'Dolby_Atmos')
-        .split(/\s+/)
-        .map((item) => item.replaceAll('_', ' '))
-        .join(', ');
+    return raw.split(/[,;|]/).map((item) => item.trim()).filter(Boolean).join(', ');
 }
 
 function formatTime(startTime: string): string {
@@ -125,14 +118,15 @@ function PosterFallback() {
 
 function MovieInfo({ movie }: Readonly<{ movie: Movie }>) {
     const [posterFailed, setPosterFailed] = React.useState(false);
+    const posterUrl = getPosterUrl(movie.POSTER);
 
     return (
         <Paper variant="outlined" sx={{ bgcolor: 'background.paper', p: 2, mb: 3, borderRadius: 2 }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-                {movie.POSTER && !posterFailed ? (
+                {posterUrl && !posterFailed ? (
                     <Box
                         component="img"
-                        src={movie.POSTER}
+                        src={posterUrl}
                         alt={`Póster de ${movie.MOVIE_TITLE}`}
                         onError={() => setPosterFailed(true)}
                         sx={{ width: POSTER_WIDTH, alignSelf: { xs: 'center', sm: 'flex-start' }, borderRadius: 1 }}
@@ -342,6 +336,9 @@ function MovieScreeningsContent({ idMovie }: Readonly<{ idMovie: number }>) {
 
     return (
         <Box sx={{ p: 2 }}>
+            <Button startIcon={<ArrowBackIcon />} onClick={goHome} sx={{ mb: 2 }}>
+                Volver a la cartelera
+            </Button>
             <MovieInfo key={movie.ID_MOVIE} movie={movie} />
 
             <Stack
