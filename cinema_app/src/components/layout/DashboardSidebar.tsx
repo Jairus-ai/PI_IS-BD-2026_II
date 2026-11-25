@@ -12,6 +12,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import MovieIcon from '@mui/icons-material/Movie';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import TheatersIcon from '@mui/icons-material/Theaters';
+import EventSeatIcon from '@mui/icons-material/EventSeat';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
@@ -201,6 +202,13 @@ export default function DashboardSidebar({
               icon={<StorefrontIcon />}
               href="/locations"
               selected={!!matchPath('/locations/*', pathname) || pathname === '/'}
+            />
+            <DashboardSidebarPageItem
+              id="screens"
+              title="Salas"
+              icon={<EventSeatIcon />}
+              href="/screens"
+              selected={!!matchPath('/screens/*', pathname)}
             />
             <DashboardSidebarPageItem
               id="snacks"
