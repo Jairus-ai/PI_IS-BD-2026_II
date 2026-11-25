@@ -61,3 +61,13 @@ export interface Language {
   ISO_CODE: string;
   LANGUAGE_NAME: string;
 }
+
+export function formatDuration(totalMinutes: number | null | undefined): string {
+  if (totalMinutes == null) return '00:00';
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  const minsStr = String(mins).padStart(2, '0');
+  if (hours <= 0) return `00:${minsStr}`;
+  if (mins === 0) return `${hours}:00`;
+  return `${hours}:${minsStr}`;
+}

@@ -1,0 +1,187 @@
+import { useState, type ChangeEvent } from 'react';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import type { GridColDef } from '@mui/x-data-grid';
+import { CrudPage } from '../../../components/crud/CrudPage';
+import { ActionButton } from '../../../components/crud/ActionButton';
+import { FilterField } from '../../../components/crud/FilterField';
+import MovieInBillboardDetailDialog from '../components/MovieInBillboardDetailDialog';
+import {
+  useMovieInBillboardFilterOptions,
+  useMoviesInBillboards
+} from '../hooks/useMoviesInBillboards';
+import {
+  formatBillboardDate,
+  type LocationOption,
+  type MovieInBillboard,
+  type MovieInBillboardFilters
+} from '../types/moviesInBillboards';
+import type { Rating } from '../../movies/types/movies';
+
+const PAGE_SIZE = 10;
+const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las películas en cartelera.';
+const NO_MOVIES_IN_BILLBOARDS_MESSAGE = 'No hay películas en ninguna de las carteleras.';
+const NO_FILTER_RESULTS_MESSAGE = 'No se encontraron resultados para la búsqueda.';
+
+const MAX_MOVIE_NAME_LENGTH = 100;
+
+const EMPTY_FILTERS: MovieInBillboardFilters = {
+  locationId: '',
+  ratingId: '',
+  movieName: ''
+};
+
+const FIRST_PAGE = {
+  page: 0,
+  pageSize: PAGE_SIZE
+};
+
+export default function MovieInBillboardList() {
+  const [filters, setFilters] = useState<MovieInBillboardFilters>(EMPTY_FILTERS);
+  const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const {
+    moviesInBillboards,
+    totalMoviesInBillboards,
+    isLoadingMoviesInBillboards,
+    moviesInBillboardsError,
+    refetchMoviesInBillboards
+  } = useMoviesInBillboards(paginationModel.page + 1, filters);
+
+  const {
+    ratings,
+    locations
+  } = useMovieInBillboardFilterOptions();
+
+  const hasFilters = filters.locationId !== ''
+    || filters.ratingId !== ''
+    || filters.movieName.trim() !== '';
+
+  const columns: GridColDef<MovieInBillboard>[] = [
+    {
+      field: 'MOVIE_TITLE',
+      headerName: 'Película',
+      flex: 2,
+      minWidth: 200
+    },
+    {
+      field: 'LOCATION_NAME',
+      headerName: 'Sucursal',
+      flex: 1,
+      minWidth: 160
+    },
+    {
+      field: 'OPENING_DATE',
+      headerName: 'Fecha de inicio',
+      flex: 1,
+      minWidth: 140,
+      valueFormatter: (value: string) => formatBillboardDate(value)
+    },
+    {
+      field: 'CLOSING_DATE',
+      headerName: 'Fecha de fin',
+      flex: 1,
+      minWidth: 140,
+      valueFormatter: (value: string) => formatBillboardDate(value)
+    },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Acciones',
+      align: 'left',
+      headerAlign: 'left',
+      flex: 1,
+      minWidth: 120,
+      getActions: ({ row }) => [
+        <ActionButton
+          key="show"
+          label="Mostrar"
+          onClick={() => setSelectedId(row.ID_MOVIE_IN_BILLBOARD)}
+        />
+      ]
+    }
+  ];
+
+  const handleFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+
+    setFilters((previousFilters) => ({
+      ...previousFilters,
+      [name]: value
+    }));
+    setPaginationModel(FIRST_PAGE);
+  };
+
+  const clearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setPaginationModel(FIRST_PAGE);
+  };
+
+  return (
+    <CrudPage
+      title="Películas en cartelera"
+      error={moviesInBillboardsError}
+      errorMessage={LOAD_ERROR_MESSAGE}
+      onRetry={() => void refetchMoviesInBillboards()}
+      rows={moviesInBillboards}
+      rowCount={totalMoviesInBillboards}
+      getRowId={(row: MovieInBillboard) => row.ID_MOVIE_IN_BILLBOARD}
+      columns={columns}
+      loading={isLoadingMoviesInBillboards}
+      paginationModel={paginationModel}
+      onPaginationModelChange={setPaginationModel}
+      noRowsLabel={
+        hasFilters
+          ? NO_FILTER_RESULTS_MESSAGE
+          : NO_MOVIES_IN_BILLBOARDS_MESSAGE
+      }
+      filters={
+        <>
+          <TextField
+            label="Buscar por nombre"
+            name="movieName"
+            value={filters.movieName}
+            onChange={handleFilterChange}
+            size="small"
+            slotProps={{ htmlInput: { maxLength: MAX_MOVIE_NAME_LENGTH } }}
+          />
+          <FilterField
+            label="Sucursal"
+            name="locationId"
+            value={filters.locationId}
+            onChange={handleFilterChange}
+            itemList={locations}
+            getValue={(location: LocationOption) => location.ID_LOCATION}
+            getLabel={(location: LocationOption) => location.LOCATION_NAME}
+          />
+          <FilterField
+            label="Clasificación"
+            name="ratingId"
+            value={filters.ratingId}
+            onChange={handleFilterChange}
+            itemList={ratings}
+            getValue={(rating: Rating) => rating.ID_RATING}
+            getLabel={(rating: Rating) => rating.RATING_CODE}
+          />
+          <Button
+            variant="outlined"
+            onClick={clearFilters}
+            sx={{
+              whiteSpace: 'nowrap',
+              minWidth: 'max-content'
+            }}
+          >
+            Limpiar filtros
+          </Button>
+        </>
+      }
+      dialogs={
+        <MovieInBillboardDetailDialog
+          movieInBillboardId={selectedId}
+          onClose={() => setSelectedId(null)}
+        />
+      }
+    />
+  );
+}
