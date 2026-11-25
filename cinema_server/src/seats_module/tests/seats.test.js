@@ -16,6 +16,7 @@ import {
 
 process.env.JWT_SECRET = 'test-secret';
 
+
 const MOCK_SEATS = [
     {
         SEAT_ROW: '3',
@@ -34,6 +35,7 @@ const NEW_RESERVATION_ID = 99;
 
 function useDatabase({
     seats = MOCK_SEATS,
+    screenInfo = [],
     boughts = [],
     reservations = [],
     ownReservation = null,
@@ -90,6 +92,9 @@ function useDatabase({
 
             return { rows: seats.map((seat) => ({ ...seat })) };
         }
+
+        if (/FROM PI_DEVELOPERS\.SCREENS\b/.test(sql))
+            return { rows: screenInfo.map((screen) => ({ ...screen })) };
 
         throw new Error(`SQL inesperado en el test: ${sql}`);
     });
@@ -539,6 +544,48 @@ describe('Only guests and clients can reserve seats', () => {
             .post('/seats/7/reservation/10')
             .set('Cookie', sessionCookie(ROLES.CLIENT))
             .expect(200);
+    });
+});
+
+describe('GET /seats/:screeningId/screen', () => {
+    test('200 devuelve la configuración de la sala', async () => {
+        const connection = useDatabase({
+            screenInfo: [
+                {
+                    ROWS: 8,
+                    COLS: 12,
+                    SEAT_SIZE: 96,
+                },
+            ],
+        });
+
+        const response = await request(app)
+            .get('/seats/1/screen')
+            .expect(200);
+
+        expect(response.body).toEqual({
+            data: [
+                {
+                    ROWS: 8,
+                    COLS: 12,
+                    SEAT_SIZE: 96,
+                },
+            ],
+        });
+        expect(connection.close).toHaveBeenCalledTimes(1);
+    });
+
+    test('200 devuelve lista vacía cuando no existe la función', async () => {
+        const connection = useDatabase();
+
+        const response = await request(app)
+            .get('/seats/999/screen')
+            .expect(200);
+
+        expect(response.body).toEqual({
+            data: [],
+        });
+        expect(connection.close).toHaveBeenCalledTimes(1);
     });
 });
 

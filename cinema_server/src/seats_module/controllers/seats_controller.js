@@ -232,7 +232,7 @@ export const getScreenInfo = async (req, res, next) =>
             ON sc.ID_SCREEN = s.ID_SCREEN
             WHERE ID_SCREENING = :screeningId`;
 
-        const result = await conection.execute(
+        const result = await connection.execute(
             request,
             [screeningId],
             {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getSeatsList } from '../services/seatsService';
+import { getSeatsList, getcreeningRoomInfo } from '../services/seatsService';
 
 /** @param {number | null} [screeningId] */
 export const useSeats = (screeningId = null) => {
@@ -12,8 +12,18 @@ export const useSeats = (screeningId = null) => {
     gcTime: 0,
   });
 
+  const screenQuery = useQuery({
+    queryKey: ['screen', screeningId],
+    queryFn: () => getcreeningRoomInfo(screeningId),
+    enabled: screeningId != null,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+
   return {
     seats: Array.isArray(seatsQuery.data?.data) ? seatsQuery.data.data : [],
+    screen: Array.isArray(seatsQuery.data?.data) ? screenQuery.data.data : [],
     reservation: seatsQuery.data?.reservation ?? null,
     isLoadingSeats: seatsQuery.isLoading,
     seatsError: seatsQuery.error,
