@@ -293,7 +293,7 @@ async function insertMovieFormats(connection, idMovie, ids) {
 
 async function insertMovieLanguages(connection, idMovie, languages) {
   for (const lang of languages) {
-    connection.execute(
+    await connection.execute(
       `INSERT INTO PI_DEVELOPERS.movies_languages
         (LANGUAGE_TYPE, ID_MOVIE, ISO_CODE)
         VALUES (:languagetype, :idmovie, :isocode)`,
@@ -344,13 +344,39 @@ async function replaceMovieFormats(connection, idMovie, ids) {
   await insertMovieFormats(connection, idMovie, ids);
 }
 
+function getLanguageKey(language) {
+  return `${language.LANGUAGE_TYPE}-${language.ISO_CODE}`;
+}
+
 async function replaceMovieLanguages(connection, idMovie, languages) {
-  await connection.execute(
-    `DELETE FROM PI_DEVELOPERS.movies_languages
+  const result = await connection.execute(
+    `SELECT ID_MOVIE_LANGUAGE, LANGUAGE_TYPE, ISO_CODE
+      FROM PI_DEVELOPERS.movies_languages
       WHERE ID_MOVIE = :idmovie`,
-    { idmovie: idMovie }
+    { idmovie: idMovie },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
   );
-  await insertMovieLanguages(connection, idMovie, languages);
+
+  const currentLanguages = result.rows;
+  const newKeys = new Set(languages.map(getLanguageKey));
+  const currentKeys = new Set(currentLanguages.map(getLanguageKey));
+
+  const removedLanguages = currentLanguages.filter(
+    (language) => !newKeys.has(getLanguageKey(language))
+  );
+  const addedLanguages = languages.filter(
+    (language) => !currentKeys.has(getLanguageKey(language))
+  );
+
+  for (const language of removedLanguages) {
+    await connection.execute(
+      `DELETE FROM PI_DEVELOPERS.movies_languages
+        WHERE ID_MOVIE_LANGUAGE = :idmovielanguage`,
+      { idmovielanguage: language.ID_MOVIE_LANGUAGE }
+    );
+  }
+
+  await insertMovieLanguages(connection, idMovie, addedLanguages);
 }
 
 export async function movieExists(connection, id) {

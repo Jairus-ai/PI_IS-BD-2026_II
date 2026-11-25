@@ -243,6 +243,18 @@ describe('Movie Controller Endpoint Tests', () => {
         .expect(400);
     });
 
+    test('409 Conflict - El idioma quitado tiene funciones', async () => {
+      mockSplitMovieBody.mockReturnValue({ movie: {}, relations: { LANGUAGES: [] } });
+      mockUpdateMovieWithRelations.mockRejectedValue({ errorNum: 2292 });
+
+      const response = await request(app)
+        .put('/management/movies/1')
+        .send({ LANGUAGES: [] })
+        .expect(409);
+
+      expect(response.body.message).toBe('No se puede quitar un idioma que tiene funciones asociadas.');
+    });
+
     test('404 Not Found - Película no existe al actualizar', async () => {
       mockSplitMovieBody.mockReturnValue({ movie: { MOVIE_TITLE: 'Unknown' }, relations: {} });
       mockUpdateMovieWithRelations.mockResolvedValue('not-found');
