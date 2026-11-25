@@ -2,22 +2,25 @@ import { Router } from 'express';
 import {
   createPaymentIntent,
   getPaymentReservation,
-  getPaymentStatus
+  getPaymentStatus,
+  getPaymentSummary
 } from '../controllers/payment_controller.js';
 import {
   ROLES,
   requireSession
 } from '../../session/session.js';
-import { validateBody } from '../../middleware/validate.js';
-import { paymentBodySchema } from '../schemas/paymentSchema.js';
-
-const PAYMENT_BODY_ERROR_MESSAGE = 'Los datos del pago no son válidos.';
 
 const router = Router();
 
 router.use(requireSession([ROLES.CLIENT]));
+//reservation and payment data change so the browser must always ask the server
+router.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 router.get('/reservation', getPaymentReservation);
-router.post('/intent', validateBody(paymentBodySchema, PAYMENT_BODY_ERROR_MESSAGE), createPaymentIntent);
+router.get('/summary', getPaymentSummary);
+router.post('/intent', createPaymentIntent);
 router.get('/status', getPaymentStatus);
 
 export default router;

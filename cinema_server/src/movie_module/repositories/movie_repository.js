@@ -238,7 +238,6 @@ export async function insertMovie(connection, movie) {
   return result.outBinds.idmovie[0];
 }
 
-// TODO(Jesus): Awaits are removed, but errors are not handled. To do pending.
 async function insertMovieGenres(connection, idMovie, ids) {
   for (const idGenre of ids) {
     connection.execute(

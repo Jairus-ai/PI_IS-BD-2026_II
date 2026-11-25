@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 const mockGet = jest.fn();
+const mockPost = jest.fn();
 
 jest.unstable_mockModule('../../../services/api', () => ({
-  api: { get: mockGet }
+  api: {
+    get: mockGet,
+    post: mockPost
+  }
 }));
 
 const {
+  createMovieInBillboard,
   getMovieInBillboard,
   getMoviesInBillboardsCount,
   getMoviesInBillboardsList
@@ -52,5 +57,18 @@ describe('movieInBillboardService', () => {
   test('Does not call the API with an invalid page', async () => {
     await expect(getMoviesInBillboardsList(0)).rejects.toThrow();
     expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  test('Creates a movie in billboard', async () => {
+    mockPost.mockResolvedValue({ data: { data: { ID_MOVIE_IN_BILLBOARD: 7 } } });
+
+    const created = await createMovieInBillboard({
+      movieId: 1,
+      locationId: 2,
+      openingDate: '2026-12-01',
+      closingDate: '2026-12-31'
+    });
+
+    expect(created).toEqual({ ID_MOVIE_IN_BILLBOARD: 7 });
   });
 });

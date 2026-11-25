@@ -2,14 +2,15 @@ import { api } from '../../../services/api';
 
 const SESSION_REQUEST_CONFIG = { withCredentials: true };
 
-export const getPaymentReservation = async () => {
-  const { data } = await api.get('/payments/reservation', SESSION_REQUEST_CONFIG);
+export const getPurchaseSummary = async () => {
+  const { data } = await api.get('/payments/summary', SESSION_REQUEST_CONFIG);
 
   return data.data;
 };
 
-export const createPaymentIntent = async (payment) => {
-  const { data } = await api.post('/payments/intent', payment, SESSION_REQUEST_CONFIG);
+//the server reads the reservation from its cookie and calculates every amount
+export const createPaymentIntent = async () => {
+  const { data } = await api.post('/payments/intent', {}, SESSION_REQUEST_CONFIG);
 
   return data.data;
 };

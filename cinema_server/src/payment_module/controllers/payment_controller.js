@@ -9,6 +9,10 @@ import {
 } from '../../seats_module/services/reservation_cookie.js';
 import { sendTicketsEmail } from '../../QR_module/controllers/QR_controller.js';
 import { getStripe } from '../services/stripe_client.js';
+import {
+  PurchaseSummaryError,
+  buildPurchaseSummary
+} from '../services/purchase_summary_service.js';
 
 const PAYMENT_CURRENCY = 'crc';
 const CENTS_PER_COLON = 100;
@@ -26,6 +30,28 @@ const RESERVATION_EXPIRED_CODE = 'RESERVATION_EXPIRED';
 const RESERVATION_EXPIRED_MESSAGE = 'La reserva de asientos expiró. Selecciona tus asientos de nuevo';
 const SESSION_ID_REQUIRED_MESSAGE = 'Falta el identificador del pago';
 const PAYMENT_NOT_FOUND_MESSAGE = 'El pago no existe';
+
+function handleSummaryError(error, res, next) {
+  if (error instanceof PurchaseSummaryError)
+    return res.status(error.status).json({ code: error.code, message: error.message });
+
+  return next(error);
+}
+
+function serializeDiscounts(discounts) {
+  return discounts.map((discount) => `${discount.discountId}:${discount.amount}`).join(';');
+}
+
+function parseDiscounts(text) {
+  if (!text)
+    return [];
+
+  return text.split(';').map((entry) => {
+    const [discountId, amount] = entry.split(':').map(Number);
+
+    return { discountId, amount };
+  });
+}
 
 function rejectExpiredReservation(res) {
   clearReservationCookie(res);
@@ -106,6 +132,20 @@ async function registerPurchase(connection, session, paymentIntentId, seats) {
       feeId
     }))
   );
+
+  const discounts = parseDiscounts(session.metadata.discounts);
+
+  if (discounts.length > 0) {
+    await connection.executeMany(
+      `INSERT INTO PI_DEVELOPERS.RECEIPT_DISCOUNTS (DISCOUNT_AMOUNT, ID_RECEIPT, ID_DISCOUNT)
+      VALUES (:amount, :receiptId, :discountId)`,
+      discounts.map((discount) => ({
+        amount: discount.amount,
+        receiptId,
+        discountId: discount.discountId
+      }))
+    );
+  }
 
   await connection.execute(
     `DELETE FROM PI_DEVELOPERS.RESERVATIONS_SEATS
@@ -229,6 +269,31 @@ export const getPaymentReservation = async (req, res, next) => {
   }
 };
 
+export const getPaymentSummary = async (req, res, next) => {
+  let connection;
+
+  try {
+    const token = readReservationToken(req);
+
+    if (!token)
+      return rejectExpiredReservation(res);
+
+    connection = await getConnection();
+
+    const summary = await buildPurchaseSummary(connection, token.reservationId);
+
+    if (!summary)
+      return rejectExpiredReservation(res);
+
+    res.status(200).json({ data: summary });
+
+  } catch (error) {
+    handleSummaryError(error, res, next);
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
 export const createPaymentIntent = async (req, res, next) => {
   let connection;
 
@@ -240,29 +305,33 @@ export const createPaymentIntent = async (req, res, next) => {
 
     connection = await getConnection();
 
-    const seats = await getReservedSeats(connection, token.reservationId);
+    //every amount comes from the database, the browser only says which reservation to pay
+    const summary = await buildPurchaseSummary(connection, token.reservationId);
 
-    if (seats.length === 0)
+    if (!summary)
       return rejectExpiredReservation(res);
 
-    const {
-      feeId,
-      seatPrice
-    } = req.validatedBody;
     const metadata = {
       clientId: String(req.user.id),
       reservationId: String(token.reservationId),
-      feeId: String(feeId),
-      seatPrice: String(seatPrice)
+      feeId: String(summary.feeId),
+      seatPrice: String(summary.unitPrice)
     };
 
+    if (summary.discounts.length > 0)
+      metadata.discounts = serializeDiscounts(summary.discounts);
+
+    const reservedUntilMs = new Date(summary.reservedUntil).getTime();
+    const seatIds = summary.tickets.map((ticket) => ticket.seatId).join('-');
+
+    //same reservation, seats and expiry give the same key
     const session = await getStripe().checkout.sessions.create({
       mode: 'payment',
-      line_items: seats.map((seat) => ({
+      line_items: summary.tickets.map((ticket) => ({
         price_data: {
           currency: PAYMENT_CURRENCY,
-          product_data: { name: `Asiento ${seat.SEAT_ROW}${seat.SEAT_NUMBER}` },
-          unit_amount: Math.round(seatPrice * CENTS_PER_COLON)
+          product_data: { name: `Asiento ${ticket.seat}` },
+          unit_amount: Math.round(summary.unitPrice * CENTS_PER_COLON)
         },
         quantity: 1
       })),
@@ -271,21 +340,23 @@ export const createPaymentIntent = async (req, res, next) => {
         capture_method: 'manual',
         metadata
       },
-      expires_at: Math.floor(Date.now() / 1000) + STRIPE_MINIMUM_SESSION_SECONDS,
+      expires_at: Math.floor(reservedUntilMs / 1000) + STRIPE_MINIMUM_SESSION_SECONDS,
       success_url: `${CLIENT_ORIGIN}/#/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${CLIENT_ORIGIN}/#/payment/cancel`
+    }, {
+      idempotencyKey: `checkout-${token.reservationId}-${seatIds}-${reservedUntilMs}`
     });
 
     res.status(201).json({
       data: {
         sessionId: session.id,
         url: session.url,
-        expiresAt: seats[0].RESERVED_UNTIL
+        expiresAt: summary.reservedUntil
       }
     });
 
   } catch (error) {
-    next(error);
+    handleSummaryError(error, res, next);
   } finally {
     await closeDatabaseConnection(connection);
   }
