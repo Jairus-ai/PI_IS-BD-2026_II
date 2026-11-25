@@ -14,6 +14,7 @@ import UserList from '../modules/users/pages/UserList.jsx';
 import ChangePassword from '../modules/auth/pages/ChangePassword';
 import PasswordRecovery from '../modules/auth/pages/PasswordRecovery';
 import FeeList from '../modules/fees/pages/FeeList';
+import ScreenList from '../modules/screens/pages/ScreenList';
 import UserCreate from '../modules/users/pages/UserCreate';
 import ShowSeats from '../modules/selectSeats/pages/selectSeats';
 import ClientLayout from '../components/layout/ClientLayout';
@@ -105,6 +106,14 @@ const router = createHashRouter([
         element: (
           <RequireSession allowedRoles={MANAGER_ROLES}>
             <FeeList />
+          </RequireSession>
+        ),
+      },
+      {
+        path: '/screens',
+        element: (
+          <RequireSession allowedRoles={MANAGER_ROLES}>
+            <ScreenList />
           </RequireSession>
         ),
       },
