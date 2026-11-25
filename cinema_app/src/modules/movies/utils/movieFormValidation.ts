@@ -11,7 +11,7 @@ export interface MovieFormValues {
   genreIds: Genre[];
   directorIds: Director[];
   formatIds: AudiovisualFormat[];
-  originalLangs: Language[];
+  originalLang: Language | null;
   dubLangs: Language[];
   subLangs: Language[];
   posterFile: File | null;
@@ -49,7 +49,7 @@ export function validateAll(
   if (values.genreIds.length === 0) errors.GENRE_IDS = 'Seleccione al menos un género';
   if (values.directorIds.length === 0) errors.DIRECTOR_IDS = 'Seleccione al menos un director';
   if (values.formatIds.length === 0) errors.FORMAT_IDS = 'Seleccione al menos un formato';
-  if (values.originalLangs.length === 0) errors.LANGUAGES_ORIGINAL = 'Seleccione al menos un idioma original';
+  if (!values.originalLang) errors.LANGUAGES_ORIGINAL = 'Seleccione el idioma original';
   if (isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
   if (!isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
   return errors;

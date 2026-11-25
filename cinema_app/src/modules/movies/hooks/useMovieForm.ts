@@ -26,7 +26,7 @@ const initialFormValues: MovieFormValues = {
   genreIds: [],
   directorIds: [],
   formatIds: [],
-  originalLangs: [],
+  originalLang: null,
   dubLangs: [],
   subLangs: [],
   posterFile: null,
@@ -144,8 +144,8 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     setFieldValue('formatIds', formats);
   };
 
-  const handleOriginalLangsChange = (languages: Language[]) => {
-    setFieldValue('originalLangs', languages);
+  const handleOriginalLangChange = (language: Language | null) => {
+    setFieldValue('originalLang', language);
   };
 
   const handlePosterChange = (file: File | null) => {
@@ -281,7 +281,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     genreIds: values.genreIds,
     directorIds: values.directorIds,
     formatIds: values.formatIds,
-    originalLangs: values.originalLangs,
+    originalLang: values.originalLang,
     dubLangs: values.dubLangs,
     subLangs: values.subLangs,
     existingPoster: values.existingPoster,
@@ -295,7 +295,7 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
     handleTitleChange, handleSynopsisChange, handleBlur,
     handleYearChange, handleDurationChange, handleRatingChange,
     handleGenresChange, handleDirectorsChange, handleFormatsChange,
-    handleOriginalLangsChange, handlePosterChange,
+    handleOriginalLangChange, handlePosterChange,
     handleSubmit,
   };
 }

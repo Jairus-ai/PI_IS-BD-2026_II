@@ -233,10 +233,9 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
         />
 
         <Autocomplete
-          multiple
           options={form.catalogs.languages as Language[]}
-          value={form.originalLangs}
-          onChange={(_, event) => form.handleOriginalLangsChange(event)}
+          value={form.originalLang}
+          onChange={(_, language) => form.handleOriginalLangChange(language)}
           onBlur={form.handleBlur('LANGUAGES_ORIGINAL')}
           getOptionLabel={(language) => language.LANGUAGE_NAME}
           isOptionEqualToValue={(valueA, valueB) => valueA.ISO_CODE === valueB.ISO_CODE}

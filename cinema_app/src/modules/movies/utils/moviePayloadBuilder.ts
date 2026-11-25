@@ -19,7 +19,9 @@ export function buildMoviePayload(values: MovieFormValues, posterPath: string) {
     DIRECTOR_IDS: values.directorIds.map((director) => director.ID_DIRECTOR),
     FORMAT_IDS: values.formatIds.map((format) => format.ID_AUDIOVISUAL_FORMAT),
     LANGUAGES: [
-      ...values.originalLangs.map((language) => ({ ISO_CODE: language.ISO_CODE, LANGUAGE_TYPE: 'OG' })),
+      ...(values.originalLang
+        ? [{ ISO_CODE: values.originalLang.ISO_CODE, LANGUAGE_TYPE: 'OG' }]
+        : []),
       ...values.dubLangs.map((language) => ({ ISO_CODE: language.ISO_CODE, LANGUAGE_TYPE: 'DUB' })),
       ...values.subLangs.map((language) => ({ ISO_CODE: language.ISO_CODE, LANGUAGE_TYPE: 'SUB' })),
     ],

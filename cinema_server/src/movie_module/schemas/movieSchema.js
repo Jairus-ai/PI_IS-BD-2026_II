@@ -114,6 +114,10 @@ export const movieBodySchema = z.object({
           ),
       })
     )
+    .refine(
+      (languages) => languages.filter((language) => language.LANGUAGE_TYPE === 'OG').length <= 1,
+      { error: 'La película solo puede tener un idioma original.' }
+    )
     .optional(),
 });
 
