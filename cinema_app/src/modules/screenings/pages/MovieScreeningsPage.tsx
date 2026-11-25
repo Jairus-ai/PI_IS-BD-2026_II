@@ -84,11 +84,9 @@ function getScreeningDayKey(startTime: string): string | null {
 
 function formatDayLabel(dayKey: string): string {
     const [year, month, day] = dayKey.split('-').map(Number);
-    const today = new Date();
-    //const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const today = new Date()
 
     if (dayKey === toDayKey(today)) return 'Hoy';
-    //if (dayKey === toDayKey(tomorrow)) return 'Mañana';
 
     const parts = Object.fromEntries(
         DAY_FORMAT.formatToParts(new Date(year, month - 1, day)).map((part) => [part.type, part.value]),

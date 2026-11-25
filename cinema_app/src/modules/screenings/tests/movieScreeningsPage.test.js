@@ -3,7 +3,6 @@ import { TextDecoder, TextEncoder } from 'node:util';
 import { jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react';
 
-// react-router uses TextEncoder at load time and jsdom does not define it
 globalThis.TextEncoder ??= TextEncoder;
 globalThis.TextDecoder ??= TextDecoder;
 
@@ -17,7 +16,6 @@ jest.unstable_mockModule('../hooks/useMovieScreenings', () => ({
 
 const { default: MovieScreeningsPage } = await import('../pages/MovieScreeningsPage');
 
-// Dates relative to today (local time) so the "today" tab is deterministic
 const at = (daysFromNow, hour, minute = 0) => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysFromNow, hour, minute).toISOString();
