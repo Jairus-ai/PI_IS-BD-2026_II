@@ -26,6 +26,7 @@ import seatsRoutes from './seats_module/routes/seats_routes.js';
 import QR_routes from './QR_module/routes/QR_routes.js';
 import paymentRoutes from './payment_module/routes/payment_routes.js';
 import { handleWebhook } from './payment_module/controllers/payment_controller.js';
+import screeningRoutes from './screening_module/routes/screening_routes.js';
 
 const port = 3000;
 const ip = '0.0.0.0';
@@ -67,6 +68,7 @@ app.use('/management/discounts', discountRoutes);
 app.use('/management/fees', feeRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
+app.use('/management/screenings', screeningRoutes);
 app.use('/seats', seatsRoutes);
 app.use('/purchase', QR_routes);
 app.use('/management/cantons', cantonRoutes);
