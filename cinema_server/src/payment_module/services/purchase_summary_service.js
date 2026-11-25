@@ -32,7 +32,6 @@ const RESERVED_SEATS_QUERY = `
   ORDER BY s.SEAT_ROW, s.SEAT_NUMBER
 `;
 
-//CURRENT_TIMESTAMP and CURRENT_DATE use the session time zone (Costa Rica), SYSTIMESTAMP and SYSDATE use the server one (UTC)
 const SCREENING_QUERY = `
   SELECT
     m.MOVIE_TITLE,
@@ -79,10 +78,7 @@ export function roundAmount(amount) {
   return Math.round(amount * 100) / 100;
 }
 
-/**
- * Each discount is taken from the price of every ticket, so the amount charged per seat and the
- * discount lines always add up to the same total.
- */
+//Each discount is taken from the price of every ticket, so the amount charged per seat and the discount lines always add up to the same total
 export function calculateTotals(feePrice, ticketCount, discounts) {
   let unitPrice = feePrice;
   const appliedDiscounts = [];
@@ -112,10 +108,6 @@ export async function getReservationSeats(connection, reservationId) {
   return result.rows;
 }
 
-/**
- * Builds the purchase summary of a reservation with the prices stored in the database.
- * Returns null when the reservation expired or has no seats.
- */
 export async function buildPurchaseSummary(connection, reservationId) {
   const seats = await getReservationSeats(connection, reservationId);
   if (seats.length === 0) {
