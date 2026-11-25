@@ -1,6 +1,6 @@
 import Footer from '../components/Footer.jsx'
 import MovieCarousel from '../modules/billboard/components/MovieCarousel'
-import Billboard from '../components/Billboard.jsx'
+import BillboardGrid from '../modules/billboard/components/BillboardGrid'
 import DashboardLayout from '../components/layout/DashboardLayout';
 
 function Mainpage() {
@@ -9,7 +9,7 @@ function Mainpage() {
     <DashboardLayout />
       <div id = "mainPageBody">
         <MovieCarousel />
-        <Billboard />
+        <BillboardGrid />
       </div>
       <Footer />
     </>

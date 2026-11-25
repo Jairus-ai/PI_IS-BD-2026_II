@@ -13,6 +13,10 @@ const mockUseMovieScreenings = jest.fn();
 jest.unstable_mockModule('../hooks/useMovieScreenings', () => ({
   useMovieScreenings: mockUseMovieScreenings,
 }));
+jest.unstable_mockModule('../../../services/api', () => ({
+  API_BASE_URL: 'http://api.test',
+  api: {},
+}));
 
 const { default: MovieScreeningsPage } = await import('../pages/MovieScreeningsPage');
 
@@ -27,7 +31,7 @@ const movie = {
   SYNOPSIS: 'Una épica del desierto.',
   MOVIE_DURATION: 155,
   PUBLISHING_YEAR: 2021,
-  POSTER: 'poster.jpg',
+  POSTER: '/posters/dune.jpg',
   RATING_NAME: 'Mayores de 12',
   RATING_CODE: 'PG-13',
   GENRES: ['Acción', 'Drama'],
@@ -135,6 +139,29 @@ describe('MovieScreeningsPage', () => {
     expect(screen.getByText('IMAX, 2D')).toBeTruthy();
     expect(screen.getByText('—')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Póster de Dune' })).toBeTruthy();
+  });
+
+  it('keeps a single value with spaces whole, like a director or a format', () => {
+    givenState({ movie: { ...movie, DIRECTORS: 'Christopher Nolan', FORMATS: 'IMAX 2D Dolby Atmos' } });
+    renderPage();
+
+    expect(screen.getByText('Christopher Nolan')).toBeTruthy();
+    expect(screen.getByText('IMAX 2D Dolby Atmos')).toBeTruthy();
+  });
+
+  it('loads the poster from the server, where the posters are stored', () => {
+    givenState();
+    renderPage();
+
+    expect(screen.getByRole('img', { name: 'Póster de Dune' }).getAttribute('src')).toBe('http://api.test/posters/dune.jpg');
+  });
+
+  it('goes back to the billboard from the movie details', () => {
+    givenState();
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Volver a la cartelera' }));
+    expect(screen.getByText('Inicio')).toBeTruthy();
   });
 
   it('replaces the poster with a fallback box when the image fails to load', () => {
