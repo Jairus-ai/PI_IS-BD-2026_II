@@ -52,7 +52,7 @@ export default function SnackFormField({ form, formId }: SnackFormFieldsProps) {
 
                 <TextField
                     label="Descripción"
-                    value={form.name}
+                    value={form.description}
                     onChange={form.handleDescriptionChange}
                     slotProps={{ htmlInput: { maxLength: 101 } }}
                     error={err('SNACK_DESCRIPTION')}

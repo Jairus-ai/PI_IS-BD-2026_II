@@ -1,7 +1,9 @@
 import * as React from 'react';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -10,95 +12,175 @@ import { useNavigate } from 'react-router';
 import PageContainer from '../../../components/common/PageContainer';
 import useNotifications from '../../../hooks/useNotifications';
 import useReservationCountdown from '../../../hooks/useReservationCountdown';
+import { getErrorMessage } from '../../../services/errorMessage';
+import { FEE_TYPE_LABELS } from '../../fees/types/fees';
+import { formatAmount, formatDateTime } from '../../purchases/types/purchases';
+import { cancelReservation } from '../../selectSeats/services/seatsService';
 import {
   useCreatePaymentIntent,
-  usePaymentReservation
+  usePurchaseSummary
 } from '../hooks/usePayments';
 import type {
   PaymentIntentResponse,
-  PaymentRequest,
-  PaymentReservation
+  PurchaseSummary
 } from '../types/payments';
-import { getErrorMessage } from '../../../services/errorMessage';
-
-// TODO(Adrián Arias): Once the endpoint are set, replace with data with the actual data.
-const PLACEHOLDER_PAYMENT: PaymentRequest = {
-  feeId: 1,
-  seatPrice: 4500
-};
 
 const RESERVATION_EXPIRED_CODE = 'RESERVATION_EXPIRED';
-const RESERVATION_EXPIRED_MESSAGE = 'Tu reserva de asientos expiró. Selecciona tus asientos de nuevo.';
+const RESERVATION_EXPIRED_MESSAGE = 'El tiempo para completar la compra expiró';
+const LOAD_ERROR_MESSAGE = 'No se pudo cargar el resumen de la compra';
 const PAYMENT_ERROR_MESSAGE = 'No se pudo iniciar el pago';
-const RESERVATION_ERROR_MESSAGE = 'No se pudo cargar la reserva.';
+const NOTIFICATION_MS = 5000;
 
-function getErrorResponse(error: unknown): { code?: string; message?: string } | undefined {
-  return isAxiosError<{ code?: string; message?: string }>(error)
-    ? error.response?.data
-    : undefined;
+const CARD_HEADER_SX = {
+  bgcolor: 'primary.main',
+  color: 'primary.contrastText',
+  px: 2,
+  py: 1.5,
+  fontWeight: 700
+};
+
+function getErrorCode(error: unknown): string | undefined {
+  return isAxiosError<{ code?: string }>(error) ? error.response?.data?.code : undefined;
+}
+
+function SummaryCard({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
+  return (
+    <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Typography variant="h6" component="h2" sx={CARD_HEADER_SX}>
+        {title}
+      </Typography>
+      {children}
+    </Paper>
+  );
+}
+
+function DetailRow({ label, value }: Readonly<{ label: string; value: string | number }>) {
+  return (
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={{ xs: 0.5, sm: 2 }}
+      sx={{ px: 2, py: 1.5, borderTop: 1, borderColor: 'divider' }}
+    >
+      <Typography sx={{ fontWeight: 600, minWidth: { sm: 220 } }}>{label}</Typography>
+      <Typography>{value}</Typography>
+    </Stack>
+  );
+}
+
+function AmountRow({ label, amount, bold = false }: Readonly<{ label: string; amount: string; bold?: boolean }>) {
+  const fontWeight = bold ? 700 : 400;
+
+  return (
+    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+      <Typography sx={{ fontWeight }}>{label}</Typography>
+      <Typography sx={{ fontWeight, whiteSpace: 'nowrap' }}>{amount}</Typography>
+    </Stack>
+  );
+}
+
+function PaymentLines({ summary }: Readonly<{ summary: PurchaseSummary }>) {
+  return (
+    <Stack spacing={1} sx={{ p: 2 }}>
+      {summary.tickets.map((ticket) => (
+        <AmountRow
+          key={ticket.seatId}
+          label={`${ticket.seat} - ${FEE_TYPE_LABELS[ticket.feeType]}`}
+          amount={formatAmount(ticket.price)}
+        />
+      ))}
+      {summary.snacks.map((snack) => (
+        <AmountRow
+          key={snack.snackId}
+          label={`${snack.quantity} × ${snack.name}`}
+          amount={formatAmount(snack.amount)}
+        />
+      ))}
+      {summary.discounts.map((discount) => (
+        <AmountRow
+          key={discount.discountId}
+          label={discount.name}
+          amount={`-${formatAmount(discount.amount)}`}
+        />
+      ))}
+      <Divider />
+      <AmountRow label="Subtotal" amount={formatAmount(summary.subtotal)} />
+      <AmountRow label="Total" amount={formatAmount(summary.total)} bold />
+    </Stack>
+  );
 }
 
 export default function PaymentCheckout() {
   const navigate = useNavigate();
   const notifications = useNotifications();
   const {
-    reservation: rawReservation,
-    isLoadingReservation,
-    reservationError
-  } = usePaymentReservation();
+    summary: rawSummary,
+    isLoadingSummary,
+    summaryError,
+    refetchSummary
+  } = usePurchaseSummary();
   const {
     createPaymentIntent,
     isCreatingPaymentIntent
   } = useCreatePaymentIntent();
+  const payingRef = React.useRef(false);
 
-  const reservation = rawReservation as PaymentReservation | null;
-  const isReservationMissing = getErrorResponse(reservationError)?.code === RESERVATION_EXPIRED_CODE;
-  const countdown = useReservationCountdown(reservation?.reservedUntil ?? null);
+  const summary = rawSummary as PurchaseSummary | null;
+  const isReservationMissing = getErrorCode(summaryError) === RESERVATION_EXPIRED_CODE;
+  const countdown = useReservationCountdown(summary?.reservedUntil ?? null);
   const isCountdownExpired = countdown?.isExpired ?? false;
+  const screeningId = summary?.screeningId;
 
-  React.useEffect(() => {
-    if (!isCountdownExpired)
-      return;
-
+  const showExpiredMessage = React.useCallback(() => {
     notifications.show(RESERVATION_EXPIRED_MESSAGE, {
       key: 'payment-reservation-expired',
       severity: 'warning',
-      autoHideDuration: 5000
+      autoHideDuration: NOTIFICATION_MS
     });
+  }, [notifications]);
 
-    void navigate(`/seats/${reservation?.screeningId}`, { replace: true });
-  }, [isCountdownExpired, navigate, notifications, reservation?.screeningId]);
+  //the reservation expired while the summary was open, free the seats and choose again
+  const returnToSeats = React.useCallback(async () => {
+    showExpiredMessage();
 
+    if (screeningId === undefined) {
+      void navigate('/', { replace: true });
+      return;
+    }
+
+    await cancelReservation(screeningId).catch(() => undefined);
+    void navigate(`/seats/${screeningId}`, { replace: true });
+  }, [navigate, screeningId, showExpiredMessage]);
+
+  React.useEffect(() => {
+    if (isCountdownExpired)
+      void returnToSeats();
+  }, [isCountdownExpired, returnToSeats]);
+
+  //without a reservation the screening is unknown, so the client goes back to the home page
   React.useEffect(() => {
     if (!isReservationMissing)
       return;
 
-    notifications.show(RESERVATION_EXPIRED_MESSAGE, {
-      key: 'payment-reservation-expired',
-      severity: 'warning',
-      autoHideDuration: 5000
-    });
-
+    showExpiredMessage();
     void navigate('/', { replace: true });
-  }, [isReservationMissing, navigate, notifications]);
+  }, [isReservationMissing, navigate, showExpiredMessage]);
 
   const handlePay = async () => {
+    if (payingRef.current)
+      return;
+
+    payingRef.current = true;
+
     try {
-      const paymentIntent: PaymentIntentResponse = await createPaymentIntent(PLACEHOLDER_PAYMENT);
+      const paymentIntent: PaymentIntentResponse = await createPaymentIntent();
 
       window.location.assign(paymentIntent.url);
 
     } catch (error) {
-      const errorResponse = getErrorResponse(error);
+      payingRef.current = false;
 
-      if (errorResponse?.code === RESERVATION_EXPIRED_CODE) {
-        notifications.show(RESERVATION_EXPIRED_MESSAGE, {
-          severity: 'warning',
-          autoHideDuration: 5000
-        });
-
-        void navigate(`/seats/${reservation?.screeningId}`, { replace: true });
-
+      if (getErrorCode(error) === RESERVATION_EXPIRED_CODE) {
+        void returnToSeats();
         return;
       }
 
@@ -106,44 +188,59 @@ export default function PaymentCheckout() {
         getErrorMessage(error, PAYMENT_ERROR_MESSAGE),
         {
           severity: 'error',
-          autoHideDuration: 3000
+          autoHideDuration: NOTIFICATION_MS
         },
       );
     }
   };
 
-  if (isLoadingReservation || isReservationMissing)
-    return <CircularProgress />;
+  const handleBack = () => {
+    if (screeningId !== undefined)
+      void navigate(`/seats/${screeningId}`);
+  };
 
-  if (!reservation) {
+  const renderContent = () => {
+    if (isLoadingSummary || isReservationMissing) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress aria-label="Cargando resumen de la compra" />
+        </Box>
+      );
+    }
+
+    if (summaryError || !summary) {
+      return (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={() => void refetchSummary()}>
+              Reintentar
+            </Button>
+          }
+        >
+          {getErrorMessage(summaryError, LOAD_ERROR_MESSAGE)}
+        </Alert>
+      );
+    }
+
     return (
-      <Alert severity="error">
-        {`${RESERVATION_ERROR_MESSAGE} ${getErrorResponse(reservationError)?.message ?? ''}`}
-      </Alert>
-    );
-  }
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ alignItems: { md: 'flex-start' } }}>
+        <Box sx={{ flex: 2 }}>
+          <SummaryCard title="Detalle de la compra">
+            <DetailRow label="Película:" value={summary.movieTitle} />
+            <DetailRow label="Cine/Sucursal:" value={summary.locationName} />
+            <DetailRow label="Sala:" value={`${summary.screenName} - ${summary.screenType}`} />
+            <DetailRow label="Función:" value={`${formatDateTime(summary.screeningDate)} - ${summary.movieFormat}`} />
+            <DetailRow label="Asientos seleccionados:" value={summary.tickets.map((ticket) => ticket.seat).join(', ')} />
+            <DetailRow label="Cantidad de boletos:" value={summary.ticketCount} />
+            <DetailRow label="Fecha y hora de compra:" value={formatDateTime(summary.purchaseDate)} />
+          </SummaryCard>
+        </Box>
 
-  return (
-    <PageContainer title="Pago">
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 3,
-          maxWidth: 480
-        }}
-      >
-        <Stack spacing={2}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Asientos seleccionados
-          </Typography>
-          <Typography>
-            {reservation.seats
-              .map((seat) => `${seat.row}${seat.number}`)
-              .join(', ')}
-          </Typography>
-          <Alert severity="info">
-            Sus asientos están reservados por {countdown?.label}. Si el pago no se completa a tiempo, no se le cobrará.
-          </Alert>
+        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 320 } }}>
+          <SummaryCard title="Resumen del pago">
+            <PaymentLines summary={summary} />
+          </SummaryCard>
           <Button
             variant="contained"
             size="large"
@@ -154,10 +251,33 @@ export default function PaymentCheckout() {
               void handlePay();
             }}
           >
-            Pagar
+            Proceder al pago
+          </Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="large"
+            disableElevation
+            disabled={isCreatingPaymentIntent}
+            onClick={handleBack}
+          >
+            Volver
           </Button>
         </Stack>
-      </Paper>
+      </Stack>
+    );
+  };
+
+  return (
+    <PageContainer
+      title="Resumen de compra"
+      actions={countdown && summary && !summaryError ? (
+        <Typography variant="body2" role="timer" sx={{ fontWeight: 700 }}>
+          Tus asientos están reservados por {countdown.label}
+        </Typography>
+      ) : null}
+    >
+      {renderContent()}
     </PageContainer>
   );
 }

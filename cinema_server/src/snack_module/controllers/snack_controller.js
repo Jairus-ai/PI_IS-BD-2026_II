@@ -131,12 +131,12 @@ export const getSnackByID = async(req, res, next) =>
 
     if (!snack) 
     {
-      return res.status(404).json({ message: 'Snack not found' });
+      return res.status(404).json({ message: 'Snack no encontrado' });
     }
 
     res.status(200).json(
     { 
-      data: snack 
+      data: snack
     });
 
   }catch(error)
@@ -151,36 +151,68 @@ export const getSnackByID = async(req, res, next) =>
   }
 };
 
-//for the other stories
-/*
+
 export const createSnack = async(req, res, next) => 
 {
   let connection;
   try
   {
-    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
     connection = await getConnection();
+    const {SNACK_NAME, SNACK_DESCRIPTION, PRICE} = req.body;
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
+    const sql = `
+      SELECT ID_SNACK
+      FROM PI_DEVELOPERS.SNACKS
+      WHERE SNACK_NAME = :SNACK_NAME AND IS_DELETED = 0
+    `;
+
+    let result = await connection.execute(
+      sql,
+      {
+        SNACK_NAME:SNACK_NAME,
+      },
+      {
+        outFormat: oracledb.OUT_FORMAT_OBJECT
+      }
+    )
+
+
+    if (result.rows.length > 0) 
+    {
+      return res.status(409).json({
+        message: 'Ya existe un snack con ese nombre.',
+      });
+    }
+
+
+    result = await connection.execute(
+      `SELECT MAX(ID_SNACK) AS LAST_ID 
+      FROM PI_DEVELOPERS.SNACKS`, 
+      [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT}  // Convert output to JSON
+    );
+
+    const lastId = result.rows[0].LAST_ID ?? 0;
+    const ID_SNACK = lastId + 1;  
 
     const request = `
-      INSERT INTO PI_DEVELOPERS.LOCATIONS(LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, ID_CANTON)
+      INSERT INTO PI_DEVELOPERS.SNACKS(ID_SNACK, SNACK_NAME, SNACK_DESCRIPTION, PRICE)
       VALUES
       (
-        :LOCATION_NAME,
-        TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
-        TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
-        :ID_CANTON
+        :ID_SNACK,
+        :SNACK_NAME,
+        :SNACK_DESCRIPTION,
+        :PRICE
       )
     `;
     
     await connection.execute(
       request,
       {
-        LOCATION_NAME: LOCATION_NAME, 
-        OPENING_HOUR: OPENING_HOUR, 
-        CLOSING_HOUR: CLOSING_HOUR,
-        ID_CANTON: ID_CANTON
+        ID_SNACK:ID_SNACK,
+        SNACK_NAME: SNACK_NAME, 
+        SNACK_DESCRIPTION: SNACK_DESCRIPTION, 
+        PRICE: PRICE
       },
       {
         autoCommit: true
@@ -212,31 +244,54 @@ export const editSnack = async(req, res, next) =>
 
   try
   {
-    const {LOCATION_NAME, OPENING_HOUR, CLOSING_HOUR, CANTON_NAME,} = req.body;
     connection = await getConnection();
 
-    const ID_CANTON = await getCantonId(CANTON_NAME, connection);
     const {id} = req.params;
+    const {SNACK_NAME, SNACK_DESCRIPTION, PRICE} = req.body;
+
+    const sql = `
+      SELECT ID_SNACK
+      FROM PI_DEVELOPERS.SNACKS
+      WHERE SNACK_NAME = :SNACK_NAME AND IS_DELETED = 0 AND ID_SNACK <> :id
+    `;
+
+    let result = await connection.execute(
+      sql,
+      {
+        SNACK_NAME:SNACK_NAME,
+        id:id,
+      },
+      {
+        outFormat: oracledb.OUT_FORMAT_OBJECT
+      }
+    )
+
+
+    if (result.rows.length > 0) 
+    {
+      return res.status(409).json({
+        message: 'Ya existe un snack con ese nombre.',
+      });
+    }
 
     const request = `
-      UPDATE PI_DEVELOPERS.LOCATIONS
+      UPDATE PI_DEVELOPERS.SNACKS
       SET
-      LOCATION_NAME = :LOCATION_NAME,
-      OPENING_HOUR = TO_DSINTERVAL('0 ' || :OPENING_HOUR || ':00'),
-      CLOSING_HOUR = TO_DSINTERVAL('0 ' || :CLOSING_HOUR || ':00'),
-      ID_CANTON = :ID_CANTON
-      WHERE ID_LOCATION = :id
+      SNACK_NAME = :SNACK_NAME,
+      SNACK_DESCRIPTION = :SNACK_DESCRIPTION,
+      PRICE = :PRICE
+      WHERE ID_SNACK = :id
+      AND IS_DELETED = 0
     `;
 
     await connection.execute(
       request,
-      [
-        LOCATION_NAME,
-        OPENING_HOUR,
-        CLOSING_HOUR,
-        ID_CANTON,
+      {
+        SNACK_NAME :SNACK_NAME,
+        SNACK_DESCRIPTION:SNACK_DESCRIPTION,
+        PRICE:PRICE,
         id,
-      ],
+      },
       {
         autoCommit: true
       }
@@ -244,7 +299,7 @@ export const editSnack = async(req, res, next) =>
 
     res.status(200).json(
       {
-        message:'succes'
+        message:'success'
       }
     );    
 
@@ -265,27 +320,20 @@ export const deleteSnack = async (req,res,next) =>
 {
   let connection;
   try{
+
     const { id } = req.params;
 
     if (!Number.isInteger(Number(id))) 
     {
-      console.log(Number.isInteger(id));
-      return res.status(400).json({ message: 'Invalid snack id' });
+      return res.status(400).json({ message: 'ID invalida' });
     }
-
+    
     connection = await oracledb.getConnection();
 
-    const hasScreenings = await checkScreenings(connection, id);
-
-    if(hasScreenings)
-    {
-      return res.status(409).json({message:'Location has active screenings'})
-    };
-    
     const request = `
-      UPDATE PI_DEVELOPERS.LOCATIONS
+      UPDATE PI_DEVELOPERS.SNACKS
       SET IS_DELETED = 1
-      WHERE ID_LOCATION = :id
+      WHERE ID_SNACK = :id
       `;
 
       const result = await connection.execute(
@@ -297,7 +345,7 @@ export const deleteSnack = async (req,res,next) =>
     );
   
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ message: 'Location not found' });
+      return res.status(404).json({ message: 'Snack no encontrado' });
     }
 
     res.status(204).json(
@@ -314,4 +362,4 @@ export const deleteSnack = async (req,res,next) =>
       await closeDatabaseConnection(connection);
     }
   }
-};*/
+};
