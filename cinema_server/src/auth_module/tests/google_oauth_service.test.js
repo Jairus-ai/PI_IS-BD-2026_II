@@ -1,13 +1,9 @@
-import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import {
   buildGoogleAuthorizationUrl,
-  consumeGoogleState,
-  fetchGoogleProfile,
-  storePendingSignUp,
-  readPendingSignUp
+  fetchGoogleProfile
 } from '../services/google_oauth_service.js';
 
 const ENV = {
@@ -18,13 +14,11 @@ const ENV = {
 };
 
 const STATE_COOKIE = 'oauth_google_state';
-const PENDING_COOKIE = 'oauth_google_pending';
 const originalFetch = global.fetch;
 const previousEnv = {};
 
 const createResponse = () => ({ cookie: jest.fn(), clearCookie: jest.fn() });
 
-// Simula el id_token que devolvería Google (la firma no se verifica en el servicio)
 function makeIdToken(claims = {}) {
   return jwt.sign(
     {
@@ -98,74 +92,6 @@ describe('buildGoogleAuthorizationUrl', () => {
     delete process.env.GOOGLE_CLIENT_ID;
 
     expect(() => buildGoogleAuthorizationUrl(createResponse())).toThrow('GOOGLE_CLIENT_ID');
-  });
-});
-
-describe('consumeGoogleState', () => {
-  it('returns the stored state and a verifier that matches the code challenge', () => {
-    const startResponse = createResponse();
-    const url = new URL(buildGoogleAuthorizationUrl(startResponse));
-    const token = startResponse.cookie.mock.calls[0][1];
-    const callbackResponse = createResponse();
-
-    const payload = consumeGoogleState({ cookies: { [STATE_COOKIE]: token } }, callbackResponse);
-
-    expect(payload.state).toBe(url.searchParams.get('state'));
-    const expectedChallenge = crypto
-      .createHash('sha256')
-      .update(payload.codeVerifier)
-      .digest('base64url');
-    expect(url.searchParams.get('code_challenge')).toBe(expectedChallenge);
-    expect(callbackResponse.clearCookie).toHaveBeenCalledWith(
-      STATE_COOKIE,
-      expect.objectContaining({ path: '/auth/google' })
-    );
-  });
-
-  it('returns null (and still clears the cookie) when there is no cookie', () => {
-    const res = createResponse();
-
-    expect(consumeGoogleState({ cookies: {} }, res)).toBeNull();
-    expect(res.clearCookie).toHaveBeenCalledTimes(1);
-  });
-
-  it('rejects a token signed with another secret', () => {
-    const forged = jwt.sign({ purpose: 'google_state', state: 'x', codeVerifier: 'y' }, 'otra-clave');
-
-    expect(consumeGoogleState({ cookies: { [STATE_COOKIE]: forged } }, createResponse())).toBeNull();
-  });
-
-  it('rejects a token that was issued for another purpose', () => {
-    const wrongPurpose = jwt.sign({ purpose: 'otro', state: 'x' }, ENV.JWT_SECRET);
-
-    expect(
-      consumeGoogleState({ cookies: { [STATE_COOKIE]: wrongPurpose } }, createResponse())
-    ).toBeNull();
-  });
-});
-
-describe('pending sign up cookie', () => {
-  const profile = { providerUserId: 'sub-1', email: 'ana@gmail.com', firstName: 'Ana' };
-
-  it('stores the profile and reads it back', () => {
-    const res = createResponse();
-
-    storePendingSignUp(res, profile);
-
-    const [name, token, options] = res.cookie.mock.calls[0];
-    expect(name).toBe(PENDING_COOKIE);
-    expect(options).toMatchObject({ httpOnly: true, path: '/auth/google' });
-    expect(readPendingSignUp({ cookies: { [PENDING_COOKIE]: token } })).toMatchObject(profile);
-  });
-
-  it('does not accept a state token in the pending cookie', () => {
-    const stateToken = jwt.sign({ purpose: 'google_state', state: 'x' }, ENV.JWT_SECRET);
-
-    expect(readPendingSignUp({ cookies: { [PENDING_COOKIE]: stateToken } })).toBeNull();
-  });
-
-  it('returns null when the cookie is missing', () => {
-    expect(readPendingSignUp({ cookies: {} })).toBeNull();
   });
 });
 

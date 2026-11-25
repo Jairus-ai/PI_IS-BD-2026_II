@@ -340,7 +340,7 @@ describe('GET /auth/google/pending', () => {
   test('returns 401 without a pending sign up', async () => {
     const response = await request(app).get('/auth/google/pending').expect(401);
 
-    expect(response.body.message).toBe('El registro con Google expiró. Intenta de nuevo');
+    expect(response.body.message).toBe('El registro expiró. Intenta de nuevo');
   });
 
   test('returns only the profile data needed to prefill the form', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { validateGoogleSignUp } from '../validators/google_auth_validator.js';
+import { validateOAuthSignUp } from '../validators/oauth_signup_validator.js';
 
 const GOOGLE_PROFILE = {
   providerUserId: 'sub-123',
@@ -19,9 +19,9 @@ const VALID_BODY = {
   phoneNumber: '88888888'
 };
 
-describe('validateGoogleSignUp', () => {
+describe('validateOAuthSignUp', () => {
   it('accepts valid data and uses the Google profile as default', () => {
-    const { errors, client } = validateGoogleSignUp(GOOGLE_PROFILE, VALID_BODY);
+    const { errors, client } = validateOAuthSignUp(GOOGLE_PROFILE, VALID_BODY);
 
     expect(errors).toEqual({});
     expect(client).toMatchObject({
@@ -34,7 +34,7 @@ describe('validateGoogleSignUp', () => {
   });
 
   it('ignores an email sent in the body and keeps the Google one', () => {
-    const { client } = validateGoogleSignUp(GOOGLE_PROFILE, {
+    const { client } = validateOAuthSignUp(GOOGLE_PROFILE, {
       ...VALID_BODY,
       email: 'otro@correo.com'
     });
@@ -43,7 +43,7 @@ describe('validateGoogleSignUp', () => {
   });
 
   it('lets the body override the names that come from Google', () => {
-    const { client } = validateGoogleSignUp(GOOGLE_PROFILE, {
+    const { client } = validateOAuthSignUp(GOOGLE_PROFILE, {
       ...VALID_BODY,
       firstName: 'Luis'
     });
@@ -52,7 +52,7 @@ describe('validateGoogleSignUp', () => {
   });
 
   it('requires the fields Google does not provide', () => {
-    const { errors } = validateGoogleSignUp(GOOGLE_PROFILE, {});
+    const { errors } = validateOAuthSignUp(GOOGLE_PROFILE, {});
 
     expect(errors).toMatchObject({
       identificationType: 'Campo obligatorio',
@@ -63,7 +63,7 @@ describe('validateGoogleSignUp', () => {
   });
 
   it('rejects an invalid identification number', () => {
-    const { errors } = validateGoogleSignUp(GOOGLE_PROFILE, {
+    const { errors } = validateOAuthSignUp(GOOGLE_PROFILE, {
       ...VALID_BODY,
       identificationNumber: '123'
     });
@@ -74,7 +74,7 @@ describe('validateGoogleSignUp', () => {
   it('rejects underage users', () => {
     const tenYearsAgo = `${new Date().getFullYear() - 10}-01-01`;
 
-    const { errors } = validateGoogleSignUp(GOOGLE_PROFILE, {
+    const { errors } = validateOAuthSignUp(GOOGLE_PROFILE, {
       ...VALID_BODY,
       birthdate: tenYearsAgo
     });
@@ -85,9 +85,9 @@ describe('validateGoogleSignUp', () => {
   it('asks for the first surname when Google does not send one', () => {
     const profile = { ...GOOGLE_PROFILE, firstSurname: '' };
 
-    expect(validateGoogleSignUp(profile, VALID_BODY).errors.firstSurname).toBe('Campo obligatorio');
+    expect(validateOAuthSignUp(profile, VALID_BODY).errors.firstSurname).toBe('Campo obligatorio');
     expect(
-      validateGoogleSignUp(profile, { ...VALID_BODY, firstSurname: 'Mora' }).errors
+      validateOAuthSignUp(profile, { ...VALID_BODY, firstSurname: 'Mora' }).errors
     ).toEqual({});
   });
 });
