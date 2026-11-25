@@ -348,3 +348,53 @@ describe('PUT ${BASE_PATH}/:id', () => {
         expect(connection.execute).toHaveBeenCalledTimes(1);
     });
 });
+
+describe('PUT ${BASE_PATH}/:id', () => {
+   test('204 elimina el snack correctamente', async () => {
+        const connection = useConnection([
+            {
+                rowsAffected: 1,
+            },
+        ]);
+
+        const response = await request(app)
+            .delete('/management/snacks/5');
+
+        expect(response.status).toBe(204);
+
+        expect(connection.execute).toHaveBeenCalledWith(
+            expect.stringContaining('UPDATE PI_DEVELOPERS.SNACKS'),
+            { id: 5 },
+            { autoCommit: true }
+        );
+    });
+
+
+    test('400 cuando el id no es un número válido', async () => {
+        const response = await request(app)
+            .delete('/management/snacks/abc');
+
+        expect(response.status).toBe(400);
+
+        expect(response.body).toEqual({
+            message: 'ID invalida',
+        });
+    });
+
+    test('404 cuando el snack no existe', async () => {
+        useConnection([
+            {
+                rowsAffected: 0,
+            },
+        ]);
+
+        const response = await request(app)
+            .delete('/management/snacks/999');
+
+        expect(response.status).toBe(404);
+
+        expect(response.body).toEqual({
+            message: 'Snack no encontrado',
+        });
+    });
+});
