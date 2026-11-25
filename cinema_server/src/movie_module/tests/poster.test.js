@@ -30,6 +30,14 @@ jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   softDeleteMovie: jest.fn(),
 }));
 
+jest.unstable_mockModule('../../session/session.js', () => ({
+  ROLES: {
+    SUPERUSER: 'SUPERUSER',
+    ADMINISTRATOR: 'ADMINISTRATOR'
+  },
+  requireSession: () => (req, res, next) => next(),
+}));
+
 jest.unstable_mockModule('../../middleware/validate.js', () => ({
   validateQuery: () => (req, res, next) => next(),
   validateParams: () => (req, res, next) => next(),
