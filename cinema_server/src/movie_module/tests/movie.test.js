@@ -3,6 +3,14 @@ import request from 'supertest';
 import express from 'express';
 
 let mockFile = null;
+const mockRollback = jest.fn();
+const mockCountMovies = jest.fn();
+const mockListMovies = jest.fn();
+const mockFindMovieById = jest.fn();
+const mockSplitMovieBody = jest.fn();
+const mockCreateMovieWithRelations = jest.fn();
+const mockUpdateMovieWithRelations = jest.fn();
+const mockSoftDeleteMovie = jest.fn();
 
 jest.unstable_mockModule('../../middleware/upload.js', () => ({
   uploadPoster: {
