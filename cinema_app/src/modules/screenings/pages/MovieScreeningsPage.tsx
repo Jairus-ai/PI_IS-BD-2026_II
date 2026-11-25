@@ -58,7 +58,7 @@ function formatList(value: ListValue): string {
     if (!raw) return '—';
 
     if (/[,;|]/.test(raw)) {
-        return raw.split(/\s*[,;|]\s*/).filter(Boolean).join(', ');
+        return raw.split(/[,;|]/).map((item) => item.trim()).filter(Boolean).join(', ');
     }
 
     return raw
@@ -73,7 +73,6 @@ function formatTime(startTime: string): string {
     return isValidDate(date) ? TIME_FORMAT.format(date) : '--:--';
 }
 
-// YYYY-MM-DD en hora local del navegador
 function toDayKey(date: Date): string {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
