@@ -26,6 +26,22 @@ const DUPLICATE_TITLE_ERROR = {
   ]
 };
 
+const LANGUAGE_IN_USE_MESSAGE = 'No se puede quitar un idioma que tiene funciones asociadas.';
+
+const LANGUAGE_IN_USE_ERROR = {
+  status: 409,
+  code: 'MOVIE_LANGUAGE_IN_USE',
+  message: LANGUAGE_IN_USE_MESSAGE,
+  details: [
+    {
+      path: ['LANGUAGES'],
+      message: LANGUAGE_IN_USE_MESSAGE
+    }
+  ]
+};
+
+const CHILD_RECORD_FOUND = 2292;
+
 export const getMoviesCount = async (req, res, next) => {
   let connection;
 
@@ -164,7 +180,9 @@ export const updateMovie = async (req, res, next) => {
 
   } catch (error) {
     await rollback(connection);
-    next(error);
+    next(error.errorNum === CHILD_RECORD_FOUND
+      ? LANGUAGE_IN_USE_ERROR
+      : error);
 
   } finally {
     await closeDatabaseConnection(connection);

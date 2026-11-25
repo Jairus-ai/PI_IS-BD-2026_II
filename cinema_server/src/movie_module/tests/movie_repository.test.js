@@ -25,7 +25,10 @@ const RELATIONS = {
 };
 
 function createConnection(...responses) {
-  const execute = jest.fn().mockResolvedValue({ rowsAffected: 1 });
+  const execute = jest.fn().mockResolvedValue({
+    rowsAffected: 1,
+    rows: []
+  });
 
   for (const response of responses)
     execute.mockResolvedValueOnce(response);
@@ -96,6 +99,50 @@ describe('movie_repository', () => {
 
     expect(outcome).toBe('ok');
     expect(connection.commit).toHaveBeenCalled();
+  });
+
+  test('Only replaces the languages that changed', async () => {
+    const connection = createConnection(
+      { rows: [{ 1: 1 }] },
+      {
+        rows: [
+          {
+            ID_MOVIE_LANGUAGE: 5,
+            LANGUAGE_TYPE: 'OG',
+            ISO_CODE: 'en'
+          },
+          {
+            ID_MOVIE_LANGUAGE: 6,
+            LANGUAGE_TYPE: 'SUB',
+            ISO_CODE: 'es'
+          }
+        ]
+      }
+    );
+
+    const languages = [
+      {
+        LANGUAGE_TYPE: 'OG',
+        ISO_CODE: 'en'
+      },
+      {
+        LANGUAGE_TYPE: 'DUB',
+        ISO_CODE: 'fr'
+      }
+    ];
+
+    await updateMovieWithRelations(connection, 1, {}, { LANGUAGES: languages });
+
+    const binds = connection.execute.mock.calls.map((call) => call[1]);
+
+    expect(binds.slice(2)).toEqual([
+      { idmovielanguage: 6 },
+      {
+        languagetype: 'DUB',
+        idmovie: 1,
+        isocode: 'fr'
+      }
+    ]);
   });
 
   test('Rolls back the update when the movie does not exist', async () => {
