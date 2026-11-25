@@ -72,7 +72,7 @@ export async function listMoviesInBillboards(connection, queryParams, page) {
     ${whereClause}
     ORDER BY
       CASE
-        WHEN mib.CLOSING_DATE >= TRUNC(SYSDATE) THEN 0
+        WHEN mib.CLOSING_DATE >= TRUNC(CURRENT_DATE) THEN 0
         ELSE 1
       END ASC,
       mib.OPENING_DATE DESC,
