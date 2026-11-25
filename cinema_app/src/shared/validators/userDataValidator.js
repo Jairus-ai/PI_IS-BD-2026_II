@@ -42,6 +42,7 @@ function isAdult(birthdateText) {
 }
 
 export function validateUserData(values) {
+  /** @type {Record<string, string>} */
   const errors = {};
 
   for (const fieldName of USER_REQUIRED_FIELDS) {
