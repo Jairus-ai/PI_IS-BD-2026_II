@@ -82,7 +82,7 @@ describe('GET /screenings/movie/:idMovie', () => {
     expect(sql).toContain('mib.IS_DELETED = 0');
     expect(sql).toContain('s.IS_DELETED = 0');
     expect(sql).toContain('l.IS_DELETED = 0');
-    expect(sql).toContain('> SYSDATE');
+    expect(sql).toContain('> CURRENT_DATE');
   });
 
   test('returns an empty list when the movie has no available screenings', async () => {

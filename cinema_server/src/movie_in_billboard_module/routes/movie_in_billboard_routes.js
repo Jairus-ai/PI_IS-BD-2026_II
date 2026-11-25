@@ -4,7 +4,8 @@ import {
   getMoviesInBillboardsList,
   getMovieInBillboardByID,
   createMovieInBillboard,
-  updateMovieInBillboard
+  updateMovieInBillboard,
+  deleteMovieInBillboard
 } from '../controllers/movie_in_billboard_controller.js';
 import {
   validateQuery,
@@ -34,5 +35,6 @@ router.get('/count', validateQuery(movieInBillboardQuerySchema), getMoviesInBill
 router.get('/:id', validateParams(movieInBillboardIdSchema), getMovieInBillboardByID);
 router.post('/', validateBody(movieInBillboardBodySchema), createMovieInBillboard);
 router.put('/:id', validateParams(movieInBillboardIdSchema), validateBody(movieInBillboardBodySchema), updateMovieInBillboard);
+router.delete('/:id', validateParams(movieInBillboardIdSchema), deleteMovieInBillboard);
 
 export default router;
