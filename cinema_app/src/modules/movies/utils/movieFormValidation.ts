@@ -18,6 +18,39 @@ export interface MovieFormValues {
   existingPoster: string | null;
 }
 
+const MAX_POSTER_SIZE_MB = 5;
+const MAX_POSTER_SIZE_BYTES = MAX_POSTER_SIZE_MB * 1024 * 1024;
+const POSTER_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+];
+const POSTER_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp'
+];
+
+export const POSTER_ACCEPT = [
+  ...POSTER_MIME_TYPES,
+  ...POSTER_EXTENSIONS
+].join(',');
+
+export function validatePosterFile(file: File): string | null {
+  const name = file.name.toLowerCase();
+  const hasValidType = POSTER_MIME_TYPES.includes(file.type)
+    && POSTER_EXTENSIONS.some((extension) => name.endsWith(extension));
+
+  if (!hasValidType)
+    return 'El póster debe ser una imagen JPG, PNG o WEBP.';
+
+  if (file.size > MAX_POSTER_SIZE_BYTES)
+    return `El póster no puede pesar más de ${MAX_POSTER_SIZE_MB} MB.`;
+
+  return null;
+}
+
 export function validateAll(
   values: MovieFormValues,
   isCreate: boolean
@@ -51,6 +84,12 @@ export function validateAll(
   if (values.formatIds.length === 0) errors.FORMAT_IDS = 'Seleccione al menos un formato';
   if (!values.originalLang) errors.LANGUAGES_ORIGINAL = 'Seleccione el idioma original';
   if (isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
+  if (values.posterFile) {
+    const posterError = validatePosterFile(values.posterFile);
+
+    if (posterError)
+      errors.POSTER = posterError;
+  }
   if (!isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
   return errors;
 }

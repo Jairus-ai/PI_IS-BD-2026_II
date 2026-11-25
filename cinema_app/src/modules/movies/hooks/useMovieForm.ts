@@ -149,7 +149,11 @@ export function useMovieForm({ movieId, open, onClose, onSaved }: UseMovieFormAr
   };
 
   const handlePosterChange = (file: File | null) => {
-    setFieldValue('posterFile', file);
+    setValues((prev) => {
+      const updated = { ...prev, posterFile: file };
+      touchAndValidate('POSTER', updated);
+      return updated;
+    });
   };
 
   React.useEffect(() => {
