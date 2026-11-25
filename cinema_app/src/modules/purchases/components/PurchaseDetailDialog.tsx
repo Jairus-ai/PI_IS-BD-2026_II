@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Alert from '@mui/material/Alert';
-import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
@@ -11,7 +11,6 @@ import {
   getDiscountLine,
   getMovieTitle,
   getSeatFee,
-  getSeatName,
   getSnackLine,
   type PurchaseDetail
 } from '../types/purchases';
@@ -45,21 +44,22 @@ function listOrDefault(lines: string[]): string | string[] {
   return lines.length > 0 ? lines : NOT_APPLICABLE;
 }
 
+const HALF = { xs: 12, sm: 6 };
+
 function PurchaseFields({ purchase }: { readonly purchase: PurchaseDetail }) {
   return (
-    <Stack spacing={1.5}>
-      <DetailField label="Sucursal" value={purchase.LOCATION_NAME ?? 'No disponible'} />
-      <DetailField label="Número de compra" value={String(purchase.ID_RECEIPT)} />
-      <DetailField label="Fecha y hora de la compra" value={formatDateTime(purchase.RECEIPT_DATE)} />
-      <DetailField label="Monto" value={formatAmount(purchase.TOTAL_AMOUNT)} />
-      <DetailField label="Película" value={getMovieTitle(purchase)} />
-      <DetailField label="Fecha y hora de la proyección" value={formatDateTime(purchase.SCREENING_DATE)} />
-      <DetailField label="Asientos" value={listOrDefault([purchase.SEATS.map(getSeatName).join(', ')].filter(Boolean))} />
-      <DetailField label="Tarifa" value={listOrDefault(purchase.SEATS.map(getSeatFee))} />
-      <DetailField label="Snacks" value={listOrDefault(purchase.SNACKS.map(getSnackLine))} />
-      <DetailField label="Descuento" value={listOrDefault(purchase.DISCOUNTS.map(getDiscountLine))} />
-      {purchase.IS_REFUNDED && <DetailField label="Reembolsada" value="Sí" />}
-    </Stack>
+    <Grid container spacing={2}>
+      <Grid size={HALF}><DetailField label="Película" value={getMovieTitle(purchase)} /></Grid>
+      <Grid size={HALF}><DetailField label="Sucursal" value={purchase.LOCATION_NAME ?? 'No disponible'} /></Grid>
+      <Grid size={HALF}><DetailField label="Fecha y hora de la proyección" value={formatDateTime(purchase.SCREENING_DATE)} /></Grid>
+      <Grid size={HALF}><DetailField label="Fecha y hora de la compra" value={formatDateTime(purchase.RECEIPT_DATE)} /></Grid>
+      <Grid size={HALF}><DetailField label="Asientos y tarifas" value={listOrDefault(purchase.SEATS.map(getSeatFee))} /></Grid>
+      <Grid size={HALF}><DetailField label="Snacks" value={listOrDefault(purchase.SNACKS.map(getSnackLine))} /></Grid>
+      <Grid size={HALF}><DetailField label="Descuento" value={listOrDefault(purchase.DISCOUNTS.map(getDiscountLine))} /></Grid>
+      <Grid size={HALF}><DetailField label="Monto" value={formatAmount(purchase.TOTAL_AMOUNT)} /></Grid>
+      <Grid size={HALF}><DetailField label="Número de compra" value={String(purchase.ID_RECEIPT)} /></Grid>
+      {purchase.IS_REFUNDED && <Grid size={HALF}><DetailField label="Reembolsada" value="Sí" /></Grid>}
+    </Grid>
   );
 }
 
@@ -92,7 +92,7 @@ export default function PurchaseDetailDialog({ purchaseId, onClose }: PurchaseDe
   return (
     <CrudDialog
       open={purchaseId !== null}
-      title={`Compra #${displayedId}`}
+      title="Detalle de la compra"
       onClose={onClose}
       loading={isLoadingPurchase}
       actions={<Button onClick={onClose}>Cerrar</Button>}

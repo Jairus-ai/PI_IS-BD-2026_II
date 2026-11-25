@@ -6,13 +6,21 @@ import {
   listMoviesInBillboards,
   findMovieInBillboardById,
   hasOverlappingMovieInBillboard,
-  insertMovieInBillboard
+  hasPremierMovieInBillboard,
+  insertMovieInBillboard,
+  hasScreeningsOutsideMovieInBillboard,
+  updateMovieInBillboardById,
+  hasActiveScreenings,
+  softDeleteMovieInBillboard
 } from '../repositories/movie_in_billboard_repository.js';
 
 const MOVIE_IN_BILLBOARD_NOT_FOUND_MESSAGE = 'No se encontró la película en cartelera.';
 const MOVIE_NOT_FOUND_MESSAGE = 'La película seleccionada no existe.';
 const LOCATION_NOT_FOUND_MESSAGE = 'La sucursal seleccionada no existe.';
 const OVERLAPPING_MOVIE_IN_BILLBOARD_MESSAGE = 'La película ya está en la cartelera de esta sucursal durante esas fechas.';
+const DUPLICATED_PREMIER_MESSAGE = 'La película ya tiene un estreno en esta sucursal.';
+const ACTIVE_SCREENINGS_MESSAGE = 'No se puede eliminar porque la película en cartelera tiene funciones activas. Elimine primero las funciones.';
+const SCREENINGS_OUTSIDE_MESSAGE = 'No se puede modificar porque hay funciones activas que quedarían fuera de la película, la sucursal o las fechas. Elimine primero esas funciones.';
 
 export const getMoviesInBillboardsCount = async (req, res, next) => {
   let connection;
@@ -95,11 +103,93 @@ export const createMovieInBillboard = async (req, res, next) => {
     if (await hasOverlappingMovieInBillboard(connection, movieInBillboard))
       return res.status(409).json({ message: OVERLAPPING_MOVIE_IN_BILLBOARD_MESSAGE });
 
+    if (movieInBillboard.premier && await hasPremierMovieInBillboard(connection, movieInBillboard))
+      return res.status(409).json({ message: DUPLICATED_PREMIER_MESSAGE });
+
     const id = await insertMovieInBillboard(connection, movieInBillboard);
     const row = await findMovieInBillboardById(connection, id);
 
     res.status(201).json({
       data: row
+    });
+
+  } catch (error) {
+    next(error);
+
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const updateMovieInBillboard = async (req, res, next) => {
+  let connection;
+
+  try {
+    const { id } = req.validatedParams;
+    const movieInBillboard = req.validatedBody;
+
+    connection = await getConnection();
+
+    if (!await findMovieInBillboardById(connection, id))
+      return res.status(404).json({ message: MOVIE_IN_BILLBOARD_NOT_FOUND_MESSAGE });
+
+    if (!await movieExists(connection, movieInBillboard.movieId))
+      return res.status(400).json({ message: MOVIE_NOT_FOUND_MESSAGE });
+
+    if (!await locationExists(connection, movieInBillboard.locationId))
+      return res.status(400).json({ message: LOCATION_NOT_FOUND_MESSAGE });
+
+    if (await hasOverlappingMovieInBillboard(connection, movieInBillboard, id))
+      return res.status(409).json({ message: OVERLAPPING_MOVIE_IN_BILLBOARD_MESSAGE });
+
+    if (movieInBillboard.premier && await hasPremierMovieInBillboard(connection, movieInBillboard, id))
+      return res.status(409).json({ message: DUPLICATED_PREMIER_MESSAGE });
+
+    if (await hasScreeningsOutsideMovieInBillboard(connection, id, movieInBillboard))
+      return res.status(409).json({ message: SCREENINGS_OUTSIDE_MESSAGE });
+
+    const rowsAffected = await updateMovieInBillboardById(connection, id, movieInBillboard);
+
+    if (rowsAffected === 0)
+      return res.status(404).json({ message: MOVIE_IN_BILLBOARD_NOT_FOUND_MESSAGE });
+
+    const row = await findMovieInBillboardById(connection, id);
+
+    res.status(200).json({
+      data: row
+    });
+
+  } catch (error) {
+    next(error);
+
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const deleteMovieInBillboard = async (req, res, next) => {
+  let connection;
+
+  try {
+    const { id } = req.validatedParams;
+
+    connection = await getConnection();
+
+    if (!await findMovieInBillboardById(connection, id))
+      return res.status(404).json({ message: MOVIE_IN_BILLBOARD_NOT_FOUND_MESSAGE });
+
+    if (await hasActiveScreenings(connection, id))
+      return res.status(409).json({ message: ACTIVE_SCREENINGS_MESSAGE });
+
+    const rowsAffected = await softDeleteMovieInBillboard(connection, id);
+
+    if (rowsAffected === 0)
+      return res.status(404).json({ message: MOVIE_IN_BILLBOARD_NOT_FOUND_MESSAGE });
+
+    res.status(200).json({
+      data: {
+        ID_MOVIE_IN_BILLBOARD: id
+      }
     });
 
   } catch (error) {

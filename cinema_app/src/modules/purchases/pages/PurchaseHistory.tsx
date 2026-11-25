@@ -10,7 +10,7 @@ import PageContainer from '../../../components/common/PageContainer';
 import { usePurchaseHistory } from '../hooks/usePurchases';
 import PurchaseDetailDialog from '../components/PurchaseDetailDialog';
 import PurchaseRefundDialog from '../components/PurchaseRefundDialog';
-import { formatAmount, getMovieTitle, type PurchaseHistoryEntry } from '../types/purchases';
+import { formatAmount, formatDateTime, getMovieTitle, type PurchaseHistoryEntry } from '../types/purchases';
 
 const PAGE_SIZE = 10;
 const NO_PURCHASES_MESSAGE = 'Aún no has realizado compras';
@@ -56,10 +56,11 @@ export default function PurchaseHistory() {
 
   const columns: GridColDef<PurchaseHistoryEntry>[] = [
     {
-      field: 'ID_RECEIPT',
-      headerName: 'Número de compra',
+      field: 'RECEIPT_DATE',
+      headerName: 'Fecha de compra',
       flex: 1,
-      minWidth: 160
+      minWidth: 170,
+      valueFormatter: (value: string) => formatDateTime(value)
     },
     {
       field: 'MOVIE_TITLE',

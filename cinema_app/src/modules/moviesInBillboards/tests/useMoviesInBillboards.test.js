@@ -10,9 +10,13 @@ import {
 } from '@tanstack/react-query';
 
 const mockCreateMovieInBillboard = jest.fn();
+const mockUpdateMovieInBillboard = jest.fn();
+const mockDeleteMovieInBillboard = jest.fn();
 
 jest.unstable_mockModule('../services/movieInBillboardService', () => ({
   createMovieInBillboard: mockCreateMovieInBillboard,
+  updateMovieInBillboard: mockUpdateMovieInBillboard,
+  deleteMovieInBillboard: mockDeleteMovieInBillboard,
   getMovieInBillboard: jest.fn().mockResolvedValue({ ID_MOVIE_IN_BILLBOARD: 5 }),
   getMoviesInBillboardsCount: jest.fn().mockResolvedValue(1),
   getMoviesInBillboardsList: jest.fn().mockResolvedValue({ data: [{ ID_MOVIE_IN_BILLBOARD: 5 }] })
@@ -29,10 +33,12 @@ jest.unstable_mockModule('../../users/services/locationService', () => ({
 
 const {
   useCreateMovieInBillboard,
+  useDeleteMovieInBillboard,
   useMovieInBillboard,
   useMovieInBillboardFilterOptions,
   useMovieInBillboardFormOptions,
-  useMoviesInBillboards
+  useMoviesInBillboards,
+  useUpdateMovieInBillboard
 } = await import('../hooks/useMoviesInBillboards');
 
 function wrapper({ children }) {
@@ -87,5 +93,32 @@ describe('useMoviesInBillboards', () => {
     });
 
     expect(mockCreateMovieInBillboard).toHaveBeenCalledWith({ movieId: 1 });
+  });
+
+  test('Updates a movie in billboard', async () => {
+    mockUpdateMovieInBillboard.mockResolvedValue({ ID_MOVIE_IN_BILLBOARD: 7 });
+
+    const { result } = renderHook(() => useUpdateMovieInBillboard(), { wrapper });
+
+    await act(async () => {
+      await result.current.updateMovieInBillboard({
+        id: 7,
+        movieInBillboard: { movieId: 1 }
+      });
+    });
+
+    expect(mockUpdateMovieInBillboard).toHaveBeenCalledWith(7, { movieId: 1 });
+  });
+
+  test('Deletes a movie in billboard', async () => {
+    mockDeleteMovieInBillboard.mockResolvedValue({ ID_MOVIE_IN_BILLBOARD: 7 });
+
+    const { result } = renderHook(() => useDeleteMovieInBillboard(), { wrapper });
+
+    await act(async () => {
+      await result.current.deleteMovieInBillboard(7);
+    });
+
+    expect(mockDeleteMovieInBillboard).toHaveBeenCalledWith(7);
   });
 });
