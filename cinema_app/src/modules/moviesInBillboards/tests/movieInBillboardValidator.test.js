@@ -1,7 +1,9 @@
 import { describe, expect, test } from '@jest/globals';
 import {
   cleanMovieInBillboardFilters,
+  getMovieInBillboardFormErrors,
   validateMovieInBillboardId,
+  validateNewMovieInBillboard,
   validatePage
 } from '../validators/movieInBillboardValidator';
 
@@ -39,5 +41,39 @@ describe('movieInBillboardValidator', () => {
     const filters = { movieName: 'a'.repeat(101) };
 
     expect(() => cleanMovieInBillboardFilters(filters)).toThrow('El nombre de la película no puede exceder los 100 caracteres.');
+  });
+
+  test('Returns an error for every invalid field', () => {
+    const errors = getMovieInBillboardFormErrors({ premier: 'yes' });
+
+    expect(Object.keys(errors)).toHaveLength(5);
+  });
+
+  test('Rejects a closing date before the opening date', () => {
+    const movieInBillboard = {
+      movieId: 1,
+      locationId: 2,
+      openingDate: '2026-12-10',
+      closingDate: '2026-12-01'
+    };
+
+    expect(() => validateNewMovieInBillboard(movieInBillboard)).toThrow();
+  });
+
+  test('Returns the body of a valid movie in billboard', () => {
+    const movieInBillboard = {
+      movieId: '1',
+      locationId: '2',
+      openingDate: '2026-12-01',
+      closingDate: '2026-12-31'
+    };
+
+    expect(validateNewMovieInBillboard(movieInBillboard)).toEqual({
+      movieId: 1,
+      locationId: 2,
+      openingDate: '2026-12-01',
+      closingDate: '2026-12-31',
+      premier: false
+    });
   });
 });
