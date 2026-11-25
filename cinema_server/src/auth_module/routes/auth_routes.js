@@ -3,13 +3,13 @@ import { changePassword, getCurrentUser, logIn, logOut } from '../controllers/au
 import { requireSession, ROLES } from '../../session/session.js';
 import { requestPasswordRecovery, verifyPasswordRecoveryCode, resetPassword} from '../controllers/password_recovery_controller.js';
 import { startGoogleLogin, handleGoogleCallback, getPendingGoogleSignUp, completeGoogleSignUp} from '../controllers/google_auth_controller.js';
+import { startFacebookLogin, handleFacebookCallback, getPendingFacebookSignUp, completeFacebookSignUp} from '../controllers/facebook_auth_controller.js';
 
 const router = Router();
 
 router.post('/login', logIn);
 router.post('/logout', logOut);
 router.get('/me', requireSession(), getCurrentUser);
-//router.patch('/change-password', requireSession(), changePassword);
 router.patch('/change-password',
     requireSession(
         Object.values(ROLES),
@@ -25,5 +25,9 @@ router.get('/google', startGoogleLogin);
 router.get('/google/callback', handleGoogleCallback);
 router.get('/google/pending', getPendingGoogleSignUp);
 router.post('/google/complete', completeGoogleSignUp);
+router.get('/facebook', startFacebookLogin);
+router.get('/facebook/callback', handleFacebookCallback);
+router.get('/facebook/pending', getPendingFacebookSignUp);
+router.post('/facebook/complete', completeFacebookSignUp);
 
 export default router;
