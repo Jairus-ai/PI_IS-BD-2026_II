@@ -4,6 +4,7 @@ import {
   countMovies,
   listMovies,
   findMovieById,
+  listMovieOptions,
   splitMovieBody,
   createMovieWithRelations,
   updateMovieWithRelations,
@@ -67,6 +68,24 @@ export const getMovieByID = async (req, res, next) => {
 
     res.status(200).json({
       data: row
+    });
+
+  } catch (error) {
+    next(error);
+  } finally {
+    await closeDatabaseConnection(connection);
+  }
+};
+
+export const getMovieOptions = async (req, res, next) => {
+  let connection;
+
+  try {
+    connection = await getConnection();
+    const rows = await listMovieOptions(connection);
+
+    res.status(200).json({
+      data: rows
     });
 
   } catch (error) {

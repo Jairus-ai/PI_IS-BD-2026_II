@@ -29,6 +29,14 @@ export interface MovieInBillboardFilters {
   movieName: string;
 }
 
+export interface NewMovieInBillboard {
+  movieId: number;
+  locationId: number;
+  openingDate: string;
+  closingDate: string;
+  premier: boolean;
+}
+
 export interface LocationOption {
   ID_LOCATION: number;
   LOCATION_NAME: string;
