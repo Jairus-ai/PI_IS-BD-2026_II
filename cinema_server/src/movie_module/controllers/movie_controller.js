@@ -5,11 +5,26 @@ import {
   listMovies,
   findMovieById,
   listMovieOptions,
+  movieTitleExists,
   splitMovieBody,
   createMovieWithRelations,
   updateMovieWithRelations,
   softDeleteMovie
 } from '../repositories/movie_repository.js';
+
+const DUPLICATE_TITLE_MESSAGE = 'Ya existe una película con ese título.';
+
+const DUPLICATE_TITLE_ERROR = {
+  status: 409,
+  code: 'DUPLICATE_MOVIE_TITLE',
+  message: DUPLICATE_TITLE_MESSAGE,
+  details: [
+    {
+      path: ['MOVIE_TITLE'],
+      message: DUPLICATE_TITLE_MESSAGE
+    }
+  ]
+};
 
 export const getMoviesCount = async (req, res, next) => {
   let connection;
@@ -102,6 +117,10 @@ export const createMovie = async (req, res, next) => {
     const { movie, relations } = splitMovieBody(req.validatedBody ?? req.body);
 
     connection = await getConnection();
+
+    if (await movieTitleExists(connection, movie.MOVIE_TITLE))
+      return next(DUPLICATE_TITLE_ERROR);
+
     const idMovie = await createMovieWithRelations(connection, movie, relations);
 
     res.status(201).json({ data: { ID_MOVIE: idMovie, ...movie, ...relations } });
@@ -127,6 +146,10 @@ export const updateMovie = async (req, res, next) => {
 
   try {
     connection = await getConnection();
+
+    if ('MOVIE_TITLE' in movie && await movieTitleExists(connection, movie.MOVIE_TITLE, id))
+      return next(DUPLICATE_TITLE_ERROR);
+
     const outcome = await updateMovieWithRelations(connection, id, movie, relations);
 
     if (outcome === 'empty') {

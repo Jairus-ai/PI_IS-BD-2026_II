@@ -14,6 +14,8 @@ import {
   uploadPoster,
 } from '../services/movieService';
 
+export const MOVIE_OPTIONS_QUERY_KEY = ['movie-options'];
+
 export const useMovies = (
   page: number = 1,
   movieId: number | null | undefined = null,
@@ -65,6 +67,7 @@ export const useMovies = (
     mutationFn: createMovie,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['movies'] });
+      await queryClient.invalidateQueries({ queryKey: MOVIE_OPTIONS_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: ['moviesCount'] });
     },
   });
@@ -73,6 +76,7 @@ export const useMovies = (
     mutationFn: ({ id, movie }: {id: number, movie: any}) => updateMovie(id, movie),
     onSuccess: async(_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ['movies'] });
+      await queryClient.invalidateQueries({ queryKey: MOVIE_OPTIONS_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: ['movie', variables.id] });
     },
   });
@@ -81,6 +85,7 @@ export const useMovies = (
     mutationFn: ({ id }: {id: number}) => deleteMovie(id),
     onSuccess: async(_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ['movies'] });
+      await queryClient.invalidateQueries({ queryKey: MOVIE_OPTIONS_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: ['movie', variables.id] });
     },
   });

@@ -72,7 +72,7 @@ export function mapDetailToFormValues(
     genreIds,
     directorIds,
     formatIds,
-    originalLangs,
+    originalLang: originalLangs[0] ?? null,
     dubLangs,
     subLangs,
     posterFile: null,

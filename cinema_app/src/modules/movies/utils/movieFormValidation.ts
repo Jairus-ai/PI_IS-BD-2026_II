@@ -11,20 +11,59 @@ export interface MovieFormValues {
   genreIds: Genre[];
   directorIds: Director[];
   formatIds: AudiovisualFormat[];
-  originalLangs: Language[];
+  originalLang: Language | null;
   dubLangs: Language[];
   subLangs: Language[];
   posterFile: File | null;
   existingPoster: string | null;
 }
 
+const MAX_POSTER_SIZE_MB = 5;
+const MAX_POSTER_SIZE_BYTES = MAX_POSTER_SIZE_MB * 1024 * 1024;
+const POSTER_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+];
+const POSTER_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp'
+];
+
+export const POSTER_ACCEPT = [
+  ...POSTER_MIME_TYPES,
+  ...POSTER_EXTENSIONS
+].join(',');
+
+export function validatePosterFile(file: File): string | null {
+  const name = file.name.toLowerCase();
+  const hasValidType = POSTER_MIME_TYPES.includes(file.type)
+    && POSTER_EXTENSIONS.some((extension) => name.endsWith(extension));
+
+  if (!hasValidType)
+    return 'El póster debe ser una imagen JPG, PNG o WEBP.';
+
+  if (file.size > MAX_POSTER_SIZE_BYTES)
+    return `El póster no puede pesar más de ${MAX_POSTER_SIZE_MB} MB.`;
+
+  return null;
+}
+
+export function normalizeMovieTitle(title: string): string {
+  return title.trim().toLowerCase();
+}
+
 export function validateAll(
   values: MovieFormValues,
-  isCreate: boolean
+  isCreate: boolean,
+  takenTitles: string[] = []
 ): ServerErrors {
   const errors: ServerErrors = {};
   if (!values.title.trim()) errors.MOVIE_TITLE = 'Campo obligatorio';
   if (values.title.trim().length > 100) errors.MOVIE_TITLE = 'El título no puede exceder 100 caracteres.';
+  if (takenTitles.includes(normalizeMovieTitle(values.title))) errors.MOVIE_TITLE = 'Ya existe una película con ese título.';
   if (!values.yearDate?.isValid()) {
     errors.PUBLISHING_YEAR = 'Seleccione el año de publicación.';
   } else {
@@ -49,8 +88,14 @@ export function validateAll(
   if (values.genreIds.length === 0) errors.GENRE_IDS = 'Seleccione al menos un género';
   if (values.directorIds.length === 0) errors.DIRECTOR_IDS = 'Seleccione al menos un director';
   if (values.formatIds.length === 0) errors.FORMAT_IDS = 'Seleccione al menos un formato';
-  if (values.originalLangs.length === 0) errors.LANGUAGES_ORIGINAL = 'Seleccione al menos un idioma original';
+  if (!values.originalLang) errors.LANGUAGES_ORIGINAL = 'Seleccione el idioma original';
   if (isCreate && !values.posterFile) errors.POSTER = 'Seleccione el póster';
+  if (values.posterFile) {
+    const posterError = validatePosterFile(values.posterFile);
+
+    if (posterError)
+      errors.POSTER = posterError;
+  }
   if (!isCreate && !values.posterFile && !values.existingPoster) errors.POSTER = 'Seleccione el póster';
   return errors;
 }

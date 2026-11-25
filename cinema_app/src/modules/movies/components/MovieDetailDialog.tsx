@@ -2,13 +2,13 @@ import * as React from 'react';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import { useMovies } from '../hooks/useMovies';
 import { API_BASE_URL } from '../../../services/api';
 import { formatDuration, type MovieDetail } from '../types/movies';
 import { DetailField } from '../../../components/crud/DetailField';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
+import MoviePoster from '../../../components/common/MoviePoster';
 
 function posterSrc(poster: string | null): string | undefined {
   if (!poster) return undefined;
@@ -44,32 +44,12 @@ export default function MovieDetailDialog({
       {movie && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <Box sx={{ width: { sm: 240 }, flexShrink: 0 }}>
-            {posterSrc(movie.POSTER) ? (
-              <Box
-                component="img"
-                src={posterSrc(movie.POSTER)}
-                alt={movie.MOVIE_TITLE}
-                sx={{
-                  width: '100%',
-                  borderRadius: 1,
-                  objectFit: 'cover',
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: 320,
-                  bgcolor: 'background.default',
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography color="text.secondary">Sin póster</Typography>
-              </Box>
-            )}
+            <MoviePoster
+              src={posterSrc(movie.POSTER)}
+              alt={movie.MOVIE_TITLE}
+              width="100%"
+              height={320}
+            />
           </Box>
 
           <Stack spacing={1.5} sx={{ flex: 1 }}>

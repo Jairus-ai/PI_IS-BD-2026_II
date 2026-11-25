@@ -17,8 +17,16 @@ import {
   movieBodySchema,
   movieBodyPartialSchema,
 } from '../schemas/movieSchema.js'
+import { requireSession, ROLES } from '../../session/session.js';
 
 const MOVIE_BODY_ERROR_MESSAGE = 'Los datos de la película no son validos.';
+
+const MOVIE_MANAGER_ROLES = [
+  ROLES.SUPERUSER,
+  ROLES.ADMINISTRATOR
+];
+
+const requireMovieManager = requireSession(MOVIE_MANAGER_ROLES);
 
 const router = Router();
 
@@ -26,9 +34,9 @@ router.get('/', validateQuery(movieQuerySchema), getMoviesList);
 router.get('/count', validateQuery(movieQuerySchema), getMoviesCount);
 router.get('/options', getMovieOptions);
 router.get('/:id', validateParams(movieIdSchema), getMovieByID);
-router.post('/poster', uploadPoster.single('poster'), uploadPosterFile);
-router.post('/', validateBody(movieBodySchema, MOVIE_BODY_ERROR_MESSAGE), createMovie);
-router.put('/:id', validateParams(movieIdSchema), validateBody(movieBodyPartialSchema, MOVIE_BODY_ERROR_MESSAGE), updateMovie);
-router.delete('/:id', validateParams(movieIdSchema), deleteMovie);
+router.post('/poster', requireMovieManager, uploadPoster.single('poster'), uploadPosterFile);
+router.post('/', requireMovieManager, validateBody(movieBodySchema, MOVIE_BODY_ERROR_MESSAGE), createMovie);
+router.put('/:id', requireMovieManager, validateParams(movieIdSchema), validateBody(movieBodyPartialSchema, MOVIE_BODY_ERROR_MESSAGE), updateMovie);
+router.delete('/:id', requireMovieManager, validateParams(movieIdSchema), deleteMovie);
 
 export default router;

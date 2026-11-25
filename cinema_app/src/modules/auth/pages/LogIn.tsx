@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
@@ -8,7 +9,13 @@ import Typography from '@mui/material/Typography';
 import { isAxiosError } from 'axios';
 
 
-import { useState, type ChangeEvent, type FocusEvent, type SubmitEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FocusEvent,
+  type SubmitEvent
+} from 'react';
 import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router';
 import AuthLayout from '../../../components/common/AuthLayout';
 import PasswordField from '../../../components/common/PasswordField';
@@ -18,6 +25,10 @@ import useSession from '../../../hooks/useSession';
 import { WORKER_ROLES, type SessionUser } from '../../../context/SessionContext';
 import { useLogIn } from '../hooks/useLogIn';
 import { validateLogInForm, validateRequiredField } from '../validators/authValidator';
+import {
+  clearSessionExpiredMessage,
+  readSessionExpiredMessage
+} from '../../../services/sessionExpiration';
 
 type LogInFormValues = {
   email: string;
@@ -55,6 +66,12 @@ export default function LogIn() {
   const [values, setValues] = useState<LogInFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<LogInFormErrors>({});
   const navigate = useNavigate();
+
+  const [sessionExpiredMessage] = useState(readSessionExpiredMessage);
+
+  useEffect(() => {
+    clearSessionExpiredMessage();
+  }, []);
 
   if (user) {
     
@@ -160,6 +177,12 @@ export default function LogIn() {
         onSubmit={handleSubmit}
         sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 2 }}
       >
+        {sessionExpiredMessage && (
+          <Alert severity="warning">
+            {sessionExpiredMessage}
+          </Alert>
+        )}
+
         <RequiredFieldsHint />
 
         <FormControl fullWidth>

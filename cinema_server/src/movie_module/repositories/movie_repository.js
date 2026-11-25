@@ -217,6 +217,26 @@ export async function listMovieOptions(connection) {
   return result.rows;
 }
 
+export async function movieTitleExists(connection, title, excludedId = null) {
+  const result = await connection.execute(
+    `SELECT 1
+      FROM PI_DEVELOPERS.MOVIES
+      WHERE IS_DELETED = 0
+        AND LOWER(TRIM(MOVIE_TITLE)) = LOWER(TRIM(:title))
+        AND (:excludedid IS NULL OR ID_MOVIE <> :excludedid)
+      FETCH FIRST 1 ROWS ONLY`,
+    {
+      title,
+      excludedid: excludedId === null
+        ? null
+        : Number(excludedId)
+    },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows.length > 0;
+}
+
 // Functions for create movie
 export async function insertMovie(connection, movie) {
   const result = await connection.execute(

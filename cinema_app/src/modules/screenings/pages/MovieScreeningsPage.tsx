@@ -1,6 +1,5 @@
 import * as React from 'react';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import MovieIcon from '@mui/icons-material/Movie';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -19,6 +18,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import IconButton from '@mui/material/IconButton';
 import { useNavigate, useParams } from 'react-router';
+import MoviePoster from '../../../components/common/MoviePoster';
 import { getPosterUrl } from '../../billboard/types/billboard';
 import { useMovieScreenings } from '../hooks/useMovieScreenings';
 import type { ListValue, Movie, Screening, ScreeningsError } from '../types/screenings';
@@ -95,45 +95,17 @@ function DetailLine({ label, value }: Readonly<{ label: string; value: ListValue
     );
 }
 
-function PosterFallback() {
-    return (
-        <Box
-            sx={{
-                width: POSTER_WIDTH,
-                height: POSTER_HEIGHT,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                alignSelf: { xs: 'center', sm: 'flex-start' },
-                borderRadius: 1,
-                bgcolor: 'action.hover',
-                color: 'text.secondary',
-            }}
-        >
-            <MovieIcon sx={{ fontSize: 64 }} />
-        </Box>
-    );
-}
-
 function MovieInfo({ movie }: Readonly<{ movie: Movie }>) {
-    const [posterFailed, setPosterFailed] = React.useState(false);
-    const posterUrl = getPosterUrl(movie.POSTER);
-
     return (
         <Paper variant="outlined" sx={{ bgcolor: 'background.paper', p: 2, mb: 3, borderRadius: 2 }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-                {posterUrl && !posterFailed ? (
-                    <Box
-                        component="img"
-                        src={posterUrl}
-                        alt={`Póster de ${movie.MOVIE_TITLE}`}
-                        onError={() => setPosterFailed(true)}
-                        sx={{ width: POSTER_WIDTH, alignSelf: { xs: 'center', sm: 'flex-start' }, borderRadius: 1 }}
-                    />
-                ) : (
-                    <PosterFallback />
-                )}
+                <MoviePoster
+                    src={getPosterUrl(movie.POSTER)}
+                    alt={`Póster de ${movie.MOVIE_TITLE}`}
+                    width={POSTER_WIDTH}
+                    height={POSTER_HEIGHT}
+                    sx={{ alignSelf: { xs: 'center', sm: 'flex-start' } }}
+                />
                 <Stack spacing={1}>
                     <Typography variant="h5" sx={{ fontWeight: 700 }}>
                         {movie.MOVIE_TITLE}

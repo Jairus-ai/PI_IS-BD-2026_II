@@ -24,10 +24,19 @@ jest.unstable_mockModule('../repositories/movie_repository.js', () => ({
   listMovies: jest.fn(),
   findMovieById: jest.fn(),
   listMovieOptions: jest.fn(),
+  movieTitleExists: jest.fn(),
   splitMovieBody: jest.fn(),
   createMovieWithRelations: jest.fn(),
   updateMovieWithRelations: jest.fn(),
   softDeleteMovie: jest.fn(),
+}));
+
+jest.unstable_mockModule('../../session/session.js', () => ({
+  ROLES: {
+    SUPERUSER: 'SUPERUSER',
+    ADMINISTRATOR: 'ADMINISTRATOR'
+  },
+  requireSession: () => (req, res, next) => next(),
 }));
 
 jest.unstable_mockModule('../../middleware/validate.js', () => ({

@@ -16,7 +16,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { AudiovisualFormat, Director, Genre, Language, Rating } from '../types/movies';
 import { firstError } from '../utils/movieFormUtils';
+import { POSTER_ACCEPT } from '../utils/movieFormValidation';
 import RequiredFieldsHint from '../../../components/common/RequiredFieldsHint';
+import MoviePoster from '../../../components/common/MoviePoster';
 import type { MovieForm } from '../hooks/useMovieForm';
 import dayjs from 'dayjs';
 
@@ -36,6 +38,9 @@ function FieldError({ show, message }: FieldErrorProps) {
 
 export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) {
   const langError = firstError(form.fieldErrors.LANGUAGES_ORIGINAL) || firstError(form.fieldErrors.LANGUAGES);
+  const posterError = form.touched.POSTER
+    ? firstError(form.fieldErrors.POSTER)
+    : '';
   const err = (name: string) => form.touched[name] && Boolean((form.fieldErrors as Record<string, unknown>)[name]);
 
   return (
@@ -233,10 +238,9 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
         />
 
         <Autocomplete
-          multiple
           options={form.catalogs.languages as Language[]}
-          value={form.originalLangs}
-          onChange={(_, event) => form.handleOriginalLangsChange(event)}
+          value={form.originalLang}
+          onChange={(_, language) => form.handleOriginalLangChange(language)}
           onBlur={form.handleBlur('LANGUAGES_ORIGINAL')}
           getOptionLabel={(language) => language.LANGUAGE_NAME}
           isOptionEqualToValue={(valueA, valueB) => valueA.ISO_CODE === valueB.ISO_CODE}
@@ -289,7 +293,6 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
           </Typography>
 
           <Stack
-            direction={{ xs: 'column', sm: 'row' }}
             spacing={2}
             sx={{ alignItems: 'flex-start', mt: 1 }}
           >
@@ -298,31 +301,35 @@ export default function MovieFormFields({ form, formId }: MovieFormFieldsProps) 
               <input
                 type="file"
                 hidden
-                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                onChange={(element) => form.handlePosterChange(element.target.files?.[0] ?? null)}
+                accept={POSTER_ACCEPT}
+                onChange={(element) => {
+                  form.handlePosterChange(element.target.files?.[0] ?? null);
+                  element.target.value = '';
+                }}
               />
             </Button>
 
-            {form.previewSrc
-              ? (
-                <Box
-                  component="img"
-                  src={form.previewSrc}
-                  alt="Póster de la película"
-                  sx={{ width: 120, borderRadius: 1, objectFit: 'cover' }}
-                />
-              ) : (
-                <Typography
-                  variant="body2"
-                  color={form.touched.POSTER && form.fieldErrors.POSTER
+            {form.previewSrc && (
+              <MoviePoster
+                src={form.previewSrc}
+                alt="Póster de la película"
+                width={120}
+                height={180}
+              />
+            )}
+
+            {(!form.previewSrc || posterError) && (
+              <Typography
+                variant="body2"
+                color={
+                  posterError
                     ? 'error'
                     : 'text.secondary'
-                  }
-                >
-                  {form.touched.POSTER && firstError(form.fieldErrors.POSTER) ? firstError(form.fieldErrors.POSTER) : 'Sin imagen seleccionada'}
-                </Typography>
-              )
-            }
+                }
+              >
+                {posterError || 'Sin imagen seleccionada'}
+              </Typography>
+            )}
           </Stack>
         </Box>
 

@@ -7,6 +7,7 @@ import {
   findMovieById,
   listMovies,
   listMovieOptions,
+  movieTitleExists,
   softDeleteMovie,
   updateMovieWithRelations
 } from '../repositories/movie_repository.js';
@@ -116,5 +117,12 @@ describe('movie_repository', () => {
     const connection = createConnection({ rows: [{ ID_MOVIE: 1 }] });
 
     expect(await listMovieOptions(connection)).toEqual([{ ID_MOVIE: 1 }]);
+  });
+
+  test('Checks if another movie has the same title', async () => {
+    const connection = createConnection({ rows: [{ 1: 1 }] }, { rows: [] });
+
+    expect(await movieTitleExists(connection, 'Tenet')).toBe(true);
+    expect(await movieTitleExists(connection, 'Tenet', 4)).toBe(false);
   });
 });
