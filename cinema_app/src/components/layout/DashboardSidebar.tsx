@@ -8,6 +8,7 @@ import Toolbar from '@mui/material/Toolbar';
 import PersonIcon from '@mui/icons-material/Person';
 import MovieIcon from '@mui/icons-material/Movie';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import EventIcon from '@mui/icons-material/Event';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
@@ -183,6 +184,13 @@ export default function DashboardSidebar({
               icon={<MovieIcon />}
               href="/locations"
               selected={!!matchPath('/locations/*', pathname) || pathname === '/'}
+            />
+            <DashboardSidebarPageItem
+              id="screenings"
+              title="Proyecciones"
+              icon={<EventIcon />}
+              href="/screenings"
+              selected={!!matchPath('/screenings/*', pathname)}
             />
             
           </List>

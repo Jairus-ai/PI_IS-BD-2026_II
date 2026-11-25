@@ -6,19 +6,9 @@ import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import { useMovies } from '../hooks/useMovies';
 import { API_BASE_URL } from '../../../services/api';
-import type { MovieDetail } from '../types/movies';
+import { formatDuration, type MovieDetail } from '../types/movies';
 import { DetailField } from '../../../components/crud/DetailField';
 import { CrudDialog } from '../../../components/crud/CrudDialog';
-
-function formatDuration(totalMinutes: number | null | undefined): string {
-  if (totalMinutes == null) return '00:00';
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  const minsStr = String(mins).padStart(2, '0');
-  if (hours <= 0) return `00:${minsStr}`;
-  if (mins === 0) return `${hours}:00`;
-  return `${hours}:${minsStr}`;
-}
 
 function posterSrc(poster: string | null): string | undefined {
   if (!poster) return undefined;
@@ -88,7 +78,7 @@ export default function MovieDetailDialog({
               value={movie.RATING_CODE}
             />
             <DetailField
-              label="Duración"
+              label="Duración (hh:mm)"
               value={formatDuration(movie.MOVIE_DURATION)}
             />
             <DetailField
