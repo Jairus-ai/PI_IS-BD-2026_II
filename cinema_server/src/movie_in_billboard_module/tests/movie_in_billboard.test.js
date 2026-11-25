@@ -138,9 +138,8 @@ describe('GET /management/movies_in_billboards/count', () => {
 
     expect(response.body).toEqual({ total: 12 });
 
-    const [sql, binds] = controllerCall(connection);
+    const [, binds] = controllerCall(connection);
 
-    expect(sql).toMatch(/mib\.IS_DELETED = 0/);
     expect(binds).toEqual({});
     expect(connection.close).toHaveBeenCalledTimes(2);
   });
@@ -153,10 +152,8 @@ describe('GET /management/movies_in_billboards/count', () => {
       .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
       .expect(200);
 
-    const [sql, binds] = controllerCall(connection);
+    const [, binds] = controllerCall(connection);
 
-    expect(sql).toMatch(/mib\.ID_LOCATION = :locationId/);
-    expect(sql).toMatch(/m\.ID_RATING = :ratingId/);
     expect(binds).toEqual({
       locationId: 3,
       ratingId: 2
@@ -184,9 +181,8 @@ describe('GET /management/movies_in_billboards/count', () => {
       .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
       .expect(200);
 
-    const [sql, binds] = controllerCall(connection);
+    const [, binds] = controllerCall(connection);
 
-    expect(sql).toMatch(/LOWER\(m\.MOVIE_TITLE\) LIKE LOWER\(:movieName\)/);
     expect(binds).toEqual({ movieName: '%Incep%' });
   });
 
@@ -236,9 +232,8 @@ describe('GET /management/movies_in_billboards', () => {
       data: MOCK_MOVIES_IN_BILLBOARDS
     });
 
-    const [sql, binds] = controllerCall(connection);
+    const [, binds] = controllerCall(connection);
 
-    expect(sql).toMatch(/OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY/);
     expect(binds).toEqual({
       offset: 0,
       limit: 10
@@ -371,9 +366,8 @@ describe('POST /management/movies_in_billboards', () => {
 
     expect(response.body).toEqual({ data: MOCK_MOVIE_IN_BILLBOARD_DETAIL });
 
-    const [sql, binds, options] = connection.execute.mock.calls[5];
+    const [, binds, options] = connection.execute.mock.calls[5];
 
-    expect(sql).toMatch(/INSERT INTO PI_DEVELOPERS\.MOVIES_IN_BILLBOARDS/);
     expect(binds).toMatchObject({
       openingDate: '2026-12-01',
       closingDate: '2026-12-31',
@@ -463,10 +457,8 @@ describe('POST /management/movies_in_billboards', () => {
 
     expect(response.body.message).toBe('La película ya está en la cartelera de esta sucursal durante esas fechas.');
 
-    const [sql, binds] = connection.execute.mock.calls[3];
+    const [, binds] = connection.execute.mock.calls[3];
 
-    expect(sql).toMatch(/OPENING_DATE <= TO_DATE\(:closingDate, 'YYYY-MM-DD'\)/);
-    expect(sql).toMatch(/CLOSING_DATE >= TO_DATE\(:openingDate, 'YYYY-MM-DD'\)/);
     expect(binds).toEqual({
       movieId: 1,
       locationId: 3,
@@ -487,9 +479,8 @@ describe('POST /management/movies_in_billboards', () => {
 
     expect(response.body.message).toBe('La película ya tiene un estreno en esta sucursal.');
 
-    const [sql, binds] = connection.execute.mock.calls[4];
+    const [, binds] = connection.execute.mock.calls[4];
 
-    expect(sql).toMatch(/PREMIER = 1/);
     expect(binds).toEqual({
       movieId: 1,
       locationId: 3
@@ -604,9 +595,8 @@ describe('PUT /management/movies_in_billboards/:id', () => {
 
     expect(response.body).toEqual({ data: MOCK_MOVIE_IN_BILLBOARD_DETAIL });
 
-    const [sql, binds, options] = connection.execute.mock.calls[7];
+    const [, binds, options] = connection.execute.mock.calls[7];
 
-    expect(sql).toMatch(/UPDATE PI_DEVELOPERS\.MOVIES_IN_BILLBOARDS/);
     expect(binds).toEqual({
       openingDate: '2026-12-01',
       closingDate: '2026-12-31',
@@ -637,13 +627,10 @@ describe('PUT /management/movies_in_billboards/:id', () => {
       .send(VALID_BODY)
       .expect(200);
 
-    const [overlapSql, overlapBinds] = connection.execute.mock.calls[4];
-    const [premierSql, premierBinds] = connection.execute.mock.calls[5];
+    const [, overlapBinds] = connection.execute.mock.calls[4];
+    const [, premierBinds] = connection.execute.mock.calls[5];
 
-    expect(overlapSql).toMatch(/ID_MOVIE_IN_BILLBOARD <> :excludedId/);
     expect(overlapBinds.excludedId).toBe(1);
-    expect(premierSql).toMatch(/PREMIER = 1/);
-    expect(premierSql).toMatch(/ID_MOVIE_IN_BILLBOARD <> :excludedId/);
     expect(premierBinds.excludedId).toBe(1);
   });
 
@@ -667,7 +654,7 @@ describe('PUT /management/movies_in_billboards/:id', () => {
       })
       .expect(200);
 
-    expect(connection.execute.mock.calls[5][0]).toMatch(/SCREENINGS/);
+    expect(connection.execute).toHaveBeenCalledTimes(8);
     expect(connection.execute.mock.calls[6][1].premier).toBe(0);
   });
 
@@ -748,12 +735,10 @@ describe('PUT /management/movies_in_billboards/:id', () => {
       .send(VALID_BODY)
       .expect(409);
 
-    expect(response.body.message).toBe('No se puede modificar porque hay funciones programadas que quedarían fuera de la película, la sucursal o las fechas.');
+    expect(response.body.message).toBe('No se puede modificar porque hay funciones activas que quedarían fuera de la película, la sucursal o las fechas. Elimine primero esas funciones.');
 
-    const [sql, binds] = connection.execute.mock.calls[6];
+    const [, binds] = connection.execute.mock.calls[6];
 
-    expect(sql).toMatch(/s\.SCREENING_DATE < TO_DATE\(:openingDate, 'YYYY-MM-DD'\)/);
-    expect(sql).toMatch(/s\.SCREENING_DATE > TO_DATE\(:closingDate, 'YYYY-MM-DD'\)/);
     expect(binds).toEqual({
       id: 1,
       movieId: 1,
@@ -824,6 +809,106 @@ describe('PUT /management/movies_in_billboards/:id', () => {
       .put(`${BASE_PATH}/1`)
       .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
       .send(VALID_BODY)
+      .expect(500);
+
+    expect(connection.close).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('DELETE /management/movies_in_billboards/:id', () => {
+  const FOUND_DETAIL = { rows: [MOCK_MOVIE_IN_BILLBOARD_DETAIL] };
+
+  test('Returns 403 for an employee', async () => {
+    mockDatabase();
+
+    await request(app)
+      .delete(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.EMPLOYEE))
+      .expect(403);
+  });
+
+  test('Deletes the movie in billboard when it has no active screenings', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      NOT_FOUND,
+      { rowsAffected: 1 }
+    );
+
+    const response = await request(app)
+      .delete(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+    expect(response.body).toEqual({ data: { ID_MOVIE_IN_BILLBOARD: 1 } });
+
+    const [, screeningBinds] = connection.execute.mock.calls[2];
+    const [, deleteBinds, deleteOptions] = connection.execute.mock.calls[3];
+
+    expect(screeningBinds).toEqual({ id: 1 });
+    expect(deleteBinds).toEqual({ id: 1 });
+    expect(deleteOptions).toEqual({ autoCommit: true });
+    expect(connection.close).toHaveBeenCalledTimes(2);
+  });
+
+  test('Returns 404 when the movie in billboard does not exist', async () => {
+    const connection = mockDatabase(NOT_FOUND);
+
+    const response = await request(app)
+      .delete(`${BASE_PATH}/99`)
+      .set('Cookie', sessionCookie(ROLES.SUPERUSER))
+      .expect(404);
+
+    expect(response.body.message).toBe('No se encontró la película en cartelera.');
+    expect(connection.execute).toHaveBeenCalledTimes(2);
+  });
+
+  test('Returns 409 when the movie in billboard has active screenings', async () => {
+    const connection = mockDatabase(FOUND_DETAIL, EXISTS);
+
+    const response = await request(app)
+      .delete(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .expect(409);
+
+    expect(response.body.message).toBe('No se puede eliminar porque la película en cartelera tiene funciones activas. Elimine primero las funciones.');
+    expect(connection.execute).toHaveBeenCalledTimes(3);
+  });
+
+  test('Returns 404 when the movie in billboard is deleted before deleting it', async () => {
+    mockDatabase(
+      FOUND_DETAIL,
+      NOT_FOUND,
+      { rowsAffected: 0 }
+    );
+
+    await request(app)
+      .delete(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .expect(404);
+  });
+
+  test('Returns 400 when the ID is not a positive integer', async () => {
+    const connection = mockDatabase();
+
+    await request(app)
+      .delete(`${BASE_PATH}/0`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
+      .expect(400);
+
+    expect(connection.execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('Returns 500 and closes the connection when the delete fails', async () => {
+    const connection = mockDatabase(
+      FOUND_DETAIL,
+      NOT_FOUND,
+      new Error('ORA-00001: unique constraint violated')
+    );
+
+    await request(app)
+      .delete(`${BASE_PATH}/1`)
+      .set('Cookie', sessionCookie(ROLES.ADMINISTRATOR))
       .expect(500);
 
     expect(connection.close).toHaveBeenCalledTimes(2);

@@ -12,6 +12,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import MovieIcon from '@mui/icons-material/Movie';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import TheatersIcon from '@mui/icons-material/Theaters';
+import EventSeatIcon from '@mui/icons-material/EventSeat';
 import { matchPath, useLocation } from 'react-router';
 import DashboardSidebarContext from '../../context/DashboardSidebarContext';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from '../../theme/constants';
@@ -80,6 +81,13 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: <StorefrontIcon />,
     href: '/locations',
     matchesRoot: true
+  },
+  {
+    id: 'screens',
+    title: 'Salas',
+    icon: <EventSeatIcon />,
+    href: '/screens',
+    allowedRoles: MANAGER_ROLES
   },
   {
     id: 'snacks',

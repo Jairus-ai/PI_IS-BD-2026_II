@@ -6,6 +6,12 @@ export interface BillboardMovie {
   POSTER: string | null;
 }
 
+export interface NowShowingMovie extends BillboardMovie {
+  MOVIE_DURATION: number;
+  RATING_CODE: string;
+  GENRES: string | null;
+}
+
 //posters are full URLs or paths served by the server (/posters/...)
 export function getPosterUrl(poster: string | null): string | null {
   if (!poster) {

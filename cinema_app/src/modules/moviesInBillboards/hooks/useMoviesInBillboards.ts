@@ -6,6 +6,7 @@ import {
 import {
   createMovieInBillboard,
   updateMovieInBillboard,
+  deleteMovieInBillboard,
   getMovieInBillboard,
   getMoviesInBillboardsCount,
   getMoviesInBillboardsList
@@ -146,5 +147,18 @@ export const useUpdateMovieInBillboard = () => {
   return {
     updateMovieInBillboard: mutation.mutateAsync,
     isUpdatingMovieInBillboard: mutation.isPending
+  };
+};
+
+export const useDeleteMovieInBillboard = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (id: number) => deleteMovieInBillboard(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MOVIES_IN_BILLBOARDS_QUERY_KEY })
+  });
+
+  return {
+    deleteMovieInBillboard: mutation.mutateAsync
   };
 };

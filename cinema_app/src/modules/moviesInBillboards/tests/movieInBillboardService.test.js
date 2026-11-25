@@ -3,17 +3,20 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 const mockGet = jest.fn();
 const mockPost = jest.fn();
 const mockPut = jest.fn();
+const mockDelete = jest.fn();
 
 jest.unstable_mockModule('../../../services/api', () => ({
   api: {
     get: mockGet,
     post: mockPost,
-    put: mockPut
+    put: mockPut,
+    delete: mockDelete
   }
 }));
 
 const {
   createMovieInBillboard,
+  deleteMovieInBillboard,
   getMovieInBillboard,
   updateMovieInBillboard,
   getMoviesInBillboardsCount,
@@ -86,5 +89,11 @@ describe('movieInBillboardService', () => {
     });
 
     expect(updated).toEqual({ ID_MOVIE_IN_BILLBOARD: 7 });
+  });
+
+  test('Deletes a movie in billboard', async () => {
+    mockDelete.mockResolvedValue({ data: { data: { ID_MOVIE_IN_BILLBOARD: 7 } } });
+
+    expect(await deleteMovieInBillboard(7)).toEqual({ ID_MOVIE_IN_BILLBOARD: 7 });
   });
 });

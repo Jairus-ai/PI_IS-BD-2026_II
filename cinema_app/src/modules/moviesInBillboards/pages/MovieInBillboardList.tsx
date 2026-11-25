@@ -3,14 +3,18 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import type { GridColDef } from '@mui/x-data-grid';
 import { CrudPage } from '../../../components/crud/CrudPage';
-import { ActionButton } from '../../../components/crud/ActionButton';
+import { Actions } from '../../../components/crud/Actions';
 import { FilterField } from '../../../components/crud/FilterField';
 import MovieInBillboardDetailDialog from '../components/MovieInBillboardDetailDialog';
 import MovieInBillboardFormDialog from '../components/MovieInBillboardFormDialog';
+import { useDialogs } from '../../../hooks/useDialogs';
+import useNotifications from '../../../hooks/useNotifications';
 import {
+  useDeleteMovieInBillboard,
   useMovieInBillboardFilterOptions,
   useMoviesInBillboards
 } from '../hooks/useMoviesInBillboards';
+import { readServerMessage } from '../utils/movieInBillboardFormUtils';
 import {
   formatBillboardDate,
   type LocationOption,
@@ -23,6 +27,8 @@ const PAGE_SIZE = 10;
 const LOAD_ERROR_MESSAGE = 'No se pudieron cargar las películas en cartelera.';
 const NO_MOVIES_IN_BILLBOARDS_MESSAGE = 'No hay películas en ninguna de las carteleras.';
 const NO_FILTER_RESULTS_MESSAGE = 'No se encontraron resultados para la búsqueda.';
+const DELETE_SUCCESS_MESSAGE = 'Película eliminada de la cartelera';
+const DELETE_ERROR_MESSAGE = 'No se pudo eliminar la película de la cartelera. Intenta de nuevo.';
 
 const MAX_MOVIE_NAME_LENGTH = 100;
 
@@ -38,6 +44,9 @@ const FIRST_PAGE = {
 };
 
 export default function MovieInBillboardList() {
+  const dialogs = useDialogs();
+  const notifications = useNotifications();
+
   const [filters, setFilters] = useState<MovieInBillboardFilters>(EMPTY_FILTERS);
   const [paginationModel, setPaginationModel] = useState(FIRST_PAGE);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -59,6 +68,8 @@ export default function MovieInBillboardList() {
     refetchMoviesInBillboards
   } = useMoviesInBillboards(paginationModel.page + 1, filters);
 
+  const { deleteMovieInBillboard } = useDeleteMovieInBillboard();
+
   const {
     ratings,
     locations
@@ -72,8 +83,8 @@ export default function MovieInBillboardList() {
     {
       field: 'MOVIE_TITLE',
       headerName: 'Película',
-      flex: 2,
-      minWidth: 160
+      flex: 1,
+      minWidth: 120
     },
     {
       field: 'LOCATION_NAME',
@@ -99,19 +110,12 @@ export default function MovieInBillboardList() {
       headerName: 'Acciones',
       align: 'left',
       headerAlign: 'left',
-      width: 300,
-      getActions: ({ row }) => [
-        <ActionButton
-          key="show"
-          label="Mostrar"
-          onClick={() => setSelectedId(row.ID_MOVIE_IN_BILLBOARD)}
-        />,
-        <ActionButton
-          key="edit"
-          label="Modificar"
-          onClick={() => openMovieInBillboardForm(row.ID_MOVIE_IN_BILLBOARD)}
-        />
-      ]
+      width: 340,
+      getActions: Actions({
+        onShow: (movieInBillboard: MovieInBillboard) => setSelectedId(movieInBillboard.ID_MOVIE_IN_BILLBOARD),
+        onEdit: (movieInBillboard: MovieInBillboard) => openMovieInBillboardForm(movieInBillboard.ID_MOVIE_IN_BILLBOARD),
+        onDelete: (movieInBillboard: MovieInBillboard) => void handleDelete(movieInBillboard)
+      })
     }
   ];
 
@@ -138,6 +142,42 @@ export default function MovieInBillboardList() {
       ...previousForm,
       open: false
     }));
+  };
+
+  const handleDelete = async (movieInBillboard: MovieInBillboard) => {
+    const confirmed = await dialogs.confirm(
+      `¿Desea eliminar "${movieInBillboard.MOVIE_TITLE}" de la cartelera de ${movieInBillboard.LOCATION_NAME}?`,
+      {
+        title: 'Eliminar película de cartelera',
+        severity: 'error',
+        okText: 'Eliminar',
+        cancelText: 'Cancelar'
+      }
+    );
+
+    if (!confirmed)
+      return;
+
+    try {
+      await deleteMovieInBillboard(movieInBillboard.ID_MOVIE_IN_BILLBOARD);
+
+      if (moviesInBillboards.length === 1 && paginationModel.page > 0)
+        setPaginationModel((previousModel) => ({
+          ...previousModel,
+          page: previousModel.page - 1
+        }));
+
+      notifications.show(DELETE_SUCCESS_MESSAGE, {
+        severity: 'success',
+        autoHideDuration: 3000
+      });
+
+    } catch (error) {
+      notifications.show(readServerMessage(error, DELETE_ERROR_MESSAGE), {
+        severity: 'error',
+        autoHideDuration: 5000
+      });
+    }
   };
 
   const clearFilters = () => {

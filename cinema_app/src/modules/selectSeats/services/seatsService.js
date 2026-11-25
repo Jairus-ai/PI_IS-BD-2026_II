@@ -9,6 +9,13 @@ export const getSeatsList = async (screeningId) =>
   return data;
 };
 
+export const getcreeningRoomInfo = async (screeningId) =>
+{
+  const { data } = await api.get(`/seats/${screeningId}/screen`, RESERVATION_REQUEST_CONFIG);
+
+  return data;
+};
+
 export const reserveSeat = async (screeningId, seatId) =>
 {
   const { data } = await api.post(`/seats/${screeningId}/reservation/${seatId}`, {}, RESERVATION_REQUEST_CONFIG);

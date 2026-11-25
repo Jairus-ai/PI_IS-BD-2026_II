@@ -61,3 +61,11 @@ export const updateMovieInBillboard = async (id, movieInBillboard) => {
 
   return data.data;
 };
+
+export const deleteMovieInBillboard = async (id) => {
+  validateMovieInBillboardId(id);
+
+  const { data } = await api.delete(`${MOVIES_IN_BILLBOARDS_PATH}/${id}`, SESSION_REQUEST_CONFIG);
+
+  return data.data;
+};

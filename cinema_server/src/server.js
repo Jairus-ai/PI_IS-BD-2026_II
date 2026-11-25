@@ -17,6 +17,7 @@ import audiovisualFormatRoutes from './movie_module/routes/audiovisual_format_ro
 import directorRoutes from './movie_module/routes/director_routes.js';
 import discountRoutes from './discount_module/routes/discount_routes.js';
 import feeRoutes from './fee_module/routes/fee_routes.js';
+import screenRoutes from './screen_module/routes/screen_routes.js';
 import billboardRoutes from './billboard_module/routes/billboard_routes.js';
 import screeningRoutes from './screening_module/routes/screening_routes.js';
 import purchaseRoutes from './purchase_module/routes/purchase_routes.js';
@@ -77,6 +78,7 @@ app.use('/management/audiovisual_format', audiovisualFormatRoutes);
 app.use('/management/directors', directorRoutes);
 app.use('/management/discounts', discountRoutes);
 app.use('/management/fees', feeRoutes);
+app.use('/management/screens', screenRoutes);
 app.use('/management/users', userRoutes);
 app.use('/management/locations', locationRoutes);
 app.use('/seats', seatsRoutes);

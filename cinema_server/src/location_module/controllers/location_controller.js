@@ -419,7 +419,7 @@ async function checkScreenings(connection, id)
     JOIN PI_DEVELOPERS.SCREENINGS sc
     ON sc.ID_SCREEN = s.ID_SCREEN
     WHERE l.ID_LOCATION = :id
-    AND sc.SCREENING_DATE >= TRUNC(SYSDATE)
+    AND sc.SCREENING_DATE >= TRUNC(CURRENT_DATE)
   `;
 
   const result = await connection.execute(

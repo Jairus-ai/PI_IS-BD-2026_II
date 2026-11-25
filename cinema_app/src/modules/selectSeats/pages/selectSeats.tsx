@@ -19,11 +19,6 @@ import {
 } from '../services/seatsService';
 import { getErrorMessage } from '../../../services/errorMessage';
 
-//temporal values while the functions for screenings are not implemented, these values should be obtained from the screening data
-const ROWS = 10;
-const COLS = 10;
-const SEAT_SIZE = 32;
-
 const COLORS = {
     available: 'grey.300',
     occupied: 'grey.700',
@@ -35,6 +30,12 @@ interface Seat {
     SEAT_NUMBER: number;
     ID_SEAT: number;
     SEAT_AVAILABLE: number;
+}
+
+interface Screen {
+    ROWS : number;
+    COLS : number;
+    SEAT_SIZE: number;
 }
 
 interface Reservation {
@@ -90,8 +91,10 @@ export default function ShowSeats() {
     const idScreeningNumber = Number(screeningId);
     const validScreeningId = Number.isInteger(idScreeningNumber) ? idScreeningNumber : null;
 
-    const { seats: rawSeats, reservation: rawReservation, isLoadingSeats } = useSeats(validScreeningId);
+    const { seats: rawSeats, screen: rawScreen, reservation: rawReservation, isLoadingSeats } = useSeats(validScreeningId);
     const seats = rawSeats as Seat[];
+    const screenInfo = rawScreen as Screen[];
+    const { ROWS, COLS, SEAT_SIZE } = screenInfo[0] ?? rawScreen;
     const reservation = rawReservation as Reservation | null;
 
     const queryClient = useQueryClient();
